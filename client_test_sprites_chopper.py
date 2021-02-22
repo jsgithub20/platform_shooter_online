@@ -234,7 +234,8 @@ class Game:
         self.player_shooter.hit_limit = 3
         # self.player_shooter.score_text = DrawText(self.screen, 20, WHITE, 200, 10)
 
-        self.player_chopper = sprite_player_correction.Player()
+        # self.player_chopper = sprite_player_correction.Player()
+        self.player_chopper = Player()
         self.player_chopper.hit_limit = 3
 
         # Create all the levels
@@ -341,8 +342,12 @@ class Game:
         # Game Loop - Update
         # Update the player.
         self.active_sprite_list.update()
-        self.network.game_state.update(0, "chopper", self.player_shooter.rect.x, self.player_shooter.rect.y, "dummy",
-                                       self.player_shooter.image_idx)
+        self.network.game_state.update(1, "chopper", self.player_chopper.rect.x, self.player_chopper.rect.y, "dummy",
+                                       self.player_chopper.image_idx)
+        game_state = self.network.send(self.network.game_state)
+        self.player_chopper.image = img_dict[game_state.state0["img_dict_key"]][game_state.state0["img_idx"]]
+        self.player_chopper.rect.x = game_state.state0["pos_x"]
+        self.player_chopper.rect.y = game_state.state0["pos_y"]
 
         self.bullet_sprite_grp.update()
 

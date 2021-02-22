@@ -189,6 +189,7 @@ class Game:
         self.active_sprite_list.update()
         self.network.game_state.update(0, "shooter", self.player_shooter.rect.x, self.player_shooter.rect.y,
                                        self.player_shooter.img_dict_key, self.player_shooter.image_idx)
+        self.network.send(self.network.game_state)
 
         self.bullet_sprite_grp.update()
 

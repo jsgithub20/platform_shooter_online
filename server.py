@@ -31,10 +31,11 @@ def threaded_client(conn, game_id):
     while True:
         try:
             data = conn.recv(1024)
-            obj = pickle.loads(data)  # receive the client object
+            game_state = pickle.loads(data)  # receive the client object
 
             if game_id in games:
-                game = games[game_id]
+                if game_state.player_id == 0:
+                    games[game_id] = game_state
                 if not data:
                     break
                 else:
@@ -42,8 +43,7 @@ def threaded_client(conn, game_id):
                 #         game.resetWent()
                 #     elif data != "get":
                 #         game.play(p, data)
-
-                    conn.sendall(pickle.dumps(game))
+                    conn.sendall(pickle.dumps(games[game_id]))
             else:
                 break
         except:
@@ -73,7 +73,7 @@ while True:
     else:
         # this is the 2nd player joining the game, change self.current_player = 1 before sending the game object
         games[game_id].player_id = 1
-        print(f"2nd player joined game: {game_id}, starting game")
+        print(f"2nd player joined game: {game_id}, game[{game_id}] is started")
         games[game_id].ready = True
 
     t = Thread(target=threaded_client, args=(conn, game_id))
