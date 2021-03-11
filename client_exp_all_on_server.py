@@ -123,9 +123,16 @@ class Game:
         self.playing = True
         while self.playing:
             # self.clock.tick(FPS)  # not needed when all updates are calculated on server
-            self.events()
+            # self.events()
             # self.update()
-            # self.draw()
+
+            # update(self, player_id, role, pos_x, pos_y, img_dict_key, img_idx)
+            game_state = json.loads(self.network.client.recv(100))
+            self.player_shooter.rect.x = game_state["pos_x"]
+            self.player_shooter.rect.y = game_state["pos_y"]
+            self.player_shooter.img_dict_key = game_state["img_dict_key"]
+            self.player_shooter.image_idx = game_state["img_idx"]
+            self.draw()
 
         # music is unloaded in update() when the match is over
         # pg.mixer.music.unload()
@@ -304,7 +311,7 @@ class Game:
         text_sprites.add(title, name, server_IP, server_Port)
 
         name.input_text = "tom"
-        server_IP.input_text = '192.168.3.10'
+        server_IP.input_text = '127.0.0.1'
         server_Port.input_text = "5050"
 
         settings_btn = Buttons("resources/gui/settings.png", 100, 500, "setting")
