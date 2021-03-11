@@ -14,3 +14,5 @@ SCREEN_HEIGHT = 768
 # others
 TITLE = "Platform Shooter"
 FPS = 60
+# HEADER_LEN = 8  # length of the header for socket send/recv
+DATA_LEN = 100

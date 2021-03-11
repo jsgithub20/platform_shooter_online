@@ -1,5 +1,6 @@
 import pygame as pg
 from sys import exit
+import json
 from platform_shooter_settings import *
 from platform_shooter_sprites import *
 import sprite_player_correction
@@ -67,6 +68,10 @@ class Game:
         self.restart()
 
     def restart(self):
+        # a string to represent key events
+        # K_LEFT, K_RIGHT, K_UP, K_SPACE, K_a, K_d, K_w, K_c, up_LEFT, up_RIGHT, up_a, up_d
+        self.keys = "000000000000"
+
         # match type
         match_type = self.match_score["match_type"]
         match_score = str(self.match_score["shooter"]) + " - " + match_type + " - " + str(self.match_score["chopper"])
@@ -74,6 +79,12 @@ class Game:
 
         # start a new game
         self.bullets = []
+
+        bullet1 = Bullet(-100, 0, 'l', SCREEN_WIDTH)
+        bullet2 = Bullet(-100, 0, 'l', SCREEN_WIDTH)
+        bullet3 = Bullet(-100, 0, 'l', SCREEN_WIDTH)
+        bullet4 = Bullet(-100, 0, 'l', SCREEN_WIDTH)
+        bullet5 = Bullet(-100, 0, 'l', SCREEN_WIDTH)
 
         # Create the self.player
         self.player_shooter = Player()
@@ -111,16 +122,18 @@ class Game:
         # Game Loop
         self.playing = True
         while self.playing:
-            self.clock.tick(FPS)
+            # self.clock.tick(FPS)  # not needed when all updates are calculated on server
             self.events()
-            self.update()
-            self.draw()
+            # self.update()
+            # self.draw()
 
         # music is unloaded in update() when the match is over
         # pg.mixer.music.unload()
 
     def events(self):
         # Game Loop - events
+        # K_LEFT, K_RIGHT, K_UP, K_SPACE, K_a, K_d, K_w, K_c, up_LEFT, up_RIGHT, up_a, up_d
+        self.keys = "000000000000"
         for event in pg.event.get():
             # check for closing window
             if event.type == pg.QUIT:
@@ -137,51 +150,38 @@ class Game:
                         self.active_sprite_list.remove(self.mouse_pos)
                 # player_shooter controls
                 if event.key == pg.K_LEFT:
-                    self.player_shooter.go_left()
+                    self.chg_key(0, "1")
                 if event.key == pg.K_RIGHT:
-                    self.player_shooter.go_right()
+                    self.chg_key(1, "1")
                 if event.key == pg.K_UP:
-                    self.player_shooter.jump()
+                    self.chg_key(2, "1")
                 if event.key == pg.K_SPACE:
-                    if self.player_shooter.loaded > 0:
-                        self.player_shooter.image_idx = 0
-                        self.player_shooter.loaded -= 1
-                        if self.player_shooter.direction == 'l':
-                            bullet = Bullet(self.player_shooter.rect.x, self.player_shooter.rect.y, 'l', SCREEN_WIDTH)
-                            bullet.level = self.current_level
-                            self.player_shooter.attack_flg = 1
-                            self.snd_yeet.play()
-                        else:
-                            bullet = Bullet(self.player_shooter.rect.x, self.player_shooter.rect.y, 'r', SCREEN_WIDTH)
-                            bullet.level = self.current_level
-                            self.player_shooter.attack_flg = 1
-                            self.snd_yeet.play()
-                        self.bullets.append(bullet)
-                        self.bullet_sprite_grp.add(bullet)
+                    self.chg_key(3, "1")
 
                 # player_chopper controls
                 if event.key == pg.K_a:
-                    self.player_chopper.go_left()
+                    self.chg_key(4, "1")
                 elif event.key == pg.K_d:
-                    self.player_chopper.go_right()
+                    self.chg_key(5, "1")
                 if event.key == pg.K_w:
-                    self.player_chopper.jump()
+                    self.chg_key(6, "1")
                 if event.key == pg.K_c:
-                    self.player_chopper.chop()
-                    self.player_chopper.image_idx = 0
+                    self.chg_key(7, "1")
 
             if event.type == pg.KEYUP:
                 # player_shooter controls
-                if event.key == pg.K_LEFT and self.player_shooter.change_x < 0:
-                    self.player_shooter.stop()
-                if event.key == pg.K_RIGHT and self.player_shooter.change_x > 0:
-                    self.player_shooter.stop()
+                if event.key == pg.K_LEFT:
+                    self.chg_key(8, "1")
+                if event.key == pg.K_RIGHT:
+                    self.chg_key(9, "1")
 
                 # player_chopper controls
-                if event.key == pg.K_a and self.player_chopper.change_x < 0:
-                    self.player_chopper.stop()
-                if event.key == pg.K_d and self.player_chopper.change_x > 0:
-                    self.player_chopper.stop()
+                if event.key == pg.K_a:
+                    self.chg_key(10, "1")
+                if event.key == pg.K_d:
+                    self.chg_key(11, "1")
+
+        reply = self.network.send(self.keys)
 
     def update(self):
         # Game Loop - Update
@@ -256,6 +256,11 @@ class Game:
 
         # *after* drawing everything, flip the display
         pg.display.update()
+
+    def chg_key(self, position, new_letter):
+        lst = list(self.keys)
+        lst[position] = new_letter
+        self.keys = "".join(lst)
 
     def check_winner(self):
         # return the winner role (if game over) or None, and a bool value for self.playing
@@ -577,6 +582,6 @@ g.show_start_screen()
 while g.running:
     # g.show_select_screen()
     g.new()
-    g.show_go_screen()
+    # g.show_go_screen()
 
 pg.quit()

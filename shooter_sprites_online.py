@@ -291,8 +291,6 @@ class Player(pg.sprite.Sprite):
         # set to 1 if the player is attacking, so the image set is changed to attacking sets
         self.attack_flg = 0
 
-        self.keys = "000000000000"
-
     def update(self):
         """ Move the player. """
         # Gravity
