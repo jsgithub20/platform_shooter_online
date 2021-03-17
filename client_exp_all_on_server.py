@@ -42,6 +42,7 @@ class Game:
 
         self.network = None
         self.player_id = 0
+        self.svr_reply = None
 
         self.winner = None
         self.running = True
@@ -70,7 +71,7 @@ class Game:
     def restart(self):
         # a string to represent key events
         # K_LEFT, K_RIGHT, K_UP, K_SPACE, K_a, K_d, K_w, K_c, up_LEFT, up_RIGHT, up_a, up_d
-        self.keys = "000000000000"
+        self.keys = "1000000000000"  # the first letter can't be "0" otherwise it disconnect the server
 
         # match type
         match_type = self.match_score["match_type"]
@@ -123,11 +124,11 @@ class Game:
         self.playing = True
         while self.playing:
             # self.clock.tick(FPS)  # not needed when all updates are calculated on server
-            # self.events()
+            self.events()
             # self.update()
 
             # update(self, player_id, role, pos_x, pos_y, img_dict_key, img_idx)
-            game_state = json.loads(self.network.client.recv(100))
+            game_state = self.svr_reply
             self.player_shooter.rect.x = game_state["pos_x"]
             self.player_shooter.rect.y = game_state["pos_y"]
             self.player_shooter.img_dict_key = game_state["img_dict_key"]
@@ -140,7 +141,7 @@ class Game:
     def events(self):
         # Game Loop - events
         # K_LEFT, K_RIGHT, K_UP, K_SPACE, K_a, K_d, K_w, K_c, up_LEFT, up_RIGHT, up_a, up_d
-        self.keys = "000000000000"
+        self.keys = "1000000000000"  # the first letter can't be "0" otherwise it disconnect the server
         for event in pg.event.get():
             # check for closing window
             if event.type == pg.QUIT:
@@ -188,7 +189,8 @@ class Game:
                 if event.key == pg.K_d:
                     self.chg_key(11, "1")
 
-        reply = self.network.send(self.keys)
+        self.svr_reply = self.network.send(self.keys)
+        # self.svr_reply = self.network.send("self.keys")
 
     def update(self):
         # Game Loop - Update
@@ -311,7 +313,7 @@ class Game:
         text_sprites.add(title, name, server_IP, server_Port)
 
         name.input_text = "tom"
-        server_IP.input_text = '127.0.0.1'
+        server_IP.input_text = '10.31.16.25'
         server_Port.input_text = "5050"
 
         settings_btn = Buttons("resources/gui/settings.png", 100, 500, "setting")

@@ -28,9 +28,13 @@ class Network:
         try:
             # data = json.dumps(obj)
             # self.client.send(f"{len(data):<{HEADER_LEN}}".encode())
+            # print(str_data.encode())
             self.client.sendall(str_data.encode())
             # recv_len = int(self.client.recv(HEADER_LEN))
-            return self.client.recv(100).decode()
+            received = self.client.recv(DATA_LEN).decode()
+            # print(type(received))
+            # print(type(json.loads(received)))
+            return json.loads(received)
         except socket.error as e:
             print(e)
 

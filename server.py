@@ -43,13 +43,15 @@ def threaded_client(conn, game_id):
                 break
 
             tick.keys = list(received)
+            tick.events()
             tick.update()
             # update(self, player_id, role, pos_x, pos_y, img_dict_key, img_idx)
             games[game_id].update(0, "shooter", tick.player_shooter.rect.x, tick.player_shooter.rect.y,
                                            tick.player_shooter.img_dict_key, tick.player_shooter.image_idx)
             # games[game_id].update(0, 0, tick.rect.x, tick.rect.y, tick.img_dict_key, tick.image_idx)
             # print(f"Received from client: {received}")
-            conn.sendall(json.dumps(games[game_id].state0_full))
+            tbs = json.dumps(games[game_id].state0_full).encode()
+            conn.sendall(tbs)
 
             # recv_len = int(conn.recv(HEADER_LEN))
             # game_state = pickle.loads(conn.recv(recv_len))  # receive the client object
@@ -70,8 +72,8 @@ def threaded_client(conn, game_id):
             #         conn.sendall(data)
             # else:
             #     break
-        except:
-            break
+        except socket.error as e:
+            print(e)
 
     print("Lost connection")
     try:
@@ -94,7 +96,7 @@ while True:
         # player joining a new game
         games[game_id] = GameState(game_id)
         game_tick[game_id] = Game()
-        game_tick[game_id].restart()
+        game_tick[game_id].new()
         print(f"Creating a new game: game_id = {game_id}")
     else:
         # this is the 2nd player joining the game, change self.current_player = 1 before sending the game object

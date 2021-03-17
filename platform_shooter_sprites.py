@@ -520,7 +520,7 @@ class Level:
 
         # Background image
         # self.background = pg.image.load("resources/platform/Tree_1024_768.png").convert_alpha()
-        self.background = pg.image.load("resources/platform/angry_owl.png").convert_alpha()
+        # self.background = pg.image.load("resources/platform/angry_owl.png").convert_alpha()
 
     # Update everythign on this level
     def update(self):
@@ -610,5 +610,5 @@ class Level_02(Level):
         # the error "cannot convert without pygame.display initialized" will occur when this module is imported
         # to "main.py". The reason being the method in a class is only executed when the instance of a class is
         # created, but the lines out of the methods of a class will be executed when this module is imported
-        moving_block = MovingPlatform(crate.convert_alpha(), 470, 300, self.player_list)
-        self.platform_list.add(moving_block)
+        # moving_block = MovingPlatform(crate.convert_alpha(), 470, 300, self.player_list)
+        # self.platform_list.add(moving_block)
