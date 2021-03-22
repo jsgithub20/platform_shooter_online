@@ -28,6 +28,8 @@ attack_R = [pg.image.load("resources/chopper/Attack__000.png"), pg.image.load("r
 # Attack animation for the LEFT
 attack_L = [pg.transform.flip(sprite, True, False) for sprite in attack_R]
 
+img_dict = {"run_R": run_R, "run_L": run_L, "attack_R": attack_R, "attack_L": attack_L}
+
 
 class Player(pg.sprite.Sprite):
     """ This class represents the bar at the bottom that the player
@@ -40,10 +42,11 @@ class Player(pg.sprite.Sprite):
         # Call the parent's constructor
         super().__init__()
 
-        # Create an image of the block, and fill it with a color.
-        # This could also be an image loaded from the disk.
+        # use a dict to store the images for different actions so that only the numbers need to be transferred from
+        # server to the client
         self.image_idx = 0
-        self.image = run_R[0]
+        self.img_dict_key = "run_R"
+        self.image = img_dict[self.img_dict_key][0]
 
         # Set a referance to the image rect.
         self.rect = self.image.get_rect()
@@ -189,20 +192,21 @@ class Player(pg.sprite.Sprite):
         self.rect.x += self.x_correction
         self.x_correction_flg = 0
 
-    def chg_frame(self, img_list):
+    def chg_frame(self, img_dict_key):
+        self.img_dict_key = img_dict_key
         if self.chop_flag == 1:
             if self.direction == 'l':
-                img_list = attack_L
+                self.img_dict_key = "attack_L"
                 # attack frame is 14 pixel wider than run frames for "ninjagirl" set
                 if self.x_correction_flg == 0:
                     self.x_correction_on()
             elif self.direction == "r":
-                img_list = attack_R
+                self.img_dict_key = "attack_R"
                 if self.x_correction_flg == 1:
                     self.x_correction_off()
         elif self.chop_flag == 0 and self.x_correction_flg == 1:
             self.x_correction_off()
-        if self.image_idx + 1 == len(img_list):
+        if self.image_idx + 1 == len(img_dict[img_dict_key]):
             self.image_idx = 0
             if self.chop_flag == 1:
                 self.chop_flag = 0
@@ -210,6 +214,11 @@ class Player(pg.sprite.Sprite):
             self.image_idx += 1
 
         current_pos = self.rect.x, self.rect.y
+        img_list = img_dict[self.img_dict_key]
         self.image = img_list[self.image_idx]
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = current_pos
+
+    def update_img(self, img_dict_key, image_idx):
+        img_list = img_dict[img_dict_key]
+        self.image = img_list[image_idx]

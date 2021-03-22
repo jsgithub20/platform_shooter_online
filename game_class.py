@@ -12,8 +12,8 @@ class Game:
     def __init__(self):
         # initialize game window, etc
         pg.init()
-        # self.screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pg.HWSURFACE)
-        # pg.display.set_caption(TITLE)
+        self.screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pg.HWSURFACE)
+        pg.display.set_caption("Server Window")
         # self.bg = pg.image.load("resources/platform/Tree_1024_768.png")
         # self.screen.blit(self.bg, (0, 0))
         self.clock = pg.time.Clock()
@@ -30,15 +30,15 @@ class Game:
                             "map": 0, "game_finished": False}
 
         # the "R" sign on the shooter's head to indicate it's the reloading time, so it can't shoot
-        # self.r_sign = DrawText(self.screen, 10, RED, 0, 0, "r_sign", "R", 0, 10)
+        self.r_sign = DrawText(self.screen, 10, RED, 0, 0, "r_sign", "R", 0, 10)
 
         # flag to display or hide mouse location
         self.mouse_pos_flag = False
 
         # display the coordinates of the mouse position
-        # self.mouse_pos = DrawText(self.screen, 10, LIGHT_BLUE, 0, 730, "mouse_pos", "(0,0)")
+        self.mouse_pos = DrawText(self.screen, 10, LIGHT_BLUE, 0, 730, "mouse_pos", "(0,0)")
 
-        # self.fps_txt = DrawText(self.screen, 5, LIGHT_GREEN, 5, 5, "fps_txt", "0")
+        self.fps_txt = DrawText(self.screen, 5, LIGHT_GREEN, 5, 5, "fps_txt", "0")
 
         self.network = None
         self.player_id = 0
@@ -57,12 +57,12 @@ class Game:
             self.match_score["round"] += 1
 
         # player score text display
-        # self.player_shooter_score = DrawText(self.screen, 20, WHITE, 100, 10, "shooter_score", "0")
-        # self.player_chopper_score = DrawText(self.screen, 20, WHITE, 600, 10, "chopper_score", "0")
+        self.player_shooter_score = DrawText(self.screen, 20, WHITE, 100, 10, "shooter_score", "0")
+        self.player_chopper_score = DrawText(self.screen, 20, WHITE, 600, 10, "chopper_score", "0")
 
         # Music and sound effect
-        self.snd_yeet = pg.mixer.Sound("resources/sound/yeet.ogg")
-        self.snd_yeet.set_volume(0.2)
+        # self.snd_yeet = pg.mixer.Sound("resources/sound/yeet.ogg")
+        # self.snd_yeet.set_volume(0.2)
 
         # pg.mixer.music.load("resources/sound/Resurrection of the Dagger.ogg")
         # pg.mixer.music.set_volume(0.3)
@@ -78,7 +78,7 @@ class Game:
         # match type
         match_type = self.match_score["match_type"]
         match_score = str(self.match_score["shooter"]) + " - " + match_type + " - " + str(self.match_score["chopper"])
-        # self.match_type_txt = DrawText(self.screen, 20, WHITE, 25, 720, "match_score", match_score, centered=True)
+        self.match_type_txt = DrawText(self.screen, 20, WHITE, 25, 720, "match_score", match_score, centered=True)
 
         # start a new game
         self.bullets = []
@@ -118,7 +118,7 @@ class Game:
 
         # self.active_sprite_list.add(self.player_shooter, self.player_chopper, self.fps_txt, self.match_type_txt,
         #                             self.player_shooter_score, self.player_chopper_score)
-        # self.active_sprite_list.add(self.player_shooter, self.player_chopper, self.fps_txt, self.match_type_txt)
+        self.active_sprite_list.add(self.player_shooter, self.player_chopper)
 
         # self.run()
 
@@ -187,8 +187,6 @@ class Game:
                     self.player_chopper.stop()
                 if position == 11 and self.player_chopper.change_x > 0:
                     self.player_chopper.stop()
-
-        self.keys = "000000000000"
 
     def update(self):
         # Game Loop - Update

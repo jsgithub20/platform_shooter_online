@@ -6,20 +6,17 @@ class GameState:
         self.match_types = ["Deathmatch", "1st23", "Best of 3"]
         self.match_score = {"match_type": self.match_types[0], "round": 0, "shooter": 0, "chopper": 0,
                             "map": 0, "game_finished": False}
-        self.state0 = {"player_id": 0, "role": self.roles[0], "pos_x": 0, "pos_y": 0, "img_dict_key": "", "img_idx": 0}
-        self.state0_full = {**self.game, **self.state0}
-        self.state1 = {"player_id": 1, "role": self.roles[1], "pos_x": 0, "pos_y": 0, "img_dict_key": "", "img_idx": 0}
-        self.state1_full = {**self.game, **self.state1}
-        self.state_full = {}
+        self.state0 = {"role0": self.roles[0], "pos0_x": 0, "pos0_y": 0, "img_dict_key0": "run_R", "img_idx0": 0}
+        self.state1 = {"role1": self.roles[1], "pos1_x": 600, "pos1_y": 200, "img_dict_key1": "run_R", "img_idx1": 0}
+        self.state_send = {}
         self.ready = False
 
     def update(self, player_id, role, pos_x, pos_y, img_dict_key, img_idx):
-        values = (player_id, role, pos_x, pos_y, img_dict_key, img_idx)
+        values = (role, pos_x, pos_y, img_dict_key, img_idx)
         keys = tuple(self.state0.keys())
         for i in range(len(keys)):
             if player_id == 0:
                 self.state0[keys[i]] = values[i]
-                self.state0_full = {**self.game, **self.state0}
             else:
                 self.state1[keys[i]] = values[i]
-                self.state1_full = {**self.game, **self.state0}
+        self.state_send = {**self.state0, **self.state1}

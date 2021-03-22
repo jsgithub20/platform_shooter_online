@@ -1,6 +1,7 @@
 import pygame as pg
 from sys import exit
 import json
+from collections import namedtuple
 from platform_shooter_settings import *
 from platform_shooter_sprites import *
 import sprite_player_correction
@@ -123,16 +124,23 @@ class Game:
         # Game Loop
         self.playing = True
         while self.playing:
-            # self.clock.tick(FPS)  # not needed when all updates are calculated on server
+            self.clock.tick(FPS)  # not needed when all updates are calculated on server?
             self.events()
             # self.update()
 
-            # update(self, player_id, role, pos_x, pos_y, img_dict_key, img_idx)
-            game_state = self.svr_reply
-            self.player_shooter.rect.x = game_state["pos_x"]
-            self.player_shooter.rect.y = game_state["pos_y"]
-            self.player_shooter.img_dict_key = game_state["img_dict_key"]
-            self.player_shooter.image_idx = game_state["img_idx"]
+            # player_id, role, pos_x, pos_y, img_dict_key, img_idx
+            # game_state = self.svr_reply.decode
+            # self.state0 = {"role0": self.roles[0], "pos0_x": 0, "pos0_y": 0, "img_dict_key0": "", "img_idx0": 0}
+            # self.state1 = {"role1": self.roles[1], "pos1_x": 0, "pos1_y": 0, "img_dict_key1": "", "img_idx1": 0}
+            self.player_shooter.rect.x = self.svr_reply[1]
+            self.player_shooter.rect.y = self.svr_reply[2]
+            # self.player_shooter.img_dict_key = self.svr_reply[5]
+            # self.player_shooter.image_idx = self.svr_reply[6]
+            self.player_shooter.update_img(self.svr_reply[3], self.svr_reply[4])
+
+            self.player_chopper.rect.x = self.svr_reply[6]
+            self.player_chopper.rect.y = self.svr_reply[7]
+            self.player_chopper.update_img(self.svr_reply[8], self.svr_reply[9])
             self.draw()
 
         # music is unloaded in update() when the match is over
@@ -141,7 +149,7 @@ class Game:
     def events(self):
         # Game Loop - events
         # K_LEFT, K_RIGHT, K_UP, K_SPACE, K_a, K_d, K_w, K_c, up_LEFT, up_RIGHT, up_a, up_d
-        self.keys = "1000000000000"  # the first letter can't be "0" otherwise it disconnect the server
+        self.keys = "000000000000"
         for event in pg.event.get():
             # check for closing window
             if event.type == pg.QUIT:
@@ -313,7 +321,7 @@ class Game:
         text_sprites.add(title, name, server_IP, server_Port)
 
         name.input_text = "tom"
-        server_IP.input_text = '10.31.16.25'
+        server_IP.input_text = '192.168.3.15'
         server_Port.input_text = "5050"
 
         settings_btn = Buttons("resources/gui/settings.png", 100, 500, "setting")

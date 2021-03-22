@@ -252,8 +252,8 @@ class Player(pg.sprite.Sprite):
         # Call the parent's constructor
         super().__init__()
 
-        # Create an image of the block, and fill it with a color.
-        # This could also be an image loaded from the disk.
+        # use a dict to store the images for different actions so that only the numbers need to be transferred from
+        # server to the client
         self.image_idx = 0
         self.img_dict_key = "run_R"
         self.image = img_dict[self.img_dict_key][0]
@@ -422,6 +422,10 @@ class Player(pg.sprite.Sprite):
         img_list = img_dict[self.img_dict_key]
         self.image = img_list[self.image_idx]
 
+    def update_img(self, img_dict_key, image_idx):
+        img_list = img_dict[img_dict_key]
+        self.image = img_list[image_idx]
+
 
 class Platform(pg.sprite.Sprite):
     """ Platform the user can jump on """
@@ -520,7 +524,7 @@ class Level:
 
         # Background image
         # self.background = pg.image.load("resources/platform/Tree_1024_768.png").convert_alpha()
-        # self.background = pg.image.load("resources/platform/angry_owl.png").convert_alpha()
+        self.background = pg.image.load("resources/platform/angry_owl.png").convert_alpha()
 
     # Update everythign on this level
     def update(self):
@@ -610,5 +614,5 @@ class Level_02(Level):
         # the error "cannot convert without pygame.display initialized" will occur when this module is imported
         # to "main.py". The reason being the method in a class is only executed when the instance of a class is
         # created, but the lines out of the methods of a class will be executed when this module is imported
-        # moving_block = MovingPlatform(crate.convert_alpha(), 470, 300, self.player_list)
-        # self.platform_list.add(moving_block)
+        moving_block = MovingPlatform(crate.convert_alpha(), 470, 300, self.player_list)
+        self.platform_list.add(moving_block)
