@@ -13,10 +13,12 @@ class GameState:
 
     def update(self, player_id, role, pos_x, pos_y, img_dict_key, img_idx):
         values = (role, pos_x, pos_y, img_dict_key, img_idx)
-        keys = tuple(self.state0.keys())
-        for i in range(len(keys)):
-            if player_id == 0:
+        if player_id == 0:
+            keys = tuple(self.state0.keys())
+            for i in range(len(keys)):
                 self.state0[keys[i]] = values[i]
-            else:
+        else:
+            keys = tuple(self.state1.keys())
+            for i in range(len(keys)):
                 self.state1[keys[i]] = values[i]
         self.state_send = {**self.state0, **self.state1}

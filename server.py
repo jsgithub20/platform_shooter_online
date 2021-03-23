@@ -48,14 +48,12 @@ def threaded_client(conn, game_id):
             tick.events()
             tick.update()
             # update(self, player_id, role, pos_x, pos_y, img_dict_key, img_idx)
-            if tick.keys[-1] == "0":  # 0 = first player, 1 = second player
-                game_state_dict[game_id].update(0, "shooter", tick.player_shooter.rect.x, tick.player_shooter.rect.y,
-                                                tick.player_shooter.img_dict_key, tick.player_shooter.image_idx)
-                game_para = tuple(game_state_dict[game_id].state_send.values())
-            elif tick.keys[-1] == "1":
-                game_state_dict[game_id].update(1, "chopper", tick.player_chopper.rect.x, tick.player_chopper.rect.y,
-                                                tick.player_chopper.img_dict_key, tick.player_chopper.image_idx)
-                game_para = tuple(game_state_dict[game_id].state_send.values())
+            game_state_dict[game_id].update(0, "shooter", tick.player_shooter.rect.x, tick.player_shooter.rect.y,
+                                            tick.player_shooter.img_dict_key, tick.player_shooter.image_idx)
+            game_state_dict[game_id].update(1, "chopper", tick.player_chopper.rect.x, tick.player_chopper.rect.y,
+                                            tick.player_chopper.img_dict_key, tick.player_chopper.image_idx)
+
+            game_para = tuple(game_state_dict[game_id].state_send.values())
 
             tick.keys = "000000000000"
 

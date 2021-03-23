@@ -321,7 +321,7 @@ class Game:
         text_sprites.add(title, name, server_IP, server_Port)
 
         name.input_text = "tom"
-        server_IP.input_text = '192.168.3.15'
+        server_IP.input_text = '10.31.16.25'
         server_Port.input_text = "5050"
 
         settings_btn = Buttons("resources/gui/settings.png", 100, 500, "setting")
