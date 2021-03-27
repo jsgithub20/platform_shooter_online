@@ -83,12 +83,12 @@ class Player(pg.sprite.Sprite):
 
         # Move left/right
         if self.chop_flag == 1:
-            self.chg_frame(attack_L)
+            self.chg_frame("attack_L")
         else:
             if self.change_x < 0:
-                self.chg_frame(run_L)
+                self.chg_frame("run_L")
             elif self.change_x > 0:
-                self.chg_frame(run_R)
+                self.chg_frame("run_R")
 
         if self.hit_flag == 1:
             self.hit_flag = 0
