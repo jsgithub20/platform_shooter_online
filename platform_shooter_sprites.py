@@ -515,7 +515,7 @@ class Level:
         Create a child class for each level with level-specific
         info. """
 
-    def __init__(self):
+    def __init__(self, background=None):
         """ Constructor. Pass in a handle to player. Needed for when moving platforms
             collide with the player. """
         self.platform_list = pg.sprite.Group()
@@ -524,7 +524,8 @@ class Level:
 
         # Background image
         # self.background = pg.image.load("resources/platform/Tree_1024_768.png").convert_alpha()
-        self.background = pg.image.load("resources/platform/angry_owl.png").convert_alpha()
+        # self.background = pg.image.load("resources/platform/angry_owl.png").convert_alpha()
+        self.background = background
 
     # Update everythign on this level
     def update(self):
@@ -548,11 +549,11 @@ class Level:
 class Level_01(Level):
     """ Definition for level 1. """
 
-    def __init__(self, player1, player2):
+    def __init__(self, player1, player2, background=None):
         """ Create level 1. """
 
         # Call the parent constructor
-        Level.__init__(self)
+        Level.__init__(self, background)
         self.player_list.add(player1, player2)
 
 
@@ -581,11 +582,11 @@ class Level_01(Level):
 class Level_02(Level):
     """ Definition for level 2. """
 
-    def __init__(self, player1, player2):
+    def __init__(self, player1, player2, background=None):
         """ Create level 2. """
 
         # Call the parent constructor
-        Level.__init__(self)
+        Level.__init__(self, background)
         self.player_list.add(player1, player2)
 
 
@@ -614,5 +615,5 @@ class Level_02(Level):
         # the error "cannot convert without pygame.display initialized" will occur when this module is imported
         # to "main.py". The reason being the method in a class is only executed when the instance of a class is
         # created, but the lines out of the methods of a class will be executed when this module is imported
-        moving_block = MovingPlatform(crate.convert_alpha(), 470, 300, self.player_list)
+        moving_block = MovingPlatform(crate, 470, 300, self.player_list)
         self.platform_list.add(moving_block)

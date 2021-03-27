@@ -89,10 +89,12 @@ def threaded_client(conn, game_id):
 
     print("Lost connection")
     try:
+        game_tick_dict[game_id].quit()
+        del game_tick_dict[game_id]
         del game_state_dict[game_id]
         print("Closing Game ", game_id)
     except:
-        pass
+        print("Error when closing the game")
     id_cnt -= 1
     conn.close()
 

@@ -11,9 +11,9 @@ from network1 import Network
 class Game:
     def __init__(self):
         # initialize game window, etc
-        pg.init()
-        self.screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pg.HWSURFACE)
-        pg.display.set_caption("Server Window")
+        # pg.init()
+        # self.screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pg.HWSURFACE)
+        # pg.display.set_caption("Server Window, Do Not Close!")
         # self.bg = pg.image.load("resources/platform/Tree_1024_768.png")
         # self.screen.blit(self.bg, (0, 0))
         self.clock = pg.time.Clock()
@@ -30,15 +30,15 @@ class Game:
                             "map": 0, "game_finished": False}
 
         # the "R" sign on the shooter's head to indicate it's the reloading time, so it can't shoot
-        self.r_sign = DrawText(self.screen, 10, RED, 0, 0, "r_sign", "R", 0, 10)
+        # self.r_sign = DrawText(self.screen, 10, RED, 0, 0, "r_sign", "R", 0, 10)
 
         # flag to display or hide mouse location
         self.mouse_pos_flag = False
 
         # display the coordinates of the mouse position
-        self.mouse_pos = DrawText(self.screen, 10, LIGHT_BLUE, 0, 730, "mouse_pos", "(0,0)")
+        # self.mouse_pos = DrawText(self.screen, 10, LIGHT_BLUE, 0, 730, "mouse_pos", "(0,0)")
 
-        self.fps_txt = DrawText(self.screen, 5, LIGHT_GREEN, 5, 5, "fps_txt", "0")
+        # self.fps_txt = DrawText(self.screen, 5, LIGHT_GREEN, 5, 5, "fps_txt", "0")
 
         self.network = None
         self.player_id = 0
@@ -50,6 +50,16 @@ class Game:
         # K_LEFT, K_RIGHT, K_UP, K_SPACE, K_a, K_d, K_w, K_c, up_LEFT, up_RIGHT, up_a, up_d
         self.keys = "000000000000"
 
+    # def quit(self):
+    #     try:
+    #         pg.quit()
+    #     except Exception as obj:
+    #         print(obj)
+    #
+    # def blank_win(self):
+    #     self.screen.fill(0, 0, 0)
+    #     pg.display.update()
+
     def new(self):
         if self.match_score["game_finished"]:
             return
@@ -57,8 +67,8 @@ class Game:
             self.match_score["round"] += 1
 
         # player score text display
-        self.player_shooter_score = DrawText(self.screen, 20, WHITE, 100, 10, "shooter_score", "0")
-        self.player_chopper_score = DrawText(self.screen, 20, WHITE, 600, 10, "chopper_score", "0")
+        # self.player_shooter_score = DrawText(self.screen, 20, WHITE, 100, 10, "shooter_score", "0")
+        # self.player_chopper_score = DrawText(self.screen, 20, WHITE, 600, 10, "chopper_score", "0")
 
         # Music and sound effect
         # self.snd_yeet = pg.mixer.Sound("resources/sound/yeet.ogg")
@@ -78,7 +88,7 @@ class Game:
         # match type
         match_type = self.match_score["match_type"]
         match_score = str(self.match_score["shooter"]) + " - " + match_type + " - " + str(self.match_score["chopper"])
-        self.match_type_txt = DrawText(self.screen, 20, WHITE, 25, 720, "match_score", match_score, centered=True)
+        # self.match_type_txt = DrawText(self.screen, 20, WHITE, 25, 720, "match_score", match_score, centered=True)
 
         # start a new game
         self.bullets = []
@@ -194,8 +204,8 @@ class Game:
         self.active_sprite_list.update()
         self.bullet_sprite_grp.update()
 
-        if self.mouse_pos in self.active_sprite_list:
-            self.mouse_pos.text = f"({str(pg.mouse.get_pos()[0])},{str(pg.mouse.get_pos()[1])})"
+        # if self.mouse_pos in self.active_sprite_list:
+        #     self.mouse_pos.text = f"({str(pg.mouse.get_pos()[0])},{str(pg.mouse.get_pos()[1])})"
 
         # Update the r_sign to follow the player_shooter
         # self.r_sign.rect.midbottom = self.player_shooter.rect.midtop
@@ -247,20 +257,21 @@ class Game:
         # Update items in the level
         self.current_level.update()
 
-        self.fps_txt.text = f"fps: {str(int(self.clock.get_fps()))}"
-        self.player_shooter_score.text = "Shooter Hit: {}/{}".format(self.player_shooter.hit_count,
-                                                                     self.player_shooter.hit_limit)
-        self.player_chopper_score.text = "Chopper Hit: {}/{}".format(self.player_chopper.hit_count,
-                                                                     self.player_chopper.hit_limit)
+        # self.fps_txt.text = f"fps: {str(int(self.clock.get_fps()))}"
+        # self.player_shooter_score.text = "Shooter Hit: {}/{}".format(self.player_shooter.hit_count,
+        #                                                              self.player_shooter.hit_limit)
+        # self.player_chopper_score.text = "Chopper Hit: {}/{}".format(self.player_chopper.hit_count,
+        #                                                              self.player_chopper.hit_limit)
 
     def draw(self):
+        pass
         # Game Loop - draw
-        self.current_level.draw(self.screen)
-        self.active_sprite_list.draw(self.screen)
-        self.bullet_sprite_grp.draw(self.screen)
-
-        # *after* drawing everything, flip the display
-        pg.display.update()
+        # self.current_level.draw(self.screen)
+        # self.active_sprite_list.draw(self.screen)
+        # self.bullet_sprite_grp.draw(self.screen)
+        #
+        # # *after* drawing everything, flip the display
+        # pg.display.update()
 
     def chg_key(self, position, new_letter):
         lst = list(self.keys)
@@ -300,93 +311,93 @@ class Game:
         # game splash/start screen
         ip_valid_ltr = "0123456789."
         port_valid_ltr = "0123456789"
-        background = pg.image.load("resources/gui/Window_06.png").convert_alpha()
-        title = DrawText(self.screen, 50, GREEN, 350, 25, "title", "My Game", 0, 10)
-        name = DrawText(self.screen, 35, WHITE, 150, 230, "name", "Your Name: ", 1, 27)
-        server_IP = DrawText(self.screen, 35, WHITE, 150, 300, "server_ip", "Server IP: ", 1, 26, ip_valid_ltr)
-        server_Port = DrawText(self.screen, 35, WHITE, 150, 370, "server_port", "Server Port#: ", 1, 19, port_valid_ltr)
-        text_sprites = pg.sprite.Group()
-        text_sprites.add(title, name, server_IP, server_Port)
+        # background = pg.image.load("resources/gui/Window_06.png").convert_alpha()
+        # title = DrawText(self.screen, 50, GREEN, 350, 25, "title", "My Game", 0, 10)
+        # name = DrawText(self.screen, 35, WHITE, 150, 230, "name", "Your Name: ", 1, 27)
+        # server_IP = DrawText(self.screen, 35, WHITE, 150, 300, "server_ip", "Server IP: ", 1, 26, ip_valid_ltr)
+        # server_Port = DrawText(self.screen, 35, WHITE, 150, 370, "server_port", "Server Port#: ", 1, 19, port_valid_ltr)
+        # text_sprites = pg.sprite.Group()
+        # text_sprites.add(title, name, server_IP, server_Port)
 
-        name.input_text = "tom"
-        server_IP.input_text = '192.168.3.10'
-        server_Port.input_text = "5050"
+        # name.input_text = "tom"
+        # server_IP.input_text = '192.168.3.10'
+        # server_Port.input_text = "5050"
 
-        settings_btn = Buttons("resources/gui/settings.png", 100, 500, "setting")
-        start_btn = Buttons("resources/gui/right.png", 400, 500, "start")
-        credit_btn = Buttons("resources/gui/credit.png", 700, 500, "credit")
-        btn_sprites = pg.sprite.Group()
-        btn_sprites.add(settings_btn, start_btn, credit_btn)
+        # settings_btn = Buttons("resources/gui/settings.png", 100, 500, "setting")
+        # start_btn = Buttons("resources/gui/right.png", 400, 500, "start")
+        # credit_btn = Buttons("resources/gui/credit.png", 700, 500, "credit")
+        # btn_sprites = pg.sprite.Group()
+        # btn_sprites.add(settings_btn, start_btn, credit_btn)
+        #
+        # pg.mixer.music.load("resources/sound/Designer_Stubble.ogg")
+        # pg.mixer.music.set_volume(0.2)
+        # pg.mixer.music.play(loops=-1)
+        #
+        # waiting = True
+        # while waiting:
+        #     self.clock.tick(FPS)
+        #     for event in pg.event.get():
+        #         if event.type == pg.QUIT:
+        #             # waiting = False
+        #             # self.running = False
+        #             pg.quit()
+        #             exit()
+        #         if event.type == pg.MOUSEBUTTONDOWN:
+        #             for txt in iter(text_sprites):
+        #                 if txt.rect.collidepoint(pg.mouse.get_pos()):
+        #                     txt.cursor = 1
+        #                 else:
+        #                     txt.cursor = 0
+        #             for btn in iter(btn_sprites):
+        #                 if btn.rect.collidepoint(pg.mouse.get_pos()):
+        #                     if btn.name == "start":
+        #                         # update text to reflect changes before checking ip validity
+        #                         text_sprites.update()
+        #                         if server_IP.check_ip() == "stop":
+        #                             self.wait_for_key()
+        #                             break
+        #                         elif server_Port.check_port() == "stop":
+        #                             self.wait_for_key()
+        #                             break
+        #                         elif name.check_name() == "stop":
+        #                             self.wait_for_key()
+        #                             break
+        #                         else:
+        #                             pg.mixer.music.fadeout(500)
+        #                             pg.mixer.music.unload()
+        #                             waiting = False
+        #
+        #         if event.type == pg.KEYDOWN:
+        #             if event.key == pg.K_F1:
+        #                 self.mouse_pos_flag = not self.mouse_pos_flag
+        #                 if self.mouse_pos_flag:
+        #                     text_sprites.add(self.mouse_pos)
+        #                 else:
+        #                     text_sprites.remove(self.mouse_pos)
+        #
+        #             if 32 <= event.key <= 126:
+        #                 for txt in iter(text_sprites):
+        #                     txt.add_letter(event.unicode)
+        #             elif event.key == pg.K_RETURN:
+        #                 for txt in iter(text_sprites):
+        #                     txt.finish()
+        #             elif event.key == pg.K_BACKSPACE:
+        #                 for txt in iter(text_sprites):
+        #                     txt.back_space()
+        #
+        #     self.screen.blit(background, (0, 0))
+        #
+        #     if self.mouse_pos in text_sprites:
+        #         self.mouse_pos.text = f"({str(pg.mouse.get_pos()[0])},{str(pg.mouse.get_pos()[1])})"
+        #
+        #     text_sprites.update()
+        #     text_sprites.draw(self.screen)
+        #     btn_sprites.draw(self.screen)
+        #
+        #     pg.display.flip()
 
-        pg.mixer.music.load("resources/sound/Designer_Stubble.ogg")
-        pg.mixer.music.set_volume(0.2)
-        pg.mixer.music.play(loops=-1)
-
-        waiting = True
-        while waiting:
-            self.clock.tick(FPS)
-            for event in pg.event.get():
-                if event.type == pg.QUIT:
-                    # waiting = False
-                    # self.running = False
-                    pg.quit()
-                    exit()
-                if event.type == pg.MOUSEBUTTONDOWN:
-                    for txt in iter(text_sprites):
-                        if txt.rect.collidepoint(pg.mouse.get_pos()):
-                            txt.cursor = 1
-                        else:
-                            txt.cursor = 0
-                    for btn in iter(btn_sprites):
-                        if btn.rect.collidepoint(pg.mouse.get_pos()):
-                            if btn.name == "start":
-                                # update text to reflect changes before checking ip validity
-                                text_sprites.update()
-                                if server_IP.check_ip() == "stop":
-                                    self.wait_for_key()
-                                    break
-                                elif server_Port.check_port() == "stop":
-                                    self.wait_for_key()
-                                    break
-                                elif name.check_name() == "stop":
-                                    self.wait_for_key()
-                                    break
-                                else:
-                                    pg.mixer.music.fadeout(500)
-                                    pg.mixer.music.unload()
-                                    waiting = False
-
-                if event.type == pg.KEYDOWN:
-                    if event.key == pg.K_F1:
-                        self.mouse_pos_flag = not self.mouse_pos_flag
-                        if self.mouse_pos_flag:
-                            text_sprites.add(self.mouse_pos)
-                        else:
-                            text_sprites.remove(self.mouse_pos)
-
-                    if 32 <= event.key <= 126:
-                        for txt in iter(text_sprites):
-                            txt.add_letter(event.unicode)
-                    elif event.key == pg.K_RETURN:
-                        for txt in iter(text_sprites):
-                            txt.finish()
-                    elif event.key == pg.K_BACKSPACE:
-                        for txt in iter(text_sprites):
-                            txt.back_space()
-
-            self.screen.blit(background, (0, 0))
-
-            if self.mouse_pos in text_sprites:
-                self.mouse_pos.text = f"({str(pg.mouse.get_pos()[0])},{str(pg.mouse.get_pos()[1])})"
-
-            text_sprites.update()
-            text_sprites.draw(self.screen)
-            btn_sprites.draw(self.screen)
-
-            pg.display.flip()
-
-        self.network = Network(server_IP.input_text, server_Port.input_text)
-        self.player_id = self.network.game_state.player_id
+        # self.network = Network(server_IP.input_text, server_Port.input_text)
+        # self.player_id = self.network.game_state.player_id
 
     def show_select_screen(self):
         background = pg.image.load("resources/gui/Window_06.png").convert_alpha()

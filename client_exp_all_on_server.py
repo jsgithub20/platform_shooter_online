@@ -15,6 +15,8 @@ class Game:
         pg.init()
         self.screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pg.HWSURFACE)
         pg.display.set_caption(TITLE)
+        self.background = pg.image.load("resources/platform/angry_owl.png").convert_alpha()
+
         # self.bg = pg.image.load("resources/platform/Tree_1024_768.png")
         # self.screen.blit(self.bg, (0, 0))
         self.clock = pg.time.Clock()
@@ -98,8 +100,8 @@ class Game:
 
         # Create all the levels
         self.level_list = []
-        self.level_list.append(Level_01(self.player_shooter, self.player_chopper))
-        self.level_list.append(Level_02(self.player_shooter, self.player_chopper))
+        self.level_list.append(Level_01(self.player_shooter, self.player_chopper, self.background))
+        self.level_list.append(Level_02(self.player_shooter, self.player_chopper, self.background))
 
         # Set the current level
         self.current_level = self.level_list[self.current_level_no]
