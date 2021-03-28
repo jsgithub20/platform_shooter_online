@@ -1,13 +1,24 @@
 class GameState:
     def __init__(self, game_id):
         self.game = {"game_id": game_id}
-        self.player_id = 0  # player_id will be changed to 1 on server if needed
+        self.player_id1 = 0  # 0 means this is player0, 1 means this is player1
         self.roles = ["shooter", "chopper"]
         self.match_types = ["Deathmatch", "1st23", "Best of 3"]
-        self.match_score = {"match_type": self.match_types[0], "round": 0, "shooter": 0, "chopper": 0,
-                            "map": 0, "game_finished": False}
+        self.match_type_idx = 0
+        self.map_idx = 0
+        self.role0_idx = 0
+        self.role1_idx = 0
+        self.selection = "000000"
+        '''
+        match_type_idx, map_idx, player0 role_idx, player1 role_idx, player_id, player0 ready flag: 0: not ready, 1: ready
+        '''
+        self.match_score = {"match_type": self.match_types[self.match_type_idx], "round": 0, "map": self.map_idx,
+                            "player0 role": self.roles[self.role0_idx],
+                            "player1 role": self.roles[self.role1_idx],
+                            "shooter": 0, "chopper": 0, "game_finished": False}
         self.state0 = {"role0": self.roles[0], "pos0_x": 0, "pos0_y": 0, "img_dict_key0": "run_R", "img_idx0": 0}
         self.state1 = {"role1": self.roles[1], "pos1_x": 600, "pos1_y": 200, "img_dict_key1": "run_R", "img_idx1": 0}
+        self.player0_ready = False
         self.state_send = {}
         self.ready = False
 
@@ -22,3 +33,9 @@ class GameState:
             for i in range(len(keys)):
                 self.state1[keys[i]] = values[i]
         self.state_send = {**self.state0, **self.state1}
+
+    def update_selection(self, selection_lst):
+        self.match_score["match_type"] = selection_lst[0]
+        self.match_score["map"] = selection_lst[1]
+        self.match_score["player0 role"] = self.roles[selection_lst[2]]
+        self.match_score["player1 role"] = self.roles[selection_lst[3]]

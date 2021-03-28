@@ -1,8 +1,11 @@
 import socket
-from threading import Thread
+from threading import Thread, get_ident
 from collections import namedtuple
 import pickle
 import json
+from pygame.time import Clock
+import time
+
 from game_state import GameState
 from platform_shooter_sprites import *
 from platform_shooter_settings import *
@@ -23,11 +26,33 @@ except socket.error as e:
 s.listen()
 print("Server Started, waiting for connections... ")
 
+clock = Clock()
 game_state_dict = {}
 game_tick_dict = {}
 id_cnt = 0
 
 ini_pos = {"shooter": (200, 0), "chopper": (600, 200)}
+
+
+def threaded_selection(conn, game_id):
+    global id_cnt
+    data = pickle.dumps(game_state_dict[game_id])
+    # conn.sendall(f"{len(data):<{HEADER_LEN}}".encode())
+    conn.sendall(data)  # send game object
+    running = True
+    while running:
+        clock.tick(60)
+        conn.send("1".encode())
+        selection = conn.recv(DATA_LEN).decode()  # to receive modified selection string "00000"
+        selection_lst = list(selection)
+        if selection_lst[-1] == "1":
+            game_state_dict[game_id].update_selection(selection_lst)
+            if selection_lst[-2] == 0 and game_state_dict[game_id].player0_ready == 0:
+                game_state_dict[game_id].player0_ready = 1
+            else:
+                game_state_dict[game_id].ready = 1
+                break
+
 
 
 def threaded_client(conn, game_id):
@@ -37,16 +62,20 @@ def threaded_client(conn, game_id):
     conn.sendall(data)  # send game object
     tick = game_tick_dict[game_id]  # this is Game()
     game_para = None
+    # print(get_ident())
 
     while True:
         try:
             received = conn.recv(DATA_LEN).decode()  # receive user's key input
+            print(f"game_id {game_id}, thread_id {get_ident()}, time_stamp (ms) {time.time() * 1000}")
             if not received:
                 break
 
+            # start = time.perf_counter()
             tick.keys = list(received)
             tick.events()
             tick.update()
+            # print(f"thread_id {get_ident()}, tick time = {(time.perf_counter() - start)*1000}")
             # update(self, player_id, role, pos_x, pos_y, img_dict_key, img_idx)
             game_state_dict[game_id].update(0, "shooter", tick.player_shooter.rect.x, tick.player_shooter.rect.y,
                                             tick.player_shooter.img_dict_key, tick.player_shooter.image_idx)
@@ -89,12 +118,14 @@ def threaded_client(conn, game_id):
 
     print("Lost connection")
     try:
-        game_tick_dict[game_id].quit()
+        # game_tick_dict[game_id].quit()
         del game_tick_dict[game_id]
         del game_state_dict[game_id]
         print("Closing Game ", game_id)
-    except:
+    except Exception as exc:
         print("Error when closing the game")
+        print(exc)
+        print("closing error above")
     id_cnt -= 1
     conn.close()
 
