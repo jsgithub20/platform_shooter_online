@@ -45,6 +45,7 @@ class Game:
 
         self.network = None
         self.player_id = 0
+        self.player0_ready = 0
         self.svr_reply = None
 
         self.winner = None
@@ -323,7 +324,7 @@ class Game:
         text_sprites.add(title, name, server_IP, server_Port)
 
         name.input_text = "tom"
-        server_IP.input_text = '192.168.3.10'
+        server_IP.input_text = '172.20.10.5'
         server_Port.input_text = "5050"
 
         settings_btn = Buttons("resources/gui/settings.png", 100, 500, "setting")
@@ -434,7 +435,7 @@ class Game:
         role_boy = PlayerIdle(idle_boy, (360, 210))
         boy_page.add(role_boy)
 
-        role_lst = [girl_page, boy_page]
+        role_lst = [boy_page, girl_page]
 
         right_btn_match = Buttons("resources/gui/right_small.png", 760, 60, "right_match")
         left_btn_match = Buttons("resources/gui/left_small.png", 160, 60, "left_match")
@@ -539,9 +540,17 @@ class Game:
             map_select.draw(self.screen)
             mouse_pos_grp.draw(self.screen)
 
-            self.network.send(self)
-
             pg.display.flip()
+
+        if self.player_id == 0:
+            self.player0_ready = 1
+        '''
+        match_type_idx, map_idx, player0 role_idx, player1 role_idx, player_id, player0 ready flag: 0: not ready, 1: ready
+        '''
+
+        self.selection = str([match_idx, map_idx, page_idx, page_idx, self.player_id, self.player0_ready])
+        # self.network.send(self)
+
 
     def show_go_screen(self):
 
@@ -599,7 +608,7 @@ class Game:
 g = Game()
 g.show_start_screen()
 while g.running:
-    # g.show_select_screen()
+    g.show_select_screen()
     g.new()
     # g.show_go_screen()
 

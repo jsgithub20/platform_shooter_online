@@ -1,7 +1,7 @@
 class GameState:
     def __init__(self, game_id):
         self.game = {"game_id": game_id}
-        self.player_id1 = 0  # 0 means this is player0, 1 means this is player1
+        self.player_id = 0  # this id will be useless after being received by bthe client during connection acceptance
         self.roles = ["shooter", "chopper"]
         self.match_types = ["Deathmatch", "1st23", "Best of 3"]
         self.match_type_idx = 0
