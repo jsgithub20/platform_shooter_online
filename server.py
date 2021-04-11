@@ -130,6 +130,11 @@ def threaded_client(conn, game_id):
     conn.close()
 
 
+def send_ini_state(conn, game_id):
+    data = pickle.dumps(game_state_dict[game_id])
+    conn.sendall(data)  # send game object
+
+
 while True:
     conn, addr = s.accept()
     print("Connected to:", addr)
@@ -141,17 +146,19 @@ while True:
         # player joining a new game
         game_state_dict[game_id] = GameState(game_id)
         game_tick_dict[game_id] = Game()
-        game_tick_dict[game_id].new()
+        # game_tick_dict[game_id].new()
+        send_ini_state(conn, game_id)
         print(f"Creating a new game: game_id = {game_id}")
     else:
         # this is the 2nd player joining the game, change self.current_player = 1 before sending the game object
         game_state_dict[game_id].player_id = 1
         print(f"2nd player joined game: {game_id}, game[{game_id}] is started")
         game_state_dict[game_id].ready = True
+        send_ini_state(conn, game_id)
 
-    t = Thread(target=threaded_client, args=(conn, game_id))
-    t.daemon = True
-    t.start()
+        t = Thread(target=threaded_client, args=(conn, game_id))
+        t.daemon = True
+        t.start()
 
 
 

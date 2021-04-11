@@ -47,6 +47,7 @@ class Game:
         self.player_id = 0
         self.player0_ready = 0
         self.svr_reply = None
+        self.selection = ""
 
         self.winner = None
         self.running = True
@@ -547,8 +548,8 @@ class Game:
         '''
         match_type_idx, map_idx, player0 role_idx, player1 role_idx, player_id, player0 ready flag: 0: not ready, 1: ready
         '''
-
-        self.selection = str([match_idx, map_idx, page_idx, page_idx, self.player_id, self.player0_ready])
+        selection_list = [match_idx, map_idx, page_idx, page_idx, self.player_id, self.player0_ready]
+        self.selection = "".join(map(str, selection_list))  # convert numbers into str
         # self.network.send(self)
 
 
