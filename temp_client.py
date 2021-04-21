@@ -2,17 +2,19 @@ import asyncio
 
 
 async def tcp_echo_client():
-    reader, writer = await asyncio.open_connection('192.168.3.10', 5000)
+    reader, writer = await asyncio.open_connection('10.31.16.25', 5000)
+    data = await reader.read(100)
+    client_id = data.decode()
+    print(f"This is client# {client_id}")
 
     while True:
-        message = input("input your message to be sent: ")
-        if message != "quit":
-            print(f'Send: {message!r}')
-            writer.write(message.encode())
-
-            data = await reader.read(100)
-            print(f'Received: {data.decode()!r}')
-
+        data = await reader.read(100)
+        msg = data.decode()
+        if msg != "quit":
+            print(f'Received: {msg!r}')
+            reply = f"{int(client_id)}: msg received is {msg!r}"
+            writer.write(reply.encode())
+            await writer.drain()
         else:
             writer.close()
             print('Closing the connection')
