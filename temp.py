@@ -28,51 +28,51 @@ logging.basicConfig(format='\033[92m%(asctime)s %(levelname)s: %(message)s', dat
 
 
 # test2 starts here:
-# async def fetch_data():
-#     logging.info("start fetching")
-#     await asyncio.sleep(2)
-#     logging.info("done fetching")
-#     return {"data": 1}
-#
-#
-# async def print_numbers():
-#     for i in range(10):
-#         print(i)
-#         if i == 3:
-#             logging.info(f"current task: {asyncio.current_task()}")
-#             # asyncio.current_task().cancel()
-#             return
-#         await asyncio.sleep(0.25)
-#
-#
-# async def main():
-#     task1 = asyncio.create_task(fetch_data())
-#     task2 = asyncio.create_task(print_numbers())
-#     logging.info(f"all tasks: {len(asyncio.all_tasks())}")
-#     value = await task1
-#     logging.warning(f"all tasks: {len(asyncio.all_tasks())}")
-#
-#     logging.info(f"fetched value: {value}")
-#
-#     await task2
-#     logging.info(f"all tasks: {len(asyncio.all_tasks())}")
-#
-#
-# asyncio.run(main())
+async def fetch_data():
+    print("start fetching")
+    await asyncio.sleep(2)
+    print("done fetching")
+    return {"data": 1}
+
+
+async def print_numbers():
+    for i in range(10):
+        print(i)
+        # if i == 3:
+            # print(f"current task: {asyncio.current_task()}")
+            # asyncio.current_task().cancel()
+            # return
+        await asyncio.sleep(0.25)
+
+
+async def main():
+    task1 = asyncio.create_task(fetch_data())
+    task2 = asyncio.create_task(print_numbers())
+    print(f"all tasks: {len(asyncio.all_tasks())}")
+    value = await task1
+    print(f"all tasks: {len(asyncio.all_tasks())}")
+
+    print(f"fetched value: {value}")
+
+    await task2
+    print(f"all tasks: {len(asyncio.all_tasks())}")
+
+
+asyncio.run(main())
 # test2 ends here
 
 # test3 starts here
-async def main():
-    print('tim')
-    task = asyncio.create_task(foo('text'))
-    print('finished')
-
-
-async def foo(text):
-    # print(text)
-    await asyncio.sleep(3)
-    print(text)
-
-asyncio.run(main())
+# async def main():
+#     print('tim')
+#     task = asyncio.create_task(foo('text'))
+#     print('finished')
+#
+#
+# async def foo(text):
+#     print(f"{text}1")
+#     await asyncio.sleep(3)
+#     print(f"{text}2")
+#
+# asyncio.run(main())
 
 # test3 ends here
