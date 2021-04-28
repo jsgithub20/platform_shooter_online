@@ -1,7 +1,6 @@
 import asyncio, pygame, time, logging
 
 pygame.init()
-clock = pygame.time.Clock()
 cnt = 0
 game_dict = {}
 
@@ -12,16 +11,20 @@ logging.basicConfig(format='\x1b[32m%(asctime)s %(levelname)s: %(message)s\x1b[3
 async def new_client(reader, writer):
     global cnt, game_dict
     cnt += 1
+    # if cnt == 3:
+    #     breakpoint()
+    clock = pygame.time.Clock()
     logging.info(f"Total connections: {cnt}")
     writer.write(str(cnt).encode())
 
     game_id = (cnt - 1) // 2
     if cnt % 2 == 1:
-        client_id = 0
-        game_dict[game_id] = (reader, writer)
+        player_id = 0  # this is the first player in a new game
+        game_dict[game_id] = [False, reader, writer]
     else:
-        client_id = 1
-        game_dict[game_id] += (reader, writer)
+        player_id = 1  # this is the 2nd player in a new game
+        game_dict[game_id] += [reader, writer]
+        game_dict[game_id][0] = True
 
     while True:
         # data = input("Msg to be sent to the clients: ").encode()  # Max number of bytes to read
@@ -31,22 +34,22 @@ async def new_client(reader, writer):
         if not data:
             writer.close()
             break
-        if cnt % 2 == 0:
-            if client_id == 1:
-                logging.warning(f"Task 1 for game_id {game_id} is being returned")
+        if game_dict[game_id][0]:
+            if player_id == 1:
+                logging.warning(f"Task for connection {cnt} in game_id {game_id} is being returned")
                 return
-            game_dict[game_id][1].write(data)
-            await game_dict[game_id][1].drain()
-            msg0 = await game_dict[game_id][0].read(100)
+            game_dict[game_id][2].write(data)
+            await game_dict[game_id][2].drain()
+            msg0 = await game_dict[game_id][1].read(100)
             logging.info(f"Received {time.strftime('%X')}: '{msg0.decode()}'")
-            game_dict[game_id][3].write(data)
-            await game_dict[game_id][3].drain()
-            msg1 = await game_dict[game_id][2].read(100)
+            game_dict[game_id][4].write(data)
+            await game_dict[game_id][4].drain()
+            msg1 = await game_dict[game_id][3].read(100)
             logging.info(f"Received {time.strftime('%X')}: '{msg1.decode()}'")
         else:
-            game_dict[game_id][1].write(data)
-            await game_dict[game_id][1].drain()
-            msg0 = await game_dict[game_id][0].read(100)
+            game_dict[game_id][2].write(data)
+            await game_dict[game_id][2].drain()
+            msg0 = await game_dict[game_id][1].read(100)
             logging.info(f"Received: '{msg0.decode()}'")
 
 
@@ -57,7 +60,7 @@ async def main(host, port):
     await server.serve_forever()
 
 
-asyncio.run(main('10.31.16.25', 5000))
+asyncio.run(main('192.168.3.18', 5000))
 
 # import asyncio
 #
