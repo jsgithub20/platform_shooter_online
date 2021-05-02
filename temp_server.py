@@ -30,7 +30,7 @@ async def new_client(reader, writer):
         # data = input("Msg to be sent to the clients: ").encode()  # Max number of bytes to read
         t = clock.tick(1)
         # print(f"Active tasks: {len(asyncio.all_tasks())}")
-        data = f"[{t}]server msg".encode()
+        data = f"[{t}]server msg: tasks - {len(asyncio.all_tasks())}".encode()
         if not data:
             writer.close()
             break
@@ -39,16 +39,16 @@ async def new_client(reader, writer):
                 logging.warning(f"Task for connection {cnt} in game_id {game_id} is being returned")
                 return
             game_dict[game_id][2].write(data)
-            await game_dict[game_id][2].drain()
+            # await game_dict[game_id][2].drain()
             msg0 = await game_dict[game_id][1].read(100)
             logging.info(f"Received {time.strftime('%X')}: '{msg0.decode()}'")
             game_dict[game_id][4].write(data)
-            await game_dict[game_id][4].drain()
+            # await game_dict[game_id][4].drain()
             msg1 = await game_dict[game_id][3].read(100)
             logging.info(f"Received {time.strftime('%X')}: '{msg1.decode()}'")
         else:
             game_dict[game_id][2].write(data)
-            await game_dict[game_id][2].drain()
+            # await game_dict[game_id][2].drain()
             msg0 = await game_dict[game_id][1].read(100)
             logging.info(f"Received: '{msg0.decode()}'")
 
