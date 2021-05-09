@@ -1,4 +1,4 @@
-import asyncio, logging
+import asyncio, logging, time, datetime
 
 # logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
 logging.basicConfig(format='\033[92m%(asctime)s %(levelname)s: %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
@@ -30,7 +30,8 @@ logging.basicConfig(format='\033[92m%(asctime)s %(levelname)s: %(message)s', dat
 # test2 starts here:
 # async def fetch_data():
 #     print("start fetching")
-#     await asyncio.sleep(2)
+#     # await asyncio.sleep(2)
+#     time.sleep(2)
 #     print("done fetching")
 #     return {"data": 1}
 #
@@ -48,14 +49,14 @@ logging.basicConfig(format='\033[92m%(asctime)s %(levelname)s: %(message)s', dat
 # async def main():
 #     task1 = asyncio.create_task(fetch_data())
 #     task2 = asyncio.create_task(print_numbers())
-#     print(f"all tasks: {len(asyncio.all_tasks())}")
+#     # print(f"all tasks: {len(asyncio.all_tasks())}")
 #     value = await task1
-#     print(f"all tasks: {len(asyncio.all_tasks())}")
+#     # print(f"all tasks: {len(asyncio.all_tasks())}")
 #
 #     print(f"fetched value: {value}")
 #
 #     await task2
-#     print(f"all tasks: {len(asyncio.all_tasks())}")
+#     # print(f"all tasks: {len(asyncio.all_tasks())}")
 #
 #
 # asyncio.run(main())
@@ -77,8 +78,40 @@ logging.basicConfig(format='\033[92m%(asctime)s %(levelname)s: %(message)s', dat
 
 # test3 ends here
 
-game = {}
-game[0] = (1, 2)
-print(game[0])
-game[0] += (3, 4)
-print(game[0])
+# from typing import *
+# from dataclasses import dataclass
+# from collections import defaultdict
+#
+#
+# @dataclass
+# class Room:
+#     key: str
+#     clients: Dict[int,Client] = field(default_factory=dict)
+#     new_clients: List[Client] = field(default_factory=list)
+#     msg_id: int = 0
+#     event_queue: asyncio.Queue = field(default_factory=asyncio.Queue)
+#     listening: bool = False
+#     future: Any = None # What Type?
+#
+#     def client_count(self) -> int:
+#         return len([c.id for c in self.clients.values() if not c.disconnected])
+#
+#
+# ConnectionOptions = dict[str, str]
+# Address = tuple[str, int]
+# Server = tuple[Address, ConnectionOptions]
+#
+# game = {}
+# game[0] = (1, 2)
+# print(game[0])
+# game[0] += (3, 4)
+# print(game[0])
+
+# def succ(x):
+#     return x + 1
+#
+# successor = succ
+# print(successor(10))
+
+d = {1:"a", 2:"b"}
+print(len(d))
