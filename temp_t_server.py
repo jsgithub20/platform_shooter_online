@@ -29,7 +29,6 @@ print("Server Started, waiting for connections... ")
 
 game_state_dict = {}
 game_tick_dict = {}
-clock_lst = [None, None, None]
 id_cnt = 0
 game_id = 0
 
@@ -65,9 +64,9 @@ def threaded_selection(conn, game_id):
 
 
 def threaded_client(conn, game_id):
-    global id_cnt, clock_lst
+    global id_cnt
     print(f"Total connections: {id_cnt}")
-    clock_lst[game_id] = Clock()
+    clock = Clock()
     # data = pickle.dumps(game_state_dict[game_id])
     # # conn.sendall(f"{len(data):<{HEADER_LEN}}".encode())
     # conn.sendall(data)  # send game object
@@ -76,8 +75,7 @@ def threaded_client(conn, game_id):
     # # print(get_ident())
 
     while True:
-        fps = id_cnt
-        clock_lst[game_id].tick(fps)
+        clock.tick(1)
         if not game_state_dict[game_id].player_1_conn:
             try:
                 server_msg = f"{time.strftime('%H:%M:%S')} server message to client {game_id}."

@@ -2,7 +2,7 @@ from temp_t_network import Network
 import time
 
 
-network = Network("10.31.16.25", "5050")
+network = Network("10.139.192.69", "5050")
 client_id = network.client_id
 print(f"This is client: {client_id}")
 
