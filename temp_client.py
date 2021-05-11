@@ -2,10 +2,12 @@ import asyncio
 
 
 async def tcp_echo_client():
-    reader, writer = await asyncio.open_connection('10.31.16.25', 5000)
+    choice = input("Input 'c' to create a new game room, or a number to join one: ")
+    reader, writer = await asyncio.open_connection('192.168.3.18', 5000)
     data = await reader.read(100)
     client_id = data.decode()
     print(f"This is client# {client_id}")
+    writer.write(choice.encode())
 
     while True:
         data = await reader.read(100)
