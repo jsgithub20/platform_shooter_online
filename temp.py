@@ -1,8 +1,8 @@
 import asyncio, logging, time, datetime
-
-# logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
-logging.basicConfig(format='\033[92m%(asctime)s %(levelname)s: %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
-# logging.addLevelName(logging.INFO, "\x1b[32m%s\x1b[32m" % logging.getLevelName(logging.INFO)) # change the color
+#
+# # logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
+# logging.basicConfig(format='\033[92m%(asctime)s %(levelname)s: %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
+# # logging.addLevelName(logging.INFO, "\x1b[32m%s\x1b[32m" % logging.getLevelName(logging.INFO)) # change the color
 
 # test 1 starts here:
 # async def main():
@@ -113,5 +113,15 @@ logging.basicConfig(format='\033[92m%(asctime)s %(levelname)s: %(message)s', dat
 # successor = succ
 # print(successor(10))
 
-d = {1:"a", 2:"b"}
-print(len(d))
+import json
+
+# a = 1
+# d = {1:"a", 2:"b", 3:"b"}
+# d1 = {"x":"a", "y":"b", "z":"c"}
+# # for key in [*d]:
+# #     print(key)
+# # print(type(*d))
+
+import demo_async_client
+
+asyncio.run(demo_async_client.start())
