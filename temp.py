@@ -1,127 +1,80 @@
-import asyncio, logging, time, datetime
-#
-# # logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
-# logging.basicConfig(format='\033[92m%(asctime)s %(levelname)s: %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
-# # logging.addLevelName(logging.INFO, "\x1b[32m%s\x1b[32m" % logging.getLevelName(logging.INFO)) # change the color
+import pygame.display
+import pygame_menu
+from pygame_menu.examples import create_example_window
+from random import randrange
+from typing import Tuple, Any
 
-# test 1 starts here:
-# async def main():
-#     logging.info(f'starting')
-#     task = asyncio.create_task(foo('text'))
-#     # print("task not started?")
-#     # print("it seems task is not executed when created")
-#     await asyncio.sleep(1)
-#     logging.info(f'main() sleep done')
-#     await task
-#     logging.info(f'await task done')
-#
-#
-# async def foo(text):
-#     logging.info(f'foo() print(text) starting')
-#     print(text)
-#     logging.info(f'foo() sleep starting')
-#     await asyncio.sleep(3)
-#     logging.info(f'foo() completed')
-#
-# asyncio.run(main())
-# test 1 ends here.
+surface = create_example_window('Example - Simple', (600, 400))
+
+items = [('Default', (255, 255, 255)),
+         ('Black', (0, 0, 0)),
+         ('Blue', (0, 0, 255)),
+         ('Random', (-1, -1, -1))]
+
+def set_difficulty(selected: Tuple, value: Any) -> None:
+    """
+    Set the difficulty of the game.
+    :return: None
+    """
+    print('Set difficulty to {} ({})'.format(selected[0], value))
 
 
-# test2 starts here:
-# async def fetch_data():
-#     print("start fetching")
-#     # await asyncio.sleep(2)
-#     time.sleep(2)
-#     print("done fetching")
-#     return {"data": 1}
-#
-#
-# async def print_numbers():
-#     for i in range(10):
-#         print(i)
-#         # if i == 3:
-#             # print(f"current task: {asyncio.current_task()}")
-#             # asyncio.current_task().cancel()
-#             # return
-#         await asyncio.sleep(0.25)
-#
-#
-# async def main():
-#     task1 = asyncio.create_task(fetch_data())
-#     task2 = asyncio.create_task(print_numbers())
-#     # print(f"all tasks: {len(asyncio.all_tasks())}")
-#     value = await task1
-#     # print(f"all tasks: {len(asyncio.all_tasks())}")
-#
-#     print(f"fetched value: {value}")
-#
-#     await task2
-#     # print(f"all tasks: {len(asyncio.all_tasks())}")
-#
-#
-# asyncio.run(main())
-# test2 ends here
+def start_the_game() -> None:
+    """
+    Function that starts a game. This is raised by the menu button,
+    here menu can be disabled, etc.
+    :return: None
+    """
+    global user_name
+    print('{0}, Do the job here!'.format(user_name.get_value()))
 
-# test3 starts here
-# async def main():
-#     print('tim')
-#     task = asyncio.create_task(foo('text'))
-#     print('finished')
-#
-#
-# async def foo(text):
-#     print(f"{text}1")
-#     await asyncio.sleep(3)
-#     print(f"{text}2")
-#
-# asyncio.run(main())
 
-# test3 ends here
+def change_background_color(*args):
+    # value_tuple, index = selected_value
+    # print(f"value = {value_tuple}, index = {index}")
+    # # print('Change widget color to', value_tuple[0])  # selected_value ('Color', surface, color)
+    # if color == (-1, -1, -1):  # Generate a random color
+    #     color = (randrange(0, 255), randrange(0, 255), randrange(0, 255))
+    # widget: 'pygame_menu.widgets.Selector' = kwargs.get('widget')
+    # widget.update_font({'selected_color': color})
+    # widget.get_selection_effect().color = color
+    print(*args)
+    # print(**kwargs)
 
-# from typing import *
-# from dataclasses import dataclass
-# from collections import defaultdict
-#
-#
-# @dataclass
-# class Room:
-#     key: str
-#     clients: Dict[int,Client] = field(default_factory=dict)
-#     new_clients: List[Client] = field(default_factory=list)
-#     msg_id: int = 0
-#     event_queue: asyncio.Queue = field(default_factory=asyncio.Queue)
-#     listening: bool = False
-#     future: Any = None # What Type?
-#
-#     def client_count(self) -> int:
-#         return len([c.id for c in self.clients.values() if not c.disconnected])
-#
-#
-# ConnectionOptions = dict[str, str]
-# Address = tuple[str, int]
-# Server = tuple[Address, ConnectionOptions]
-#
-# game = {}
-# game[0] = (1, 2)
-# print(game[0])
-# game[0] += (3, 4)
-# print(game[0])
 
-# def succ(x):
-#     return x + 1
+menu = pygame_menu.Menu(
+    height=300,
+    theme=pygame_menu.themes.THEME_BLUE,
+    title='Welcome',
+    width=400
+)
 #
-# successor = succ
-# print(successor(10))
+# user_name = menu.add.text_input('Name: ', default='John Doe', maxchar=10)
+# menu.add.selector('Difficulty: ', [('Hard', 1), ('Easy', 2)], onchange=set_difficulty)
+# menu.add.button('Play', start_the_game)
+# menu.add.button('Quit', pygame_menu.events.EXIT)
 
-import json
+selector = menu.add.selector(
+    title='Current color:\t',
+    items=items,
+    onreturn=change_background_color,  # User press "Return" button
+    onchange=change_background_color  # User changes value with left/right keys
+)
+# selector.add_self_to_kwargs()  # Callbacks will receive widget as parameter
+selector2 = menu.add.selector(
+    title='New color:',
+    items=items,
+    style=pygame_menu.widgets.SELECTOR_STYLE_FANCY
+)
 
-# a = 1
-# d = {1:"a", 2:"b", 3:"b"}
-# d1 = {"x":"a", "y":"b", "z":"c"}
-# # for key in [*d]:
-# #     print(key)
-# # print(type(*d))
 
-import demo_async_client
+if __name__ == '__main__':
+    while True:
+        menu.mainloop(surface)
 
-asyncio.run(demo_async_client.start())
+        pygame.display.flip()
+
+
+
+
+
