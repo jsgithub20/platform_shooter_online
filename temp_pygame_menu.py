@@ -4,6 +4,7 @@ from pygame_menu.examples import create_example_window
 
 from typing import Optional
 
+
 # -----------------------------------------------------------------------------
 # Constants and global variables
 # -----------------------------------------------------------------------------
@@ -66,8 +67,8 @@ def main(test: bool = False) -> None:
     # Create menus: Main menu
     # -------------------------------------------------------------------------
     no_title_theme = pygame_menu.themes.THEME_ORANGE.copy()
-    no_title_theme.background_color = (0, 0, 0, 0)
-    no_title_theme.title = False
+    no_title_theme.background_color = (0, 0, 0, 50)
+    # no_title_theme.title = False
     no_title_theme.widget_alignment = pygame_menu.locals.ALIGN_LEFT
 
     main_menu = pygame_menu.Menu(
@@ -75,7 +76,10 @@ def main(test: bool = False) -> None:
         onclose=pygame_menu.events.EXIT,  # User press ESC button
         theme=no_title_theme,
         title='Epic Menu',
-        width=WINDOW_SIZE[0] * 0.8
+        width=WINDOW_SIZE[0] * 0.8,
+        columns=2,
+        rows=10,
+        position=[30, 80],
     )
 
     main_menu.add.text_input(
@@ -84,6 +88,8 @@ def main(test: bool = False) -> None:
         onreturn=None,
         textinput_id='server_ip'
     )
+
+    main_menu.add.vertical_margin(30)
 
     main_menu.add.text_input(
         'Server port#: ',
