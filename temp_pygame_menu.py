@@ -99,7 +99,6 @@ def main(test: bool = False) -> None:
     )
 
     main_menu.add.button("Create a new game", None)
-    main_menu.add.button("Create a new game", None)
     main_menu.add.dropselect("Join a game: ", ["Room1", "Room2", "Room3"])
 
     widget_colors_theme = pygame_menu.themes.THEME_BLUE.copy()
