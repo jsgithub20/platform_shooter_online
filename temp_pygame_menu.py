@@ -81,6 +81,13 @@ def main(test: bool = False) -> None:
         position=[30, 80],
     )
 
+    join_game_menu = pygame_menu.Menu(
+        '', WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.7,
+        onclose=pygame_menu.events.EXIT,  # User press ESC button
+        theme=no_title_theme,
+        position=[30, 80],
+    )
+
     main_menu.add.vertical_margin(10)
 
     main_menu.add.text_input(
@@ -104,11 +111,17 @@ def main(test: bool = False) -> None:
         textinput_id='new_game'
     )
 
+    main_menu.add.button('Join an existing game', join_game_menu)
+
+    join_game_menu.add.button('game1')
+    join_game_menu.add.button('game2')
+    join_game_menu.add.button('game3')
+
     main_menu.add.dropselect("Join a game: ", [("Room1", "R1"), ("Room2", "R2"), ("Room3", "R3")],
                              selection_box_border_color=(0, 0, 0, 0),
-                             selection_box_bgcolor=(50, 100, 50),
-                             selection_option_font_size=20,
-                             selection_option_selected_font_color=(10, 10, 10),
+                             selection_box_bgcolor=(0, 0, 0, 0),
+                             selection_option_font_size=25,
+                             selection_option_selected_font_color=(10, 10, 100),
                              selection_option_font_color=(255, 255, 255))
 
     widget_colors_theme = pygame_menu.themes.THEME_BLUE.copy()
