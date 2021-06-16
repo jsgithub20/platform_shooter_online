@@ -70,26 +70,25 @@ def main(test: bool = False) -> None:
     no_title_theme.background_color = (0, 0, 0, 50)
     # no_title_theme.title = False
     no_title_theme.widget_alignment = pygame_menu.locals.ALIGN_LEFT
+    no_title_theme.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_SIMPLE
+    no_title_theme.widget_padding = 5
 
     main_menu = pygame_menu.Menu(
-        height=WINDOW_SIZE[1] * 0.7,
+        '', WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.7,
+        center_content=False,
         onclose=pygame_menu.events.EXIT,  # User press ESC button
         theme=no_title_theme,
-        title='Epic Menu',
-        width=WINDOW_SIZE[0] * 0.8,
-        columns=2,
-        rows=10,
         position=[30, 80],
     )
+
+    main_menu.add.vertical_margin(10)
 
     main_menu.add.text_input(
         'Server ip address: ',
         default='0.0.0.0',
         onreturn=None,
-        textinput_id='server_ip'
+        textinput_id='server_ip',
     )
-
-    main_menu.add.vertical_margin(30)
 
     main_menu.add.text_input(
         'Server port#: ',
@@ -98,8 +97,19 @@ def main(test: bool = False) -> None:
         textinput_id='server_port'
     )
 
-    main_menu.add.button("Create a new game", None)
-    main_menu.add.dropselect("Join a game: ", ["Room1", "Room2", "Room3"])
+    main_menu.add.text_input(
+        'Create a new game with name: ',
+        default="Amy's game",
+        onreturn=None,
+        textinput_id='new_game'
+    )
+
+    main_menu.add.dropselect("Join a game: ", [("Room1", "R1"), ("Room2", "R2"), ("Room3", "R3")],
+                             selection_box_border_color=(0, 0, 0, 0),
+                             selection_box_bgcolor=(50, 100, 50),
+                             selection_option_font_size=20,
+                             selection_option_selected_font_color=(10, 10, 10),
+                             selection_option_font_color=(255, 255, 255))
 
     widget_colors_theme = pygame_menu.themes.THEME_BLUE.copy()
     widget_colors_theme.widget_margin = (0, 10)

@@ -1,324 +1,322 @@
+"""
+pygame-menu
+https://github.com/ppizarror/pygame-menu
+EXAMPLE - CALCULATOR
+Simple calculator app.
+License:
+-------------------------------------------------------------------------------
+The MIT License (MIT)
+Copyright 2017-2021 Pablo Pizarro R. @ppizarror
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+-------------------------------------------------------------------------------
+"""
+
+__all__ = ['main']
+
 import pygame
 import pygame_menu
 from pygame_menu.examples import create_example_window
 
-from typing import Tuple, Optional
+from typing import Union, List
 
-# -----------------------------------------------------------------------------
-# Constants and global variables
-# -----------------------------------------------------------------------------
-FPS = 60
-WINDOW_SIZE = (640, 480)
 
-sound: Optional['pygame_menu.sound.Sound'] = None
-surface: Optional['pygame.Surface'] = None
-main_menu: Optional['pygame_menu.Menu'] = None
-
-# -----------------------------------------------------------------------------
-# Methods
-# -----------------------------------------------------------------------------
-def main_background() -> None:
+class CalculatorApp(object):
     """
-    Background color of the main menu, on this function user can plot
-    images, play sounds, etc.
-    :return: None
+    Simple calculator app.
     """
-    surface.fill((40, 40, 40))
+    op: str  # Operation
+    prev: str  # Prev value
+    curr: str  # Current value
+    menu: 'pygame_menu.Menu'
+    screen: 'pygame_menu.widgets.Label'
+    surface: 'pygame.Surface'
 
-
-def check_name_test(value: str) -> None:
-    """
-    This function tests the text input widget.
-    :param value: The widget value
-    :return: None
-    """
-    print('User name: {0}'.format(value))
-
-
-def update_menu_sound(value: Tuple, enabled: bool) -> None:
-    """
-    Update menu sound.
-    :param value: Value of the selector (Label and index)
-    :param enabled: Parameter of the selector, (True/False)
-    :return: None
-    """
-    assert isinstance(value, tuple)
-    if enabled:
-        main_menu.set_sound(sound, recursive=True)
-        print('Menu sounds were enabled')
-    else:
-        main_menu.set_sound(None, recursive=True)
-        print('Menu sounds were disabled')
-
-
-def main(test: bool = False) -> None:
-    """
-    Main program.
-    :param test: Indicate function is being tested
-    :return: None
-    """
-
-    # -------------------------------------------------------------------------
-    # Globals
-    # -------------------------------------------------------------------------
-    global main_menu
-    global sound
-    global surface
-
-    # -------------------------------------------------------------------------
-    # Create window
-    # -------------------------------------------------------------------------
-    surface = create_example_window('Example - Multi Input', WINDOW_SIZE)
-    clock = pygame.time.Clock()
-
-    # -------------------------------------------------------------------------
-    # Set sounds
-    # -------------------------------------------------------------------------
-    sound = pygame_menu.sound.Sound()
-
-    # Load example sounds
-    sound.load_example_sounds()
-
-    # Disable a sound
-    sound.set_sound(pygame_menu.sound.SOUND_TYPE_ERROR, None)
-
-    # -------------------------------------------------------------------------
-    # Create menus: Settings
-    # -------------------------------------------------------------------------
-    settings_menu_theme = pygame_menu.themes.THEME_ORANGE.copy()
-    settings_menu_theme.title_offset = (5, -2)
-    settings_menu_theme.widget_alignment = pygame_menu.locals.ALIGN_LEFT
-    settings_menu_theme.widget_font = pygame_menu.font.FONT_OPEN_SANS_LIGHT
-    settings_menu_theme.widget_font_size = 20
-
-    settings_menu = pygame_menu.Menu(
-        height=WINDOW_SIZE[1] * 0.85,
-        theme=settings_menu_theme,
-        title='Settings',
-        width=WINDOW_SIZE[0] * 0.9
-    )
-
-    # Add text inputs with different configurations
-    settings_menu.add.text_input(
-        'First name: ',
-        default='John',
-        onreturn=check_name_test,
-        textinput_id='first_name'
-    )
-    settings_menu.add.text_input(
-        'Last name: ',
-        default='Rambo',
-        maxchar=10,
-        textinput_id='last_name',
-        input_underline='.'
-    )
-    settings_menu.add.text_input(
-        'Your age: ',
-        default=25,
-        maxchar=3,
-        maxwidth=3,
-        textinput_id='age',
-        input_type=pygame_menu.locals.INPUT_INT,
-        cursor_selection_enable=False
-    )
-    settings_menu.add.text_input(
-        'Some long text: ',
-        maxwidth=19,
-        textinput_id='long_text',
-        input_underline='_'
-    )
-    settings_menu.add.text_input(
-        'Password: ',
-        maxchar=6,
-        password=True,
-        textinput_id='pass',
-        input_underline='_'
-    )
-
-    # Selectable items
-    items = [('Easy', 'EASY'),
-             ('Medium', 'MEDIUM'),
-             ('Hard', 'HARD')]
-
-    # Create selector with 3 difficulty options
-    settings_menu.add.selector(
-        'Select difficulty:\t',
-        items,
-        selector_id='difficulty',
-        default=1
-    )
-    settings_menu.add.selector(
-        'Select difficulty fancy',
-        items,
-        selector_id='difficulty_fancy',
-        default=1,
-        style='fancy'
-    )
-    settings_menu.add.dropselect(
-        'Select difficulty (drop)',
-        items,
-        default=1,
-        dropselect_id='difficulty_drop'
-    )
-    settings_menu.add.dropselect_multiple(
-        title='Pick 3 colors',
-        items=[('Black', (0, 0, 0)),
-               ('Blue', (0, 0, 255)),
-               ('Cyan', (0, 255, 255)),
-               ('Fuchsia', (255, 0, 255)),
-               ('Green', (0, 255, 0)),
-               ('Red', (255, 0, 0)),
-               ('White', (255, 255, 255)),
-               ('Yellow', (255, 255, 0))],
-        dropselect_multiple_id='pickcolors',
-        max_selected=3,
-        open_middle=True,
-        selection_box_height=6  # How many options show if opened
-    )
-
-    # Create switch
-    settings_menu.add.toggle_switch('First Switch', False,
-                                    toggleswitch_id='first_switch')
-    settings_menu.add.toggle_switch('Other Switch', True,
-                                    toggleswitch_id='second_switch',
-                                    state_text=('Apagado', 'Encencido'))
-
-    def data_fun() -> None:
+    # noinspection PyArgumentEqualDefault
+    def __init__(self) -> None:
         """
-        Print data of the menu.
-        :return: None
+        Constructor.
         """
-        print('Settings data:')
-        data = settings_menu.get_input_data()
-        for k in data.keys():
-            print(u'\t{0}\t=>\t{1}'.format(k, data[k]))
+        self.surface = create_example_window('Example - Calculator', (520, 780))
 
-    settings_menu.add.clock(clock_format='%Y/%m/%d %H:%M', title_format='Clock: {0}')
-    settings_menu.add.button('Store data', data_fun, button_id='store')  # Call function
-    settings_menu.add.button('Restore original values', settings_menu.reset_value)
-    settings_menu.add.button('Return to main menu', pygame_menu.events.BACK,
-                             align=pygame_menu.locals.ALIGN_CENTER)
+        # Configure theme
+        theme = pygame_menu.Theme()
 
-    # -------------------------------------------------------------------------
-    # Create menus: More settings
-    # -------------------------------------------------------------------------
-    more_settings_menu = pygame_menu.Menu(
-        height=WINDOW_SIZE[1] * 0.85,
-        theme=settings_menu_theme,
-        title='More Settings',
-        width=WINDOW_SIZE[0] * 0.9
-    )
+        theme.background_color = (43, 43, 43)
+        theme.title_background_color = (43, 43, 43)
+        theme.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_SIMPLE
+        theme.title_close_button_cursor = pygame_menu.locals.CURSOR_HAND
+        theme.title_font_size = 35
+        theme.widget_alignment = pygame_menu.locals.ALIGN_LEFT
+        theme.widget_background_color = None
+        theme.widget_font = pygame_menu.font.FONT_DIGITAL
+        theme.widget_font_color = (255, 255, 255)
+        theme.widget_font_size = 40
+        theme.widget_padding = 0
+        theme.widget_selection_effect = \
+            pygame_menu.widgets.HighlightSelection(1, 0, 0).set_color((120, 120, 120))
 
-    more_settings_menu.add.image(
-        pygame_menu.baseimage.IMAGE_EXAMPLE_PYGAME_MENU,
-        scale=(0.25, 0.25),
-        align=pygame_menu.locals.ALIGN_CENTER
-    )
-    more_settings_menu.add.color_input(
-        'Color 1 RGB: ',
-        color_type='rgb'
-    )
-    more_settings_menu.add.color_input(
-        'Color 2 RGB: ',
-        color_type='rgb',
-        default=(255, 0, 0),
-        input_separator='-'
-    )
+        self.menu = pygame_menu.Menu('', 320, 780,
+                                     center_content=False,
+                                     mouse_motion_selection=True,
+                                     onclose=pygame_menu.events.EXIT,
+                                     overflow=False,
+                                     theme=theme,
+                                     )
 
-    def print_color(color: Tuple) -> None:
-        """
-        Test onchange/onreturn.
-        :param color: Color tuple
-        :return: None
-        """
-        print('Returned color: ', color)
+        # self.menu = pygame_menu.Menu('', 320, 780,
+        #                              center_content=False,
+        #                              onclose=pygame_menu.events.EXIT,  # User press ESC button
+        #                              theme=theme,
+        #                              position=[30, 80],
+        #                              )
 
-    more_settings_menu.add.color_input(
-        'Color in Hex: ',
-        color_type='hex',
-        hex_format='lower',
-        color_id='hex_color',
-        onreturn=print_color
-    )
-
-    more_settings_menu.add.vertical_margin(25)
-    more_settings_menu.add.button(
-        'Return to main menu',
-        pygame_menu.events.BACK,
-        align=pygame_menu.locals.ALIGN_CENTER
-    )
-
-    # -------------------------------------------------------------------------
-    # Create menus: Column buttons
-    # -------------------------------------------------------------------------
-    button_column_menu_theme = pygame_menu.themes.THEME_ORANGE.copy()
-    button_column_menu_theme.background_color = pygame_menu.BaseImage(
-        image_path=pygame_menu.baseimage.IMAGE_EXAMPLE_GRAY_LINES,
-        drawing_mode=pygame_menu.baseimage.IMAGE_MODE_REPEAT_XY
-    )
-    button_column_menu_theme.widget_font_size = 25
-
-    button_column_menu = pygame_menu.Menu(
-        columns=2,
-        height=WINDOW_SIZE[1] * 0.45,
-        rows=3,
-        theme=button_column_menu_theme,
-        title='Textures+Columns',
-        width=WINDOW_SIZE[0] * 0.9
-    )
-    for i in range(4):
-        button_column_menu.add.button('Button {0}'.format(i), pygame_menu.events.BACK)
-    button_column_menu.add.button(
-        'Return to main menu', pygame_menu.events.BACK,
-        background_color=pygame_menu.BaseImage(
-            image_path=pygame_menu.baseimage.IMAGE_EXAMPLE_METAL
+        # menu_deco = self.menu.get_scrollarea().get_decorator()
+        #
+        # # Add the layout
+        # self.menu.add.vertical_margin(10)
+        # menu_deco.add_rectangle(10, 188, 300, 55, (60, 63, 65), use_center_positioning=False)
+        # self.screen = self.menu.add.label('0', background_color=None, margin=(10, 0),
+        #                                   selectable=True, selection_effect=None)
+        self.menu.add.text_input(
+            'Server ip address: ',
+            default='0.0.0.0',
+            onreturn=None,
+            textinput_id='server_ip',
         )
-    ).background_inflate_to_selection_effect()
 
-    # -------------------------------------------------------------------------
-    # Create menus: Main menu
-    # -------------------------------------------------------------------------
-    main_menu_theme = pygame_menu.themes.THEME_ORANGE.copy()
-    main_menu_theme.title_font = pygame_menu.font.FONT_COMIC_NEUE
-    main_menu_theme.widget_font = pygame_menu.font.FONT_COMIC_NEUE
-    main_menu_theme.widget_font_size = 30
+    #     self.menu.add.vertical_margin(20)
+    #
+    #     cursor = pygame_menu.locals.CURSOR_HAND
+    #
+    #     # Add horizontal frames
+    #     f1 = self.menu.add.frame_h(299, 54, margin=(10, 0))
+    #     b1 = f1.pack(self.menu.add.button('1', lambda: self._press(1), cursor=cursor))
+    #     b2 = f1.pack(self.menu.add.button('2', lambda: self._press(2), cursor=cursor),
+    #                  align=pygame_menu.locals.ALIGN_CENTER)
+    #     b3 = f1.pack(self.menu.add.button('3', lambda: self._press(3), cursor=cursor),
+    #                  align=pygame_menu.locals.ALIGN_RIGHT)
+    #     self.menu.add.vertical_margin(10)
+    #
+    #     f2 = self.menu.add.frame_h(299, 54, margin=(10, 0))
+    #     b4 = f2.pack(self.menu.add.button('4', lambda: self._press(4), cursor=cursor))
+    #     b5 = f2.pack(self.menu.add.button('5', lambda: self._press(5), cursor=cursor),
+    #                  align=pygame_menu.locals.ALIGN_CENTER)
+    #     b6 = f2.pack(self.menu.add.button('6', lambda: self._press(6), cursor=cursor),
+    #                  align=pygame_menu.locals.ALIGN_RIGHT)
+    #     self.menu.add.vertical_margin(10)
+    #
+    #     f3 = self.menu.add.frame_h(299, 54, margin=(10, 0))
+    #     b7 = f3.pack(self.menu.add.button('7', lambda: self._press(7), cursor=cursor))
+    #     b8 = f3.pack(self.menu.add.button('8', lambda: self._press(8), cursor=cursor),
+    #                  align=pygame_menu.locals.ALIGN_CENTER)
+    #     b9 = f3.pack(self.menu.add.button('9', lambda: self._press(9), cursor=cursor),
+    #                  align=pygame_menu.locals.ALIGN_RIGHT)
+    #     self.menu.add.vertical_margin(10)
+    #
+    #     f4 = self.menu.add.frame_h(299, 54, margin=(10, 0))
+    #     b0 = f4.pack(self.menu.add.button('0', lambda: self._press(0), cursor=cursor))
+    #     b_plus = f4.pack(self.menu.add.button('+', lambda: self._press('+'), cursor=cursor),
+    #                      align=pygame_menu.locals.ALIGN_CENTER)
+    #     b_minus = f4.pack(self.menu.add.button('-', lambda: self._press('-'), cursor=cursor),
+    #                       align=pygame_menu.locals.ALIGN_RIGHT)
+    #     self.menu.add.vertical_margin(10)
+    #
+    #     f5 = self.menu.add.frame_h(299, 54, margin=(10, 0))
+    #     b_times = f5.pack(self.menu.add.button('x', lambda: self._press('x'), cursor=cursor))
+    #     b_div = f5.pack(self.menu.add.button('/', lambda: self._press('/'), cursor=cursor),
+    #                     align=pygame_menu.locals.ALIGN_CENTER)
+    #     beq = f5.pack(self.menu.add.button('=', lambda: self._press('='), cursor=cursor),
+    #                   align=pygame_menu.locals.ALIGN_RIGHT)
+    #
+    #     # Add decorator for each object
+    #     for widget in (b1, b2, b3, b4, b5, b6, b7, b8, b9, b0, beq, b_plus,
+    #                    b_minus, b_times, b_div):
+    #         w_deco = widget.get_decorator()
+    #         if widget != beq:
+    #             w_deco.add_rectangle(-37, -27, 74, 54, (15, 15, 15))
+    #             on_layer = w_deco.add_rectangle(-37, -27, 74, 54, (84, 84, 84))
+    #         else:
+    #             w_deco.add_rectangle(-37, -27, 74, 54, (38, 96, 103))
+    #             on_layer = w_deco.add_rectangle(-37, -27, 74, 54, (40, 171, 187))
+    #         w_deco.disable(on_layer)
+    #         widget.set_attribute('on_layer', on_layer)
+    #
+    #         def widget_select(sel: bool, wid: 'pygame_menu.widgets.Widget', _):
+    #             """
+    #             Function triggered if widget is selected
+    #             """
+    #             lay = wid.get_attribute('on_layer')
+    #             if sel:
+    #                 wid.get_decorator().enable(lay)
+    #             else:
+    #                 wid.get_decorator().disable(lay)
+    #
+    #         widget.set_onselect(widget_select)
+    #         widget.set_padding((2, 19, 0, 23))
+    #         widget._keyboard_enabled = False
+    #
+    #     self.prev = ''
+    #     self.curr = ''
+    #     self.op = ''
+    #
+    #     self.menu.set_onupdate(self.process_events)
+    #     self.menu.set_onwindowmouseleave(lambda m: self.screen.select(update_menu=True))
+    #
+    # def process_events(self, events: List['pygame.event.Event'], _=None) -> None:
+    #     """
+    #     Process events from user.
+    #     """
+    #     for event in events:
+    #         if event.type == pygame.KEYDOWN:
+    #             # noinspection PyUnresolvedReferences
+    #             if event.key == pygame.K_0:
+    #                 self._press(0)
+    #             elif event.key == pygame.K_1:
+    #                 self._press(1)
+    #             elif event.key == pygame.K_2:
+    #                 self._press(2)
+    #             elif event.key == pygame.K_3:
+    #                 self._press(3)
+    #             elif event.key == pygame.K_4:
+    #                 self._press(4)
+    #             elif event.key == pygame.K_5:
+    #                 self._press(5)
+    #             elif event.key == pygame.K_6:
+    #                 self._press(6)
+    #             elif event.key == pygame.K_7:
+    #                 self._press(7)
+    #             elif event.key == pygame.K_8:
+    #                 self._press(8)
+    #             elif event.key == pygame.K_9:
+    #                 self._press(9)
+    #             elif event.key == pygame.K_PLUS:
+    #                 self._press('+')
+    #             elif event.key == pygame.K_MINUS:
+    #                 self._press('-')
+    #             elif event.key == pygame.K_SLASH or \
+    #                     (hasattr(pygame, 'K_PERCENT') and event.key == pygame.K_PERCENT):
+    #                 self._press('/')
+    #             elif event.key == pygame.K_ASTERISK or event.key == pygame.K_x:
+    #                 self._press('x')
+    #             elif event.key == pygame.K_EQUALS or event.key == pygame.K_RETURN:
+    #                 self._press('=')
+    #             elif event.key == pygame.K_BACKSPACE:
+    #                 self._press('=')
+    #                 self._press('=')
+    #
+    # def _operate(self) -> Union[int, float]:
+    #     """
+    #     Operate current and previous values.
+    #     :return: Operation result
+    #     """
+    #     a = 0 if self.curr == '' else float(self.curr)
+    #     b = 0 if self.prev == '' else float(self.prev)
+    #     c = 0
+    #     if self.op == '+':
+    #         c = a + b
+    #     elif self.op == '-':
+    #         c = b - a
+    #     elif self.op == 'x':
+    #         c = a * b
+    #     elif self.op == '/':
+    #         if a != 0:
+    #             c = b / a
+    #         else:
+    #             self.screen.set_title('Error')
+    #     return int(c)
+    #
+    # def _press(self, digit: Union[int, str]) -> None:
+    #     """
+    #     Press calculator digit.
+    #     :param digit: Number or symbol
+    #     :return: None
+    #     """
+    #     if digit in ('+', '-', 'x', '/'):
+    #         if self.curr != '':
+    #             if self.op != '':
+    #                 self.prev = str(self._operate())
+    #             else:
+    #                 self.prev = self.curr
+    #             self.curr = ''
+    #         self.op = digit
+    #         if len(self.prev) <= 8:
+    #             self.screen.set_title(self.prev + self.op)
+    #         else:
+    #             self.screen.set_title('Ans' + self.op)
+    #     elif digit == '=':
+    #         if self.prev == '':
+    #             self.curr = ''
+    #             self.screen.set_title('0')
+    #             return
+    #         c = self._operate()
+    #         self.screen.set_title(str(c))
+    #         if len(str(c)) > 8:
+    #             c = 0
+    #             self.screen.set_title('Overflow')
+    #         self.prev = ''
+    #         self.curr = str(c)
+    #         self.op = ''
+    #     else:
+    #         if self.op == '':
+    #             if len(self.prev) <= 7:
+    #                 self.prev += str(digit)
+    #                 self.prev = self._format(self.prev)
+    #             self.screen.set_title(self.prev)
+    #         else:
+    #             if len(self.curr) <= 7:
+    #                 self.curr += str(digit)
+    #                 self.curr = self._format(self.curr)
+    #             self.screen.set_title(self.curr)
+    #
+    # @staticmethod
+    # def _format(x: str) -> str:
+    #     """
+    #     Format number.
+    #     :param x: Number
+    #     :return: Str
+    #     """
+    #     try:
+    #         if int(x) == float(x):
+    #             return str(int(x))
+    #     except ValueError:
+    #         pass
+    #     try:
+    #         x = float(x)
+    #     except ValueError:
+    #         pass
+    #
+    #     return str(round(int(x), 0))
 
-    main_menu = pygame_menu.Menu(
-        height=WINDOW_SIZE[1] * 0.7,
-        onclose=pygame_menu.events.EXIT,  # User press ESC button
-        theme=main_menu_theme,
-        title='Main menu',
-        width=WINDOW_SIZE[0] * 0.8
-    )
+    def mainloop(self, test: bool) -> None:
+        """
+        App mainloop.
+        :param test: Test status
+        """
+        self.menu.mainloop(self.surface, disable_loop=test)
 
-    main_menu.add.button('Settings', settings_menu)
-    main_menu.add.button('More Settings', more_settings_menu)
-    main_menu.add.button('Menu in textures and columns', button_column_menu)
-    main_menu.add.selector('Menu sounds ',
-                           [('Off', False), ('On', True)],
-                           onchange=update_menu_sound)
-    main_menu.add.button('Quit', pygame_menu.events.EXIT)
 
-    # -------------------------------------------------------------------------
-    # Main loop
-    # -------------------------------------------------------------------------
-    while True:
-
-        # Tick
-        clock.tick(FPS)
-
-        # Paint background
-        main_background()
-
-        # Main menu
-        main_menu.mainloop(surface, main_background, disable_loop=test, fps_limit=FPS)
-
-        # Flip surface
-        pygame.display.flip()
-
-        # At first loop returns
-        if test:
-            break
+def main(test: bool = False) -> 'CalculatorApp':
+    """
+    Main function.
+    :param test: Indicate function is being tested
+    :return: App object
+    """
+    app = CalculatorApp()
+    app.mainloop(test)
+    return app
 
 
 if __name__ == '__main__':
