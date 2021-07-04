@@ -73,6 +73,13 @@ def main(test: bool = False) -> None:
     no_title_theme.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_SIMPLE
     no_title_theme.widget_padding = 5
 
+    no_title_theme_join_game = pygame_menu.themes.THEME_ORANGE.copy()
+    no_title_theme_join_game.background_color = (0, 0, 0, 50)
+    # no_title_theme.title = False
+    no_title_theme_join_game.widget_alignment = pygame_menu.locals.ALIGN_CENTER
+    no_title_theme_join_game.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_SIMPLE
+    no_title_theme_join_game.widget_padding = 5
+
     main_menu = pygame_menu.Menu(
         '', WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.7,
         center_content=False,
@@ -83,26 +90,27 @@ def main(test: bool = False) -> None:
 
     join_game_menu = pygame_menu.Menu(
         '', WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.7,
+        center_content=False,
         onclose=pygame_menu.events.EXIT,  # User press ESC button
-        theme=no_title_theme,
+        theme=no_title_theme_join_game,
         position=[30, 80],
     )
 
     main_menu.add.vertical_margin(10)
 
-    main_menu.add.text_input(
+    server_ip = main_menu.add.text_input(
         'Server ip address: ',
         default='0.0.0.0',
         onreturn=None,
         textinput_id='server_ip',
-    )
+        )
 
-    main_menu.add.text_input(
+    server_port = main_menu.add.text_input(
         'Server port#: ',
         default='1111',
         onreturn=None,
         textinput_id='server_port'
-    )
+        )
 
     main_menu.add.text_input(
         'Create a new game with name: ',
@@ -113,55 +121,13 @@ def main(test: bool = False) -> None:
 
     main_menu.add.button('Join an existing game', join_game_menu)
 
-    join_game_menu.add.button('game1')
-    join_game_menu.add.button('game2')
-    join_game_menu.add.button('game3')
+    join_game_menu.add.button("Amy's Game")
+    join_game_menu.add.button("John's Game")
+    join_game_menu.add.button("Dora's Game")
 
-    main_menu.add.dropselect("Join a game: ", [("Room1", "R1"), ("Room2", "R2"), ("Room3", "R3")],
-                             selection_box_border_color=(0, 0, 0, 0),
-                             selection_box_bgcolor=(0, 0, 0, 0),
-                             selection_option_font_size=25,
-                             selection_option_selected_font_color=(10, 10, 100),
-                             selection_option_font_color=(255, 255, 255))
+    main_menu.add.button("Start the game",
+                         lambda: print(f"server address: {server_ip.get_value()}:{server_port.get_value()}"))
 
-    widget_colors_theme = pygame_menu.themes.THEME_BLUE.copy()
-    widget_colors_theme.widget_margin = (0, 10)
-    widget_colors_theme.widget_padding = 0
-    widget_colors_theme.widget_selection_effect.margin_xy(10, 5)
-    widget_colors_theme.widget_font_size = 20
-    widget_colors_theme.set_background_color_opacity(0.5)  # 50% opacity
-
-    widget_colors = pygame_menu.Menu(
-        height=WINDOW_SIZE[1] * 0.7,
-        theme=widget_colors_theme,
-        title='Widget backgrounds',
-        width=WINDOW_SIZE[0] * 0.8
-    )
-
-    button_image = pygame_menu.BaseImage(pygame_menu.baseimage.IMAGE_EXAMPLE_CARBON_FIBER)
-
-    widget_colors.add.button('Opaque color button',
-                             background_color=(100, 100, 100))
-    widget_colors.add.button('Transparent color button',
-                             background_color=(50, 50, 50, 200), font_size=40)
-    widget_colors.add.button('Transparent background inflate to selection effect',
-                             background_color=(50, 50, 50, 200),
-                             margin=(0, 15)).background_inflate_to_selection_effect()
-    widget_colors.add.button('Background inflate + font background color',
-                             background_color=(50, 50, 50, 200),
-                             font_background_color=(200, 200, 200)
-                             ).background_inflate_to_selection_effect()
-    widget_colors.add.button('This inflates background to match selection effect',
-                             background_color=button_image,
-                             font_color=(255, 255, 255), font_size=15
-                             ).selection_expand_background = True
-    widget_colors.add.button('This is already inflated to match selection effect',
-                             background_color=button_image,
-                             font_color=(255, 255, 255), font_size=15
-                             ).background_inflate_to_selection_effect()
-
-    main_menu.add.button('Test different widget colors', widget_colors)
-    main_menu.add.button('Another fancy button', lambda: print('This button has been pressed'))
     main_menu.add.button('Quit', pygame_menu.events.EXIT)
     main_menu.set_sound(all_sound, recursive=True)  # Apply on menu and all sub-menus
 
