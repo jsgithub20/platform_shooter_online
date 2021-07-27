@@ -124,5 +124,5 @@ async def main(host, port):
     logging.info(f"Server started at {host}:{port}")
     await server.serve_forever()
 
-
-asyncio.run(main('127.0.0.1', 5000))
+if __name__ == "__main__":
+    asyncio.run(main('127.0.0.1', 5000))
