@@ -12,8 +12,9 @@ import asyncio
 
 
 class Network:
-    def __init__(self, server_ip='127.0.0.1'):
+    def __init__(self, server_ip='127.0.0.1', server_port="8888"):
         self.server_ip = server_ip
+        self.server_port = server_port
         self.client_id = 0
         self.server_msg = ""
 
@@ -22,14 +23,14 @@ class Network:
         # input "0" to simulate the request to join a room
         choice = input("Input 'c' to create a new game room, or 'j' to join one: ")
         if choice == "c":
-            reader, writer = await asyncio.open_connection(self.server_ip, 5000)
+            reader, writer = await asyncio.open_connection(self.server_ip, self.server_port)
             data = await reader.read(100)
             self.client_id = data.decode()
             print(f"This is client# {self.client_id}")
             writer.write("c".encode())
             await self.client(reader, writer, self.client_id)
         else:
-            reader, writer = await asyncio.open_connection(self.server_ip, 5000)
+            reader, writer = await asyncio.open_connection(self.server_ip, self.server_port)
             data = await reader.read(100)
             self.client_id = data.decode()
             print(f"This is client# {self.client_id}")
@@ -62,6 +63,10 @@ class Network:
                 break
 
 
-if __name__ == "__main__":
-    new_client = Network()
+def main(server_ip='127.0.0.1', server_port="8888"):
+    new_client = Network(server_ip, server_port)
     asyncio.run(new_client.start())
+
+
+if __name__ == "__main__":
+    main()

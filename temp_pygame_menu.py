@@ -5,7 +5,7 @@ from pygame_menu.examples import create_example_window
 from typing import Optional
 
 import asyncio
-import demo_async_server
+import demo_async_client
 
 
 # -----------------------------------------------------------------------------
@@ -30,7 +30,14 @@ background_image = pygame_menu.BaseImage(
 
 # -----------------------------------------------------------------------------
 # Methods
-# -----------------------------------------------------------------------------
+aloop = asyncio.get_event_loop()
+
+
+async def client(server_ip, server_port):
+    task = asyncio.create_task(demo_async_client.main(server_ip, server_port))
+    await task
+
+
 def main_background() -> None:
     """
     Background color of the main menu, on this function user can plot
@@ -129,9 +136,8 @@ def main(test: bool = False) -> None:
     join_game_menu.add.button("Dora's Game")
 
     main_menu.add.button("Start the game",
-                         lambda: asyncio.run(demo_async_server.main(server_ip.get_value(),
-                                                                    server_port.get_value())))
-
+                         lambda: asyncio.run_coroutine_threadsafe(demo_async_client.main(
+                             server_ip.get_value(), server_port.get_value()), aloop))
 
     main_menu.add.button('Quit', pygame_menu.events.EXIT)
     main_menu.set_sound(all_sound, recursive=True)  # Apply on menu and all sub-menus
