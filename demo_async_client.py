@@ -69,4 +69,4 @@ def main(server_ip='127.0.0.1', server_port="8888"):
 
 
 if __name__ == "__main__":
-    main()
+    print(type(main))
