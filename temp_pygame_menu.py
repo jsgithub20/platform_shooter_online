@@ -1,4 +1,5 @@
 import pygame
+from threading import Thread
 import pygame_menu
 from pygame_menu.examples import create_example_window
 
@@ -18,7 +19,7 @@ sound: Optional['pygame_menu.sound.Sound'] = None
 surface: Optional['pygame.Surface'] = pygame.image.load("resources\gui\Window_06.png")
 main_menu: Optional['pygame_menu.Menu'] = None
 
-pygame.init()
+# pygame.init()
 
 # -----------------------------------------------------------------------------
 # Load image
@@ -30,12 +31,20 @@ background_image = pygame_menu.BaseImage(
 
 # -----------------------------------------------------------------------------
 # Methods
-aloop = asyncio.get_event_loop()
 
 
-async def client(server_ip, server_port):
-    task = asyncio.create_task(demo_async_client.main(server_ip, server_port))
-    await task
+class EventLoop(Thread):
+    def __init__(self):
+        self._loop = asyncio.get_event_loop()
+        super().__init__(target=self._loop.run_forever)
+        self.start()
+
+    def stop(self):
+        self._loop.call_soon_threadsafe(self._loop.stop)
+
+    def create_task(self, coro):
+        return asyncio.run_coroutine_threadsafe(coro, self._loop)
+
 
 
 def main_background() -> None:
@@ -60,6 +69,8 @@ def main(test: bool = False) -> None:
     global main_menu
     # global sound
     global surface
+
+    t_loop = EventLoop()
 
     # -------------------------------------------------------------------------
     # Create window
@@ -136,8 +147,8 @@ def main(test: bool = False) -> None:
     join_game_menu.add.button("Dora's Game")
 
     main_menu.add.button("Start the game",
-                         lambda: asyncio.run_coroutine_threadsafe(demo_async_client.main(
-                             server_ip.get_value(), server_port.get_value()), aloop))
+                         lambda: t_loop.create_task(demo_async_client.Network(server_ip.get_value(),
+                                                                              server_port.get_value()).start()))
 
     main_menu.add.button('Quit', pygame_menu.events.EXIT)
     main_menu.set_sound(all_sound, recursive=True)  # Apply on menu and all sub-menus

@@ -68,5 +68,10 @@ def main(server_ip='127.0.0.1', server_port="8888"):
     asyncio.run(new_client.start())
 
 
+async def some_func(number):
+    await asyncio.sleep(number)
+    return number
+
+
 if __name__ == "__main__":
-    print(type(main))
+    main()
