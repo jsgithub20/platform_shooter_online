@@ -19,7 +19,8 @@ sound: Optional['pygame_menu.sound.Sound'] = None
 surface: Optional['pygame.Surface'] = pygame.image.load("resources\gui\Window_06.png")
 main_menu: Optional['pygame_menu.Menu'] = None
 
-# pygame.init()
+pygame.init()
+clock = pygame.time.Clock()
 
 # -----------------------------------------------------------------------------
 # Load image
@@ -46,6 +47,12 @@ class EventLoop(Thread):
         return asyncio.run_coroutine_threadsafe(coro, self._loop)
 
 
+def start_game(server_ip, server_port):
+    global main_menu
+    t_loop = EventLoop()
+    t_loop.create_task(demo_async_client.Network(server_ip, server_port).start())
+    main_menu.disable()
+
 
 def main_background() -> None:
     """
@@ -54,6 +61,26 @@ def main_background() -> None:
     :return: None
     """
     background_image.draw(surface)
+
+
+def game_window():
+    global surface
+    while True:
+        clock.tick(60)
+        surface.fill((0, 200, 0))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    exit()
+
+        pygame.draw.circle(surface, (255, 255, 255), (100, 100), 10.0)
+
+        pygame.display.flip()
 
 
 def main(test: bool = False) -> None:
@@ -70,13 +97,11 @@ def main(test: bool = False) -> None:
     # global sound
     global surface
 
-    t_loop = EventLoop()
 
     # -------------------------------------------------------------------------
     # Create window
     # -------------------------------------------------------------------------
     surface = create_example_window('Example - Image Background', WINDOW_SIZE)
-    clock = pygame.time.Clock()
 
     all_sound = pygame_menu.sound.Sound()
     # engine.set_sound(pygame_menu.sound.SOUND_TYPE_CLICK_MOUSE, 'resources/sound/Designer_Stubble.ogg', volume=0.5)
@@ -147,8 +172,7 @@ def main(test: bool = False) -> None:
     join_game_menu.add.button("Dora's Game")
 
     main_menu.add.button("Start the game",
-                         lambda: t_loop.create_task(demo_async_client.Network(server_ip.get_value(),
-                                                                              server_port.get_value()).start()))
+                         lambda: start_game(server_ip.get_value(), server_port.get_value()))
 
     main_menu.add.button('Quit', pygame_menu.events.EXIT)
     main_menu.set_sound(all_sound, recursive=True)  # Apply on menu and all sub-menus
@@ -161,18 +185,23 @@ def main(test: bool = False) -> None:
         # Tick
         clock.tick(FPS)
 
-        # events = pygame.event.get()
-        # for event in events:
-        #     if event.type == pygame.MOUSEBUTTONDOWN:
-        #         pass
-        #
-        #     if main_menu.is_enabled():
-        #         main_background()
-        #         main_menu.update(events)
-        #         main_menu.draw(surface)
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pass
+            if event.type == pygame.QUIT:
+                exit()
+
+        if main_menu.is_enabled():
+            main_background()
+            main_menu.update(events)
+            if main_menu.is_enabled():
+                main_menu.draw(surface)
+        else:
+            break
 
         # Main menu
-        main_menu.mainloop(surface, main_background, disable_loop=test, fps_limit=FPS)
+        # main_menu.mainloop(surface, main_background, disable_loop=test, fps_limit=FPS)
 
         # Flip surface
         pygame.display.flip()
@@ -184,3 +213,5 @@ def main(test: bool = False) -> None:
 
 if __name__ == '__main__':
     main()
+    game_window()
+    pygame.quit()

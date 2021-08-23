@@ -17,36 +17,38 @@ class Network:
         self.server_port = server_port
         self.client_id = 0
         self.server_msg = ""
+        self.reader = None
+        self.writer = None
 
     async def start(self):
         timer = 0  # used to simulate the waiting time for the player to enter room#
         # input "0" to simulate the request to join a room
         choice = input("Input 'c' to create a new game room, or 'j' to join one: ")
         if choice == "c":
-            reader, writer = await asyncio.open_connection(self.server_ip, self.server_port)
-            data = await reader.read(100)
+            self.reader, self.writer = await asyncio.open_connection(self.server_ip, self.server_port)
+            data = await self.reader.read(100)
             self.client_id = data.decode()
             print(f"This is client# {self.client_id}")
-            writer.write("c".encode())
-            await self.client(reader, writer, self.client_id)
+            self.writer.write("c".encode())
+            await self.client(self.reader, self.writer, self.client_id)
         else:
-            reader, writer = await asyncio.open_connection(self.server_ip, self.server_port)
-            data = await reader.read(100)
+            self.reader, self.writer = await asyncio.open_connection(self.server_ip, self.server_port)
+            data = await self.reader.read(100)
             self.client_id = data.decode()
             print(f"This is client# {self.client_id}")
-            writer.write("j".encode())  # input "0" to simulate the request to join a room
+            self.writer.write("j".encode())  # input "0" to simulate the request to join a room
             while True:
-                data = await reader.read(100)
+                data = await self.reader.read(100)
                 rooms = data.decode()
                 print(f"Rooms available to join: {rooms}")
                 timer += 1
                 if timer < 5:  # used to simulate the waiting time for the player to input a room#
                     reply = "j"
-                    writer.write(reply.encode())
+                    self.writer.write(reply.encode())
                 else:
                     reply = rooms[-1]  # simulate the room selected by the player
-                    writer.write(reply.encode())
-                    await self.client(reader, writer, self.client_id)
+                    self.writer.write(reply.encode())
+                    await self.client(self.reader, self.writer, self.client_id)
 
     async def client(self, reader, writer, client_id):
         while True:
@@ -61,6 +63,9 @@ class Network:
                 writer.close()
                 print('Closing the connection')
                 break
+
+    async def stop(self):
+        self.writer.close()
 
 
 def main(server_ip='127.0.0.1', server_port="8888"):
