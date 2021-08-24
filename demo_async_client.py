@@ -30,7 +30,7 @@ class Network:
             self.client_id = data.decode()
             print(f"This is client# {self.client_id}")
             self.writer.write("c".encode())
-            await self.client(self.reader, self.writer, self.client_id)
+            await self.client()
         else:
             self.reader, self.writer = await asyncio.open_connection(self.server_ip, self.server_port)
             data = await self.reader.read(100)
@@ -48,24 +48,25 @@ class Network:
                 else:
                     reply = rooms[-1]  # simulate the room selected by the player
                     self.writer.write(reply.encode())
-                    await self.client(self.reader, self.writer, self.client_id)
+                    await self.client()
 
-    async def client(self, reader, writer, client_id):
+    async def client(self):
         while True:
-            data = await reader.read(100)
+            data = await self.reader.read(100)
             self.server_msg = data.decode()
             if self.server_msg != "quit":
                 print(f'Received: {self.server_msg!r}')
-                reply = f"{int(client_id)}: msg received is {self.server_msg!r}"
-                writer.write(reply.encode())
-                await writer.drain()
+                reply = f"{int(self.client_id)}: msg received is {self.server_msg!r}"
+                self.writer.write(reply.encode())
+                await self.writer.drain()
             else:
-                writer.close()
-                print('Closing the connection')
+                await self.stop()
                 break
 
     async def stop(self):
         self.writer.close()
+        await self.writer.wait_closed()
+        print('Closing the connection')
 
 
 def main(server_ip='127.0.0.1', server_port="8888"):

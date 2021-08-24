@@ -47,9 +47,11 @@ class EventLoop(Thread):
         return asyncio.run_coroutine_threadsafe(coro, self._loop)
 
 
+t_loop = EventLoop()
+
+
 def start_game(server_ip, server_port):
     global main_menu
-    t_loop = EventLoop()
     t_loop.create_task(demo_async_client.Network(server_ip, server_port).start())
     main_menu.disable()
 
@@ -71,6 +73,7 @@ def game_window():
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                t_loop.stop()
                 pygame.quit()
                 exit()
             if event.type == pygame.KEYDOWN:
