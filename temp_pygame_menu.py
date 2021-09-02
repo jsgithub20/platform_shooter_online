@@ -34,17 +34,32 @@ background_image = pygame_menu.BaseImage(
 # Methods
 
 
+class DrawText(pygame.sprite.Sprite):
+    def __init__(self, text):
+        super().__init__()
+        self.text = text
+        self.font = pygame.font.Font("resources/OvOV20.ttf", 30)
+        self.image = self.font.render(text, True, (255, 255, 255))
+        self.rect = self.image.get_rect()
+        self.rect.x = 100
+        self.rect.y = 100
+
+    def update(self) -> None:
+        self.image = self.font.render(self.text, True, (255, 255, 255))
+
+
 class EventLoop(Thread):
     def __init__(self):
         self._loop = asyncio.get_event_loop()
         super().__init__(target=self._loop.run_forever)
         self.start()
+        self.game_task = None
 
     def stop(self):
         self._loop.call_soon_threadsafe(self._loop.stop)
 
     def create_task(self, coro):
-        return asyncio.run_coroutine_threadsafe(coro, self._loop)
+        self.game_task = asyncio.run_coroutine_threadsafe(coro, self._loop)
 
 
 t_loop = EventLoop()
@@ -52,9 +67,34 @@ t_loop = EventLoop()
 
 def start_game(server_ip, server_port):
     global main_menu
-    t_loop.create_task(demo_async_client.Network(server_ip, server_port).start())
+    connection = demo_async_client.Network(server_ip, server_port)
+    t_loop.create_task(connection.start())
     main_menu.disable()
 
+    global surface
+    server_msg = DrawText("Server msg:")
+    msg_grp = pygame.sprite.Group()
+    msg_grp.add(server_msg)
+    while True:
+        clock.tick(60)
+        surface.fill((0, 200, 0))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                t_loop.game_task.cancel()
+                t_loop.stop()
+                pygame.quit()
+                exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    exit()
+
+        server_msg.text = connection.server_msg
+        msg_grp.update()
+        msg_grp.draw(surface)
+
+        pygame.display.flip()
 
 def main_background() -> None:
     """
@@ -73,6 +113,7 @@ def game_window():
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                t_loop.game_task.cancel()
                 t_loop.stop()
                 pygame.quit()
                 exit()
@@ -216,5 +257,5 @@ def main(test: bool = False) -> None:
 
 if __name__ == '__main__':
     main()
-    game_window()
+    # game_window()
     pygame.quit()
