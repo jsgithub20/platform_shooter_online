@@ -87,6 +87,8 @@ def start_game(server_ip, server_port):
                 exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    t_loop.game_task.cancel()
+                    t_loop.stop()
                     pygame.quit()
                     exit()
 

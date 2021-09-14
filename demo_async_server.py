@@ -14,11 +14,13 @@ import logging
 import datetime
 from dataclasses import dataclass
 from typing import Any
+from functools import partial
 
 pygame.init()
 cnt = 0  # total number of connections to the server
 game_dict = {}  # used to store game room information
 room_cnt = 1  # total number of game rooms
+logging.getLogger("asyncio")
 logging.basicConfig(format='\x1b[32m%(asctime)s.%(msecs)03d %(levelname)s: %(message)s\x1b[32m', datefmt='%X', level=logging.INFO)
 
 
@@ -46,9 +48,22 @@ async def join(reader, writer):
             return choice
 
 
+def _handle_task_result(task: asyncio.Task, room=1, player=0, writer=None):
+    try:
+        task.result()
+    except asyncio.CancelledError:
+        pass  # Task cancellation should not be logged as an error.
+    except ConnectionError:
+        writer.close()
+        logging.exception(f"Connection to room {room}: player {player} is lost")
+    except Exception:  # pylint: disable=broad-except
+        logging.exception('Exception raised by task = %r', task)
+
+
 async def new_client(reader, writer):
     # any new client connection goes here first
     global cnt, game_dict, room_cnt
+    loop = asyncio.get_running_loop()
     cnt += 1
     room = None
     player_id = 0
@@ -57,6 +72,7 @@ async def new_client(reader, writer):
     writer.write(str(cnt).encode())  # the number of connections is sent as client_id
     received = await reader.read(100)
     choice = received.decode()
+    connected_player = 0
 
     if choice == "c":
         player_id = 0
@@ -100,22 +116,38 @@ async def new_client(reader, writer):
                     f"server msg to {room.room_id}:1 tasks - {len(asyncio.all_tasks())}".encode()
             room.player_1_writer.write(data1)
             # await game_dict[game_id][4].drain()
-            msg0, msg1 = await asyncio.gather(room.player_0_reader.read(100),
-                                              room.player_1_reader.read(100))
-            # if msg0 is None:
-            #     room.player_0_writer.close()
-            #     break
-            # if not msg1:
-            #     room.player_1_writer.close()
-            #     break
-            logging.info(f"Received: '{msg0.decode()}'")
-            logging.info(f"Received: '{msg1.decode()}'")
+
+            try:
+                msg0 = await loop.create_task(room.player_0_reader.read(100))
+                logging.info(f"Received: '{msg0.decode()}'")
+                connected_player += 1
+            except ConnectionError:
+                room.player_0_writer.close()
+                logging.warning(f"Connection to room {room.room_id}: player 0 is lost")
+                break
+
+            try:
+                msg1 = await loop.create_task(room.player_1_reader.read(100))
+                logging.info(f"Received: '{msg1.decode()}'")
+                connected_player += 1
+            except ConnectionError:
+                room.player_1_writer.close()
+                logging.warning(f"Connection to room {room.room_id}: player 1 is lost")
+                break
+
         else:  # if game_ready is False, it means there is only player_0 in the game room
             data = f"[{datetime.datetime.now().strftime('%H:%M:%S.%f')}]server msg: tasks - {len(asyncio.all_tasks())}".encode()
             room.player_0_writer.write(data)
             # await game_dict[game_id][2].drain()
-            msg0 = await room.player_0_reader.read(100)
-            logging.info(f"Received: '{msg0.decode()}'")
+            try:
+                msg0 = await room.player_0_reader.read(100)
+                logging.info(f"Received: '{msg0.decode()}'")
+            except Exception as e:
+                print(f"Connection to room {room.room_id} - player0 is lost: {e}")
+                room.player_0_writer.close()
+                # print the information if the key to pop up doesn't exist in the following line
+                print(game_dict.pop(room.room_id, f"room '{room.room_id}' is not running"))
+                break
 
 
 async def main(host, port):
@@ -125,4 +157,7 @@ async def main(host, port):
     await server.serve_forever()
 
 if __name__ == "__main__":
-    asyncio.run(main('127.0.0.1', 8888))
+    try:
+        asyncio.run(main('127.0.0.1', 8888))
+    except KeyboardInterrupt:
+        print("Server terminated by player.")
