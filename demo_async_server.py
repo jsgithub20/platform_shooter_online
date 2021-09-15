@@ -72,7 +72,6 @@ async def new_client(reader, writer):
     writer.write(str(cnt).encode())  # the number of connections is sent as client_id
     received = await reader.read(100)
     choice = received.decode()
-    connected_player = 0
 
     if choice == "c":
         player_id = 0
@@ -108,32 +107,12 @@ async def new_client(reader, writer):
                 return  # the task (for player_1) is returned once player_1 is in the room
             # the following block is the routine communication between the server and
             # both players in the same game room
-            data0 = f"[{datetime.datetime.now().strftime('%H:%M:%S.%f')}]" \
-                    f"server msg to {room.room_id}:0 tasks - {len(asyncio.all_tasks())}".encode()
-            room.player_0_writer.write(data0)
+            data = "Game Ready".encode()
+            room.player_0_writer.write(data)
             # await game_dict[game_id][2].drain()
-            data1 = f"[{datetime.datetime.now().strftime('%H:%M:%S.%f')}]" \
-                    f"server msg to {room.room_id}:1 tasks - {len(asyncio.all_tasks())}".encode()
-            room.player_1_writer.write(data1)
+            room.player_1_writer.write(data)
             # await game_dict[game_id][4].drain()
-
-            try:
-                msg0 = await loop.create_task(room.player_0_reader.read(100))
-                logging.info(f"Received: '{msg0.decode()}'")
-                connected_player += 1
-            except ConnectionError:
-                room.player_0_writer.close()
-                logging.warning(f"Connection to room {room.room_id}: player 0 is lost")
-                break
-
-            try:
-                msg1 = await loop.create_task(room.player_1_reader.read(100))
-                logging.info(f"Received: '{msg1.decode()}'")
-                connected_player += 1
-            except ConnectionError:
-                room.player_1_writer.close()
-                logging.warning(f"Connection to room {room.room_id}: player 1 is lost")
-                break
+            break  # break current while loop to start the game playing data exchange loop
 
         else:  # if game_ready is False, it means there is only player_0 in the game room
             data = f"[{datetime.datetime.now().strftime('%H:%M:%S.%f')}]server msg: tasks - {len(asyncio.all_tasks())}".encode()
@@ -143,11 +122,32 @@ async def new_client(reader, writer):
                 msg0 = await room.player_0_reader.read(100)
                 logging.info(f"Received: '{msg0.decode()}'")
             except Exception as e:
-                print(f"Connection to room {room.room_id} - player0 is lost: {e}")
+                logging.warning(f"Something's wrong with room {room.room_id} - player0: {e}")
                 room.player_0_writer.close()
                 # print the information if the key to pop up doesn't exist in the following line
-                print(game_dict.pop(room.room_id, f"room '{room.room_id}' is not running"))
+                logging.warning(game_dict.pop(room.room_id, f"room '{room.room_id}' is not running"))
                 break
+
+    while True:
+        clock.tick(1)
+        try:
+            msg0 = await loop.create_task(room.player_0_reader.read(100))
+            # logging.info(f"Received: '{msg0.decode()}'")
+        except ConnectionError:
+            room.player_0_writer.close()
+            logging.warning(f"Connection to room {room.room_id}: player 0 is lost")
+            break
+
+        try:
+            msg1 = await loop.create_task(room.player_1_reader.read(100))
+            # logging.info(f"Received: '{msg1.decode()}'")
+        except ConnectionError:
+            room.player_1_writer.close()
+            logging.warning(f"Connection to room {room.room_id}: player 1 is lost")
+            break
+
+        room.player_0_writer.write(f"data received by player 0 from player1: {msg1.decode()}".encode())
+        room.player_1_writer.write(f"data received by player 1 from player0: {msg0.decode()}".encode())
 
 
 async def main(host, port):
