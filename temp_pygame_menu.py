@@ -1,3 +1,5 @@
+import queue
+
 import pygame
 from threading import Thread
 import pygame_menu
@@ -91,8 +93,21 @@ def start_game(server_ip, server_port):
                     t_loop.stop()
                     pygame.quit()
                     exit()
+                if event.key == pygame.K_SPACE:
+                    connection.pos_send[0] += 1
+                    connection.pos_send[1] += 1
 
-        server_msg.text = connection.server_msg
+        if connection.server_msg != "Game Ready":
+            server_msg.rect.x, server_msg.rect.y = (100, 100)
+        else:
+            try:
+                # 3 lines of get_nowait() to make sure even the Queue() is full, only the last item is returned
+                server_msg.rect.x, server_msg.rect.y = connection.pos_recv.get_nowait()
+                server_msg.rect.x, server_msg.rect.y = connection.pos_recv.get_nowait()
+                server_msg.rect.x, server_msg.rect.y = connection.pos_recv.get_nowait()
+            except queue.Empty:
+                pass
+        server_msg.text = str((server_msg.rect.x, server_msg.rect.x))
         msg_grp.update()
         msg_grp.draw(surface)
 

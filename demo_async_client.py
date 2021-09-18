@@ -10,6 +10,8 @@ This is a test client program to confirm the following functionalities:
 
 import asyncio
 import logging
+import queue
+from queue import Queue
 
 
 class Network:
@@ -17,11 +19,12 @@ class Network:
         self.server_ip = server_ip
         self.server_port = server_port
         self.client_id = 0
-        self.server_msg = ""
+        self.server_msg = "Initial msg"
         self.reader = None
         self.writer = None
-        self.pos = (0, 0)
         self.speed = 2
+        self.pos_send = [0, 0]
+        self.pos_recv = Queue(maxsize=3)  # (x, Y) coordinates as tuple for each item in the Queue
 
     async def start(self):
         timer = 0  # used to simulate the waiting time for the player to enter room#
@@ -54,12 +57,11 @@ class Network:
                     await self.client()
 
     async def client(self):
-        print("Joining game")
         while True:
             data = await self.reader.read(100)
             self.server_msg = data.decode()
             if self.server_msg == "Game Ready":
-                logging.info("Game Ready")
+                # logging.info("Game Ready")
                 break
             elif self.server_msg != "quit":
                 print(f'Received: {self.server_msg!r}')
@@ -71,18 +73,20 @@ class Network:
                 break
 
         while True:
-            reply = f"{self.pos}"
+            reply = self.pos2str(self.pos_send)
             self.writer.write(reply.encode())
             data = await self.reader.read(100)
-            msg = data.decode()
-            print(f"message from server: {msg}")
+            try:
+                self.pos_recv.put_nowait(self.str2pos(data.decode()))
+            except queue.Full:
+                pass  # TODO: code to handle the exception
 
     async def stop(self):
         self.writer.close()
         await self.writer.wait_closed()
         print('Closing the connection')
 
-    def pos2str(self, pos: tuple):
+    def pos2str(self, pos: list):
         # the returned string is like "100,100" from tuple (100, 100)
         return ','.join(map(str, pos))
 

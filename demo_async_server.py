@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from typing import Any
 from functools import partial
 
+FPS = 60
+
 pygame.init()
 cnt = 0  # total number of connections to the server
 game_dict = {}  # used to store game room information
@@ -92,8 +94,8 @@ async def new_client(reader, writer):
         game_dict[choice].game_ready = True
         room = game_dict[choice]
 
-    while True:
-        clock.tick(1)
+    while True:  # wait for the 2nd player to join the room
+        clock.tick(FPS)
 
         """
         once there are two players in one game room, game_ready for that room is set to 
@@ -103,7 +105,7 @@ async def new_client(reader, writer):
         """
         if room.game_ready:
             if player_id == 1:  # player_id = 1 means this is the task for player_1
-                logging.warning(f"Task for connection {cnt} in game_id {room.room_id} is being returned")
+                # logging.warning(f"Task for connection {cnt} in game_id {room.room_id} is being returned")
                 return  # the task (for player_1) is returned once player_1 is in the room
             # the following block is the routine communication between the server and
             # both players in the same game room
@@ -120,16 +122,16 @@ async def new_client(reader, writer):
             # await game_dict[game_id][2].drain()
             try:
                 msg0 = await room.player_0_reader.read(100)
-                logging.info(f"Received: '{msg0.decode()}'")
+                # logging.info(f"Received: '{msg0.decode()}'")
             except Exception as e:
-                logging.warning(f"Something's wrong with room {room.room_id} - player0: {e}")
+                # logging.warning(f"Something's wrong with room {room.room_id} - player0: {e}")
                 room.player_0_writer.close()
                 # print the information if the key to pop up doesn't exist in the following line
-                logging.warning(game_dict.pop(room.room_id, f"room '{room.room_id}' is not running"))
+                # logging.warning(game_dict.pop(room.room_id, f"room '{room.room_id}' is not running"))
                 break
 
-    while True:
-        clock.tick(1)
+    while True:  # this is the routine game tick loop
+        clock.tick(FPS)
         try:
             msg0 = await loop.create_task(room.player_0_reader.read(100))
             # logging.info(f"Received: '{msg0.decode()}'")
@@ -146,8 +148,8 @@ async def new_client(reader, writer):
             logging.warning(f"Connection to room {room.room_id}: player 1 is lost")
             break
 
-        room.player_0_writer.write(f"data received by player 0 from player1: {msg1.decode()}".encode())
-        room.player_1_writer.write(f"data received by player 1 from player0: {msg0.decode()}".encode())
+        room.player_0_writer.write(msg1)
+        room.player_1_writer.write(msg0)
 
 
 async def main(host, port):

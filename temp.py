@@ -1,14 +1,47 @@
+from queue import Queue
 
+# Initializing a queue
+q = Queue(maxsize=3)
 
-def pos2str(pos: tuple):
-    # the returned string is like "100,100" from tuple (100, 100)
-    return ','.join(map(str, pos))
+# qsize() give the maxsize
+# of the Queue
+print(q.qsize())
 
+# Adding of element to queue
+q.put((100, 199))
+q.put('b')
+q.put('c')
 
-def str2pos(string):
-    # string must be "100,100" or "100, 100" which will be converted to (100, 100)
-    return tuple(map(int, string.split(',')))
+# Return Boolean for Full
+# Queue
+print("\nFull: ", q.full())
 
+# Removing element from queue
+print("\nElements dequeued from the queue")
+# print(type(q.get()))
+# print(q.get())
+# print(q.get())
+# print(q.get_nowait())
 
-print(str2pos("100,100"))
-print(pos2str((200, 200)))
+a = "start"
+
+try:
+    a = q.get_nowait()
+    print(f"a = {a}")
+    a = q.get_nowait()
+    print(f"a = {a}")
+    a = q.get_nowait()
+    print(f"a = {a}")
+    a = q.get_nowait()
+    print(f"a = {a}")
+except:
+    print("empty")
+    print(f"finally a = {a}")
+
+# Return Boolean for Empty
+# Queue
+print("\nEmpty: ", q.empty())
+
+q.put(1)
+print("\nEmpty: ", q.empty())
+print("Full: ", q.full())
