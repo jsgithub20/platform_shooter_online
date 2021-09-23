@@ -15,7 +15,7 @@ from queue import Queue
 
 
 class Network:
-    def __init__(self, server_ip='127.0.0.1', server_port="8888"):
+    def __init__(self, server_ip='192.168.3.10', server_port="8888"):
         self.server_ip = server_ip
         self.server_port = server_port
         self.client_id = 0
@@ -64,7 +64,7 @@ class Network:
                 # logging.info("Game Ready")
                 break
             elif self.server_msg != "quit":
-                print(f'Received: {self.server_msg!r}')
+                # print(f'Received: {self.server_msg!r}')
                 reply = f"{int(self.client_id)}: msg received is {self.server_msg!r}"
                 self.writer.write(reply.encode())
                 await self.writer.drain()
@@ -95,7 +95,7 @@ class Network:
         return tuple(map(int, string.split(',')))
 
 
-def main(server_ip='127.0.0.1', server_port="8888"):
+def main(server_ip='192.168.3.10', server_port="8888"):
     new_client = Network(server_ip, server_port)
     asyncio.run(new_client.start())
 

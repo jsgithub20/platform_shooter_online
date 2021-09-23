@@ -45,9 +45,33 @@ class DrawText(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = 100
         self.rect.y = 100
+        self.change_x = 0
+        self.change_y = 0
+        self.speed = 6
 
     def update(self) -> None:
+        self.rect.x += self.change_x
+        self.rect.y += self.change_y
         self.image = self.font.render(self.text, True, (255, 255, 255))
+
+    def go_left(self):
+        self.change_x = -self.speed
+
+    def go_right(self):
+        self.change_x = self.speed
+
+    def go_up(self):
+        self.change_y = -self.speed
+
+    def go_down(self):
+        self.change_y = self.speed
+
+    def stop(self):
+        self.change_x = 0
+        self.change_y = 0
+
+    def pos(self):
+        return self.rect.x, self.rect.y
 
 
 class EventLoop(Thread):
@@ -71,12 +95,14 @@ def start_game(server_ip, server_port):
     global main_menu
     connection = demo_async_client.Network(server_ip, server_port)
     t_loop.create_task(connection.start())
+    print(f"Connected to server: {server_ip}:{server_port}")
     main_menu.disable()
 
     global surface
-    server_msg = DrawText("Server msg:")
+    my_msg = DrawText("My msg:")
+    their_msg = DrawText("Their msg:")
     msg_grp = pygame.sprite.Group()
-    msg_grp.add(server_msg)
+    msg_grp.add(my_msg, their_msg)
     while True:
         clock.tick(60)
         surface.fill((0, 200, 0))
@@ -96,22 +122,36 @@ def start_game(server_ip, server_port):
                 if event.key == pygame.K_SPACE:
                     connection.pos_send[0] += 1
                     connection.pos_send[1] += 1
+                if event.key == pygame.K_LEFT:
+                    my_msg.go_left()
+                if event.key == pygame.K_RIGHT:
+                    my_msg.go_right()
+                if event.key == pygame.K_UP:
+                    my_msg.go_up()
+                if event.key == pygame.K_DOWN:
+                    my_msg.go_down()
+            if event.type == pygame.KEYUP:
+                my_msg.stop()
 
         if connection.server_msg != "Game Ready":
-            server_msg.rect.x, server_msg.rect.y = (100, 100)
+            my_msg.rect.x, my_msg.rect.y = (100, 100)
+            their_msg.rect.x, their_msg.rect.y = (100, 200)
         else:
             try:
                 # 3 lines of get_nowait() to make sure even the Queue() is full, only the last item is returned
-                server_msg.rect.x, server_msg.rect.y = connection.pos_recv.get_nowait()
-                server_msg.rect.x, server_msg.rect.y = connection.pos_recv.get_nowait()
-                server_msg.rect.x, server_msg.rect.y = connection.pos_recv.get_nowait()
+                their_msg.rect.x, their_msg.rect.y = connection.pos_recv.get_nowait()
+                their_msg.rect.x, their_msg.rect.y = connection.pos_recv.get_nowait()
+                their_msg.rect.x, their_msg.rect.y = connection.pos_recv.get_nowait()
             except queue.Empty:
                 pass
-        server_msg.text = str((server_msg.rect.x, server_msg.rect.x))
+        my_msg.text = f"I'm at {str((my_msg.rect.x, my_msg.rect.x))}"
+        connection.pos_send = my_msg.pos()
+        their_msg.text = f"They are at {str((their_msg.rect.x, their_msg.rect.x))}"
         msg_grp.update()
         msg_grp.draw(surface)
 
         pygame.display.flip()
+
 
 def main_background() -> None:
     """

@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from typing import Any
 from functools import partial
 
-FPS = 60
+FPS = 100
 
 pygame.init()
 cnt = 0  # total number of connections to the server
@@ -160,6 +160,7 @@ async def main(host, port):
 
 if __name__ == "__main__":
     try:
-        asyncio.run(main('127.0.0.1', 8888))
+        # No IP address is provided to allow the server to listen to all connections on the port
+        asyncio.run(main('', 8888))
     except KeyboardInterrupt:
         print("Server terminated by player.")
