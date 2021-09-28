@@ -1,4 +1,5 @@
 import queue
+from time import perf_counter
 
 import pygame
 from threading import Thread
@@ -23,13 +24,13 @@ main_menu: Optional['pygame_menu.Menu'] = None
 
 pygame.init()
 clock = pygame.time.Clock()
+screen = pygame.display.set_mode(WINDOW_SIZE, flags=pygame.NOFRAME)
+
 
 # -----------------------------------------------------------------------------
 # Load image
 # -----------------------------------------------------------------------------
-background_image = pygame_menu.BaseImage(
-    image_path="resources\gui\Window_06.png"
-)
+background_image = pygame.image.load("resources\gui\Window_19_1024-768.png")
 
 
 # -----------------------------------------------------------------------------
@@ -105,7 +106,7 @@ def start_game(server_ip, server_port):
     msg_grp.add(my_msg, their_msg)
     while True:
         clock.tick(60)
-        surface.fill((0, 200, 0))
+        screen.fill((0, 200, 0))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -148,18 +149,18 @@ def start_game(server_ip, server_port):
         connection.pos_send = my_msg.pos()
         their_msg.text = f"They are at {str((their_msg.rect.x, their_msg.rect.x))}"
         msg_grp.update()
-        msg_grp.draw(surface)
+        msg_grp.draw(screen)
 
         pygame.display.flip()
 
 
-def main_background() -> None:
-    """
-    Background color of the main menu, on this function user can plot
-    images, play sounds, etc.
-    :return: None
-    """
-    background_image.draw(surface)
+# def main_background() -> None:
+#     """
+#     Background color of the main menu, on this function user can plot
+#     images, play sounds, etc.
+#     :return: None
+#     """
+#     background_image.draw(surface)
 
 
 def game_window():
@@ -202,7 +203,7 @@ def main(test: bool = False) -> None:
     # -------------------------------------------------------------------------
     # Create window
     # -------------------------------------------------------------------------
-    surface = create_example_window('Example - Image Background', WINDOW_SIZE)
+    # surface = create_example_window('Example - Image Background', WINDOW_SIZE)
 
     all_sound = pygame_menu.sound.Sound()
     # engine.set_sound(pygame_menu.sound.SOUND_TYPE_CLICK_MOUSE, 'resources/sound/Designer_Stubble.ogg', volume=0.5)
@@ -214,25 +215,34 @@ def main(test: bool = False) -> None:
     # Create menus: Main menu
     # -------------------------------------------------------------------------
     no_title_theme = pygame_menu.themes.THEME_ORANGE.copy()
-    no_title_theme.background_color = (0, 0, 0, 50)
+    # no_title_theme.title_background_color = (0, 0, 0, 0)
+    no_title_theme.title_font = pygame_menu.font.FONT_8BIT
+
+    no_title_theme.title_font_shadow = True
+    no_title_theme.title_font_color = (200, 50, 50)
+    no_title_theme.title_close_button = False
+    no_title_theme.title_offset = (120, 0)
+
+    no_title_theme.background_color = (0, 0, 0, 0)
     # no_title_theme.title = False
+    no_title_theme.widget_font = pygame_menu.font.FONT_MUNRO
     no_title_theme.widget_alignment = pygame_menu.locals.ALIGN_LEFT
-    no_title_theme.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_SIMPLE
-    no_title_theme.widget_padding = 5
+    no_title_theme.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_NONE
+    no_title_theme.widget_padding = 15
 
     no_title_theme_join_game = pygame_menu.themes.THEME_ORANGE.copy()
-    no_title_theme_join_game.background_color = (0, 0, 0, 50)
-    # no_title_theme.title = False
+    no_title_theme_join_game.background_color = (0, 0, 0, 0)
+    # no_title_theme_join_game.title = False
     no_title_theme_join_game.widget_alignment = pygame_menu.locals.ALIGN_CENTER
     no_title_theme_join_game.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_SIMPLE
     no_title_theme_join_game.widget_padding = 5
 
     main_menu = pygame_menu.Menu(
-        '', WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.7,
+        "Platform Game", WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.7,
         center_content=False,
         onclose=pygame_menu.events.EXIT,  # User press ESC button
         theme=no_title_theme,
-        position=[30, 80],
+        position=[40, 20],
     )
 
     join_game_menu = pygame_menu.Menu(
@@ -243,30 +253,30 @@ def main(test: bool = False) -> None:
         position=[30, 80],
     )
 
-    main_menu.add.vertical_margin(10)
+    main_menu.add.vertical_margin(30)
 
     server_ip = main_menu.add.text_input(
         'Server ip address: ',
-        default='127.0.0.1',
+        default='47.94.100.39',
         onreturn=None,
         textinput_id='server_ip',
         )
 
     server_port = main_menu.add.text_input(
         'Server port#: ',
-        default='8888',
+        default='8887',
         onreturn=None,
         textinput_id='server_port'
         )
 
     main_menu.add.text_input(
-        'Create a new game with name: ',
+        'Create a new game: ',
         default="Amy's game",
         onreturn=None,
         textinput_id='new_game'
     )
 
-    main_menu.add.button('Join an existing game', join_game_menu)
+    main_menu.add.button('Join an existing game: ', join_game_menu)
 
     join_game_menu.add.button("Amy's Game")
     join_game_menu.add.button("John's Game")
@@ -288,16 +298,15 @@ def main(test: bool = False) -> None:
 
         events = pygame.event.get()
         for event in events:
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                pass
             if event.type == pygame.QUIT:
+                pygame.quit()
                 exit()
 
         if main_menu.is_enabled():
-            main_background()
+            screen.blit(background_image, (0, 0))
             main_menu.update(events)
             if main_menu.is_enabled():
-                main_menu.draw(surface)
+                main_menu.draw(screen)
         else:
             break
 
@@ -315,4 +324,4 @@ def main(test: bool = False) -> None:
 if __name__ == '__main__':
     main()
     # game_window()
-    pygame.quit()
+    # pygame.quit()

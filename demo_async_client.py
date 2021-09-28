@@ -12,6 +12,10 @@ import asyncio
 import logging
 import queue
 from queue import Queue
+from time import perf_counter
+
+
+LEN = 15
 
 
 class Network:
@@ -75,7 +79,9 @@ class Network:
         while True:
             reply = self.pos2str(self.pos_send)
             self.writer.write(reply.encode())
-            data = await self.reader.read(100)
+            # start = perf_counter()
+            data = await self.reader.read(LEN)
+            # print(perf_counter() - start)
             try:
                 self.pos_recv.put_nowait(self.str2pos(data.decode()))
             except queue.Full:
@@ -98,11 +104,6 @@ class Network:
 def main(server_ip='192.168.3.10', server_port="8888"):
     new_client = Network(server_ip, server_port)
     asyncio.run(new_client.start())
-
-
-async def some_func(number):
-    await asyncio.sleep(number)
-    return number
 
 
 if __name__ == "__main__":

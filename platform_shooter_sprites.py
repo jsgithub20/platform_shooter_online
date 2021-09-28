@@ -524,8 +524,8 @@ class Level:
 
         # Background image
         # self.background = pg.image.load("resources/platform/Tree_1024_768.png").convert_alpha()
-        # self.background = pg.image.load("resources/platform/angry_owl.png").convert_alpha()
-        self.background = background
+        self.background = pg.image.load("resources/platform/angry_owl.png").convert_alpha()
+        # self.background = background
 
     # Update everythign on this level
     def update(self):

@@ -17,6 +17,7 @@ from typing import Any
 from functools import partial
 
 FPS = 100
+LEN = 15
 
 pygame.init()
 cnt = 0  # total number of connections to the server
@@ -130,10 +131,10 @@ async def new_client(reader, writer):
                 # logging.warning(game_dict.pop(room.room_id, f"room '{room.room_id}' is not running"))
                 break
 
-    while True:  # this is the routine game tick loop
+    while True:  # this is the routine game tick
         clock.tick(FPS)
         try:
-            msg0 = await loop.create_task(room.player_0_reader.read(100))
+            msg0 = await loop.create_task(room.player_0_reader.read(LEN))
             # logging.info(f"Received: '{msg0.decode()}'")
         except ConnectionError:
             room.player_0_writer.close()
@@ -141,7 +142,7 @@ async def new_client(reader, writer):
             break
 
         try:
-            msg1 = await loop.create_task(room.player_1_reader.read(100))
+            msg1 = await loop.create_task(room.player_1_reader.read(LEN))
             # logging.info(f"Received: '{msg1.decode()}'")
         except ConnectionError:
             room.player_1_writer.close()
