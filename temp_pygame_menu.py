@@ -233,8 +233,14 @@ def main(test: bool = False) -> None:
     no_title_theme_join_game = pygame_menu.themes.THEME_ORANGE.copy()
     no_title_theme_join_game.background_color = (0, 0, 0, 0)
     # no_title_theme_join_game.title = False
+    no_title_theme_join_game.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_NONE
+    no_title_theme_join_game.title_offset = (200, 0)
+    no_title_theme_join_game.title_font_shadow = True
+    no_title_theme_join_game.title_font_color = (200, 50, 50)
+    no_title_theme_join_game.widget_font = pygame_menu.font.FONT_MUNRO
+
     no_title_theme_join_game.widget_alignment = pygame_menu.locals.ALIGN_CENTER
-    no_title_theme_join_game.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_SIMPLE
+    # no_title_theme_join_game.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_SIMPLE
     no_title_theme_join_game.widget_padding = 5
 
     main_menu = pygame_menu.Menu(
@@ -246,11 +252,11 @@ def main(test: bool = False) -> None:
     )
 
     join_game_menu = pygame_menu.Menu(
-        '', WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.7,
+        'Existing Online Games', WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.7,
         center_content=False,
         onclose=pygame_menu.events.EXIT,  # User press ESC button
         theme=no_title_theme_join_game,
-        position=[30, 80],
+        position=[40, 20],
     )
 
     main_menu.add.vertical_margin(30)
@@ -278,6 +284,7 @@ def main(test: bool = False) -> None:
 
     main_menu.add.button('Join an existing game: ', join_game_menu)
 
+    join_game_menu.add.vertical_margin(30)
     join_game_menu.add.button("Amy's Game")
     join_game_menu.add.button("John's Game")
     join_game_menu.add.button("Dora's Game")
