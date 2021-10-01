@@ -96,7 +96,7 @@ def start_game(server_ip, server_port):
     global main_menu
     connection = demo_async_client.Network(server_ip, server_port)
     t_loop.create_task(connection.start())
-    print(f"Connected to server: {server_ip}:{server_port}")
+    print(f"Connected to server: {server_ip}:{server_port}", server_ip)
     main_menu.disable()
 
     global surface
@@ -199,6 +199,7 @@ def main(test: bool = False) -> None:
     # global sound
     global surface
 
+    game_rooms = ["Amy's game", "Jacky's game", "Dora's game"]
 
     # -------------------------------------------------------------------------
     # Create window
@@ -241,7 +242,7 @@ def main(test: bool = False) -> None:
 
     no_title_theme_join_game.widget_alignment = pygame_menu.locals.ALIGN_CENTER
     # no_title_theme_join_game.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_SIMPLE
-    no_title_theme_join_game.widget_padding = 5
+    no_title_theme_join_game.widget_padding = 15
 
     main_menu = pygame_menu.Menu(
         "Platform Game", WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.7,
@@ -282,15 +283,21 @@ def main(test: bool = False) -> None:
         textinput_id='new_game'
     )
 
-    main_menu.add.button('Join an existing game: ', join_game_menu)
+    choose_game = main_menu.add.text_input(
+        'Choose a game: ',
+        default="<Click to choose a running game>",
+        onreturn=None,
+        onselect=join_game_menu.enable,
+        textinput_id='choose_game'
+    )
+
+    # choose_game = main_menu.add.button('Join an existing game: <click to choose>', join_game_menu)
 
     join_game_menu.add.vertical_margin(30)
-    join_game_menu.add.button("Amy's Game")
-    join_game_menu.add.button("John's Game")
-    join_game_menu.add.button("Dora's Game")
+    for game in game_rooms:
+        join_game_menu.add.button(game, choose_game.set_title, game)
 
-    main_menu.add.button("Start the game",
-                         lambda: start_game(server_ip.get_value(), server_port.get_value()))
+    main_menu.add.button("Start the game", start_game, server_ip.get_value(), server_port.get_value())
 
     main_menu.add.button('Quit', pygame_menu.events.EXIT)
     main_menu.set_sound(all_sound, recursive=True)  # Apply on menu and all sub-menus
