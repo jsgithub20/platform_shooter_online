@@ -233,6 +233,7 @@ def main(test: bool = False) -> None:
     no_title_theme_join_game = pygame_menu.themes.THEME_ORANGE.copy()
     no_title_theme_join_game.background_color = (0, 0, 0, 0)
     # no_title_theme_join_game.title = False
+    no_title_theme_join_game.title_close_button = False
     no_title_theme_join_game.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_NONE
     no_title_theme_join_game.title_offset = (200, 0)
     no_title_theme_join_game.title_font_shadow = True
