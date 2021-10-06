@@ -567,7 +567,7 @@ class Game:
 
 
 g = Game()
-g.show_start_screen()
+# g.show_start_screen()
 while g.running:
     g.show_select_screen()
     g.new()
