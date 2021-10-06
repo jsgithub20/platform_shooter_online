@@ -1,6 +1,9 @@
 from threading import Thread
 from pygame_menu.locals import *
 from typing import Optional
+from logging import handlers
+import logging
+import coloredlogs
 import queue
 import pygame
 import pygame_menu
@@ -66,7 +69,7 @@ class DrawText(pygame.sprite.Sprite):
 class EventLoop(Thread):
     def __init__(self):
         self._loop = asyncio.get_event_loop()
-        super().__init__(target=self._loop.run_forever)
+        super().__init__(target=self._loop.run_forever, daemon=True)
         self.start()
         self.game_task = None
 
@@ -77,9 +80,40 @@ class EventLoop(Thread):
         self.game_task = asyncio.run_coroutine_threadsafe(coro, self._loop)
 
 
+class MyLogger:
+    def __init__(self):
+        FIELD_STYLES = {'asctime': {'color': 'green'},
+                        'levelname': {'bold': False, 'color': (200, 200, 200)},
+                        'filename': {'color': 'cyan'},
+                        'funcName': {'color': 'blue'}}
+
+        LEVEL_STYLES = {'critical': {'bold': True, 'color': 'red'},
+                        'debug': {'color': 'magenta'},
+                        'error': {'color': 'red'},
+                        'exception': {'color': 'red'},
+                        'info': {'color': 'green'},
+                        'warning': {'color': 'yellow'}}
+
+        self.my_logger = logging.getLogger()
+
+        format = '%(asctime)s [%(levelname)s] - %(message)s'
+
+        coloredlogs.install(level=logging.INFO,
+                            logger=self.my_logger,
+                            fmt=format,
+                            field_styles=FIELD_STYLES,
+                            level_styles=LEVEL_STYLES)
+
+        format_str = logging.Formatter(format)
+        fh = handlers.RotatingFileHandler("client_log.txt", "a", 100000, 3)
+        fh.setFormatter(format_str)
+        self.my_logger.addHandler(fh)
+
+
 class Menu:
     def __init__(self):
         pygame.init()
+        self.my_logger = MyLogger()
         self.clock = pygame.time.Clock()
         self.screen = pygame.display.set_mode(WINDOW_SIZE, flags=pygame.NOFRAME)
         self.room_selected1 = "Join an existing game: "
@@ -100,7 +134,7 @@ class Menu:
         self.server_ip = server_ip
         self.server_port = server_port
         self.conn_task()
-        print(f"Connected to server: {self.server_ip}:{self.server_port}", self.server_ip)
+        self.my_logger.my_logger.info(f"Connected to server: {self.server_ip}:{self.server_port}")
         self.main_menu.disable()
 
         my_msg = DrawText("My msg:")
@@ -158,7 +192,7 @@ class Menu:
 
     def game_room_selected(self, room: str, choose_game):
         choose_game.set_title(f"{self.room_selected1} {room}")
-        print(room)
+        self.my_logger.my_logger.info(room)
 
     def main(self, test: bool = False) -> None:
         """
@@ -187,7 +221,7 @@ class Menu:
         no_title_theme.title_close_button = False
         no_title_theme.title_offset = (120, 0)
 
-        no_title_theme.background_color = (0, 0, 0, 0)
+        no_title_theme.background_color = (0, 0, 0, 10)
         # no_title_theme.title = False
         no_title_theme.widget_font = pygame_menu.font.FONT_MUNRO
         no_title_theme.widget_alignment = pygame_menu.locals.ALIGN_LEFT
@@ -209,11 +243,11 @@ class Menu:
         no_title_theme_join_game.widget_padding = 5
 
         self.main_menu = pygame_menu.Menu(
-            "Platform Game", WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.7,
+            "Platform Game", WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.8,
             center_content=False,
             onclose=pygame_menu.events.EXIT,  # User press ESC button
             theme=no_title_theme,
-            position=[40, 20],
+            position=[40, 30],
         )
 
         join_game_menu = pygame_menu.Menu(
@@ -293,9 +327,11 @@ class Menu:
                                              align=ALIGN_CENTER,
                                              cursor=CURSOR_HAND)
 
-        self.main_menu.add.button("Start the game", self.start_game, server_ip.get_value(), server_port.get_value())
+        self.main_menu.add.button("Start", self.start_game, server_ip.get_value(), server_port.get_value())
 
         self.main_menu.add.button('Quit', pygame_menu.events.EXIT)
+        self.main_menu.add.vertical_margin(80)
+        self.main_menu.add.label("Disclaimer: you agree to use this program on your own risks.", font_color="red")
         self.main_menu.set_sound(all_sound, recursive=True)  # Apply on menu and all sub-menus
 
         # -------------------------------------------------------------------------
