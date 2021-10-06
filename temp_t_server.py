@@ -78,7 +78,7 @@ def threaded_client(conn, game_id):
         clock.tick(1)
         if not game_state_dict[game_id].player_1_conn:
             try:
-                server_msg = f"{time.strftime('%H:%M:%S')} server message to client {game_id}."
+                server_msg = f"{time.strftime('%Y-%m-%d %H:%M:%S')} server message to client {game_id}."
                 conn.sendall(server_msg.encode())
                 client_msg = conn.recv(100).decode()
                 print(f"{time.strftime('%H:%M:%S')} client message: '{client_msg}'")

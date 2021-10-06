@@ -10,21 +10,43 @@ This is a test server program to confirm the following functionalities:
 
 import asyncio
 import pygame
-import logging
+import coloredlogs
 import datetime
+import logging
+from logging import handlers
 from dataclasses import dataclass
 from typing import Any
-from functools import partial
 
 FPS = 100
 LEN = 15
 
+FIELD_STYLES = {'asctime': {'color': 'green'},
+                'levelname': {'bold': False, 'color': (200, 200, 200)},
+                'filename': {'color': 'cyan'},
+                'funcName': {'color': 'blue'}}
+
+LEVEL_STYLES = {'critical': {'bold': True, 'color': 'red'},
+                'debug': {'color': 'magenta'},
+                'error': {'color': 'red'},
+                'exception': {'color': 'red'},
+                'info': {'color': 'green'},
+                'warning': {'color': 'yellow'}}
 pygame.init()
 cnt = 0  # total number of connections to the server
 game_dict = {}  # used to store game room information
 room_cnt = 1  # total number of game rooms
-logging.getLogger("asyncio")
-logging.basicConfig(format='\x1b[32m%(asctime)s.%(msecs)03d %(levelname)s: %(message)s\x1b[32m', datefmt='%X', level=logging.INFO)
+my_logger = logging.getLogger()
+
+coloredlogs.install(level=logging.INFO,
+                    logger=my_logger,
+                    fmt='%(asctime)s [%(levelname)s] - %(message)s',
+                    field_styles=FIELD_STYLES,
+                    level_styles=LEVEL_STYLES)
+
+format_str = logging.Formatter("%(asctime)s - %(levelname)s: %(message)s")
+fh = handlers.RotatingFileHandler("log.txt", "a", 100000, 3)
+fh.setFormatter(format_str)
+my_logger.addHandler(fh)
 
 
 @dataclass
@@ -42,7 +64,7 @@ async def join(reader, writer):
     while True:
         # sending joinable (only 1 player in the room) room list to the client
         rooms = [str(room_id) for room_id in [*game_dict] if game_dict[room_id].game_ready is False]
-        data = f"[{datetime.datetime.now().strftime('%H:%M:%S.%f')}]server msg: {' '.join(rooms)}".encode()
+        data = f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')}]server msg: {' '.join(rooms)}".encode()
         writer.write(data)
         received = await reader.read(100)
         choice = received.decode()
@@ -58,9 +80,9 @@ def _handle_task_result(task: asyncio.Task, room=1, player=0, writer=None):
         pass  # Task cancellation should not be logged as an error.
     except ConnectionError:
         writer.close()
-        logging.exception(f"Connection to room {room}: player {player} is lost")
+        my_logger.exception(f"Connection to room {room}: player {player} is lost")
     except Exception:  # pylint: disable=broad-except
-        logging.exception('Exception raised by task = %r', task)
+        my_logger.exception('Exception raised by task = %r', task)
 
 
 async def new_client(reader, writer):
@@ -71,7 +93,7 @@ async def new_client(reader, writer):
     room = None
     player_id = 0
     clock = pygame.time.Clock()
-    logging.info(f"Total connections: {cnt}")
+    my_logger.info(f"Total connections: {cnt}")
     writer.write(str(cnt).encode())  # the number of connections is sent as client_id
     received = await reader.read(100)
     choice = received.decode()
@@ -138,7 +160,7 @@ async def new_client(reader, writer):
             # logging.info(f"Received: '{msg0.decode()}'")
         except ConnectionError:
             room.player_0_writer.close()
-            logging.warning(f"Connection to room {room.room_id}: player 0 is lost")
+            my_logger.warning(f"Connection to room {room.room_id}: player 0 is lost")
             break
 
         try:
@@ -146,7 +168,7 @@ async def new_client(reader, writer):
             # logging.info(f"Received: '{msg1.decode()}'")
         except ConnectionError:
             room.player_1_writer.close()
-            logging.warning(f"Connection to room {room.room_id}: player 1 is lost")
+            my_logger.warning(f"Connection to room {room.room_id}: player 1 is lost")
             break
 
         room.player_0_writer.write(msg1)
@@ -156,12 +178,14 @@ async def new_client(reader, writer):
 async def main(host, port):
     server = await asyncio.start_server(new_client, host, port)
     # print(f"Server started with {host}:{port}")
-    logging.info(f"Server started at {host}:{port}")
+    my_logger.info(f"Server started at {host}:{port}")
     await server.serve_forever()
 
+
 if __name__ == "__main__":
+    my_logger.info("----------------------New log started---------------------------------")
     try:
         # No IP address is provided to allow the server to listen to all connections on the port
-        asyncio.run(main('', 8888))
+        asyncio.run(main('0.0.0.0', 8888))
     except KeyboardInterrupt:
-        print("Server terminated by player.")
+        my_logger.warning("Server terminated by player.")
