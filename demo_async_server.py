@@ -35,6 +35,7 @@ pygame.init()
 cnt = 0  # total number of connections to the server
 game_dict = {}  # used to store game room information
 room_cnt = 1  # total number of game rooms
+
 my_logger = logging.getLogger()
 
 coloredlogs.install(level=logging.INFO,
@@ -44,7 +45,7 @@ coloredlogs.install(level=logging.INFO,
                     level_styles=LEVEL_STYLES)
 
 format_str = logging.Formatter("%(asctime)s - %(levelname)s: %(message)s")
-fh = handlers.RotatingFileHandler("log.txt", "a", 100000, 3)
+fh = handlers.RotatingFileHandler("server_log.txt", "a", 100000, 3)
 fh.setFormatter(format_str)
 my_logger.addHandler(fh)
 
@@ -95,7 +96,7 @@ async def new_client(reader, writer):
     clock = pygame.time.Clock()
     my_logger.info(f"Total connections: {cnt}")
     writer.write(str(cnt).encode())  # the number of connections is sent as client_id
-    received = await reader.read(100)
+    received = await reader.read(200)
     choice = received.decode()
 
     if choice == "c":
@@ -186,6 +187,6 @@ if __name__ == "__main__":
     my_logger.info("----------------------New log started---------------------------------")
     try:
         # No IP address is provided to allow the server to listen to all connections on the port
-        asyncio.run(main('0.0.0.0', 8888))
+        asyncio.run(main('0.0.0.0', 8887))
     except KeyboardInterrupt:
         my_logger.warning("Server terminated by player.")
