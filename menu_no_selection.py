@@ -1,3 +1,9 @@
+"""
+File_id: 07oct2021_menu
+Related file id:  07oct2021_async_client, 07oct2021_async_server
+This is the alpha player menu code for the "shooter" game
+"""
+
 from threading import Thread
 from pygame_menu.locals import *
 from typing import Optional
@@ -8,7 +14,7 @@ import queue
 import pygame
 import pygame_menu
 import asyncio
-import demo_async_client
+import async_client
 
 # -----------------------------------------------------------------------------
 # Constants and global variables
@@ -119,7 +125,7 @@ class Menu:
         self.room_selected1 = "Join an existing game: "
         self.room_selected2 = "<click to choose>"
         self.t_loop = EventLoop()
-        self.connection: Optional [demo_async_client.Network] = None
+        self.connection: Optional [async_client.Network] = None
         self.server_ip: str = "47.94.100.39"
         self.server_port: str = "8887"
         self.main_menu: Optional [pygame_menu.menu] = None
@@ -127,7 +133,7 @@ class Menu:
         self.sound: Optional['pygame_menu.sound.Sound'] = None
 
     def conn_task(self):
-        self.connection = demo_async_client.Network(self.server_ip, self.server_port)
+        self.connection = async_client.Network(self.server_ip, self.server_port)
         self.t_loop.create_task(self.connection.start())
 
     def start_game(self, server_ip, server_port):
@@ -275,11 +281,13 @@ class Menu:
         )
 
         self.main_menu.add.text_input(
-            'Create a new game: ',
-            default="Amy's game",
+            'Your name: ',
+            default="Amy",
             onreturn=None,
             textinput_id='new_game'
         )
+
+        self.main_menu.add.button("Create a new game")
 
         choose_game = self.main_menu.add.button(self.room_selected1 + self.room_selected2, join_game_menu)
 
@@ -330,7 +338,7 @@ class Menu:
         self.main_menu.add.button("Start", self.start_game, server_ip.get_value(), server_port.get_value())
 
         self.main_menu.add.button('Quit', pygame_menu.events.EXIT)
-        self.main_menu.add.vertical_margin(80)
+        self.main_menu.add.vertical_margin(50)
         self.main_menu.add.label("Disclaimer: you agree to use this program on your own risks.", font_color="red")
         self.main_menu.set_sound(all_sound, recursive=True)  # Apply on menu and all sub-menus
 

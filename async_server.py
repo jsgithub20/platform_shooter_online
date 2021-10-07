@@ -1,11 +1,7 @@
 """
-File_id: 14may2020_async_server
-Related file id:  14may2020_async_client
-This is a test server program to confirm the following functionalities:
-1. server-client connection establishment through asyncio streams
-2. async task structures to handle new game room creation and existing game room joining
-    based on the client request
-3. client frame rate control with server tick rate (clock.tick()) over the connection
+File_id: 07oct2021_async_server
+Related file id:  07oct2021_async_client, 07oct2021_menu
+This is the alpha server code for the "shooter" game
 """
 
 import asyncio
@@ -31,6 +27,7 @@ LEVEL_STYLES = {'critical': {'bold': True, 'color': 'red'},
                 'exception': {'color': 'red'},
                 'info': {'color': 'green'},
                 'warning': {'color': 'yellow'}}
+
 pygame.init()
 cnt = 0  # total number of connections to the server
 game_dict = {}  # used to store game room information
@@ -54,6 +51,8 @@ my_logger.addHandler(fh)
 class RoomState:
     room_id: int = 0
     game_ready: bool = False
+    player_0_name: str = ""  # room name will be f"{player_0_name}'s game"
+    player_1_name: str = ""
     player_0_reader: Any = None
     player_0_writer: Any = None
     player_1_reader: Any = None
@@ -61,7 +60,7 @@ class RoomState:
 
 
 async def join(reader, writer):
-    # if the client request to join an existing game, a new task will be created with this function
+    # if the client request to join an existing game, a new coroutine will be created with this function
     while True:
         # sending joinable (only 1 player in the room) room list to the client
         rooms = [str(room_id) for room_id in [*game_dict] if game_dict[room_id].game_ready is False]
@@ -72,18 +71,6 @@ async def join(reader, writer):
         print("Room choice = ", choice)
         if choice != "j":  # use a number to simulate the game room selection
             return choice
-
-
-def _handle_task_result(task: asyncio.Task, room=1, player=0, writer=None):
-    try:
-        task.result()
-    except asyncio.CancelledError:
-        pass  # Task cancellation should not be logged as an error.
-    except ConnectionError:
-        writer.close()
-        my_logger.exception(f"Connection to room {room}: player {player} is lost")
-    except Exception:  # pylint: disable=broad-except
-        my_logger.exception('Exception raised by task = %r', task)
 
 
 async def new_client(reader, writer):
@@ -97,17 +84,18 @@ async def new_client(reader, writer):
     my_logger.info(f"Total connections: {cnt}")
     writer.write(str(cnt).encode())  # the number of connections is sent as client_id
     received = await reader.read(200)
-    choice = received.decode()
+    player_info = received.decode()
 
-    if choice == "c":
+    if player_info[0] == "c":  # first msg received from client will be "c"+player's name to create a new game
         player_id = 0
         room = RoomState()
         room.room_id = room_cnt
+        room.player_0_name = player_info[1:]
         room.player_0_reader = reader
         room.player_0_writer = writer
         game_dict[room.room_id] = room
         room_cnt += 1
-    elif choice == "j":  # client msg of "j" is simulated as a request to join an existing game room
+    elif player_info[0] == "j":  # first msg received from client will be "j"+player's name to create a new game
         choice = await join(reader, writer)
         # once a number is provided by the client, it's used as a room number
         # that this client wants to join and join() is returned back here
