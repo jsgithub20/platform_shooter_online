@@ -1,0 +1,178 @@
+2021-10-08 11:25:27,328 - INFO: ----------------------New log started---------------------------------
+2021-10-08 11:25:27,338 - INFO: Server started at 0.0.0.0:8887
+2021-10-08 11:28:40,417 - WARNING: Server terminated by player.
+2021-10-08 11:28:42,981 - INFO: ----------------------New log started---------------------------------
+2021-10-08 11:28:42,986 - INFO: Server started at 0.0.0.0:8887
+2021-10-08 11:29:00,318 - WARNING: Server terminated by player.
+2021-10-08 11:29:01,775 [INFO]: ----------------------New log started---------------------------------
+2021-10-08 11:29:01,780 [INFO]: Server started at 0.0.0.0:8887
+2021-10-08 11:30:24,028 [INFO]: Total connections: 1
+2021-10-08 11:30:45,652 [INFO]: Total connections: 2
+2021-10-08 11:30:45,678 [ERROR]: Task exception was never retrieved
+future: <Task finished name='Task-7' coro=<Server.new_client() done, defined at C:\Data\Python\platform_shooter_online\async_server.py:85> exception=TypeError('data argument must be a bytes-like object, not str')>
+Traceback (most recent call last):
+  File "C:\Data\Python\platform_shooter_online\async_server.py", line 107, in new_client
+    choice = await self.join(reader, writer)
+  File "C:\Data\Python\platform_shooter_online\async_server.py", line 78, in join
+    writer.write(rooms_lst_enc)
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\streams.py", line 341, in write
+    self._transport.write(data)
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\proactor_events.py", line 333, in write
+    raise TypeError(
+TypeError: data argument must be a bytes-like object, not str
+2021-10-08 11:33:09,756 [WARNING]: Server terminated by player.
+2021-10-08 11:33:09,815 [ERROR]: Task exception was never retrieved
+future: <Task finished name='Task-5' coro=<Server.new_client() done, defined at C:\Data\Python\platform_shooter_online\async_server.py:85> exception=KeyboardInterrupt()>
+Traceback (most recent call last):
+  File "C:\Data\Python\platform_shooter_online\async_server.py", line 185, in <module>
+    asyncio.run(s.main('0.0.0.0', 8887))
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 629, in run_until_complete
+    self.run_forever()
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\windows_events.py", line 316, in run_forever
+    super().run_forever()
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 596, in run_forever
+    self._run_once()
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 1890, in _run_once
+    handle._run()
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Data\Python\platform_shooter_online\async_server.py", line 118, in new_client
+    clock.tick(FPS)
+KeyboardInterrupt
+2021-10-08 11:33:57,801 [INFO]: ----------------------New log started---------------------------------
+2021-10-08 11:33:57,806 [INFO]: Server started at 0.0.0.0:8887
+2021-10-08 11:34:04,917 [INFO]: Total connections: 1
+2021-10-08 11:34:09,453 [INFO]: Total connections: 2
+2021-10-08 11:34:09,522 [ERROR]: Task exception was never retrieved
+future: <Task finished name='Task-7' coro=<Server.new_client() done, defined at C:\Data\Python\platform_shooter_online\async_server.py:85> exception=ValueError('invalid literal for int() with base 10: \'2: msg received is \\\'[[false, ""]]\\\'\'')>
+Traceback (most recent call last):
+  File "C:\Data\Python\platform_shooter_online\async_server.py", line 110, in new_client
+    choice = int(choice)
+ValueError: invalid literal for int() with base 10: '2: msg received is \'[[false, ""]]\''
+2021-10-08 11:34:28,685 [WARNING]: Server terminated by player.
+2021-10-08 11:34:28,761 [ERROR]: Task exception was never retrieved
+future: <Task finished name='Task-5' coro=<Server.new_client() done, defined at C:\Data\Python\platform_shooter_online\async_server.py:85> exception=KeyboardInterrupt()>
+Traceback (most recent call last):
+  File "C:\Data\Python\platform_shooter_online\async_server.py", line 185, in <module>
+    asyncio.run(s.main('0.0.0.0', 8887))
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 629, in run_until_complete
+    self.run_forever()
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\windows_events.py", line 316, in run_forever
+    super().run_forever()
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 596, in run_forever
+    self._run_once()
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 1890, in _run_once
+    handle._run()
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Data\Python\platform_shooter_online\async_server.py", line 118, in new_client
+    clock.tick(FPS)
+KeyboardInterrupt
+2021-10-08 15:22:34,265 [INFO]: ----------------------New log started---------------------------------
+2021-10-08 15:22:34,273 [INFO]: Server started at 0.0.0.0:8887
+2021-10-08 15:22:53,891 [INFO]: Total connections: 1, new connection from: 
+2021-10-08 15:22:53,902 [ERROR]: Task exception was never retrieved
+future: <Task finished name='Task-5' coro=<Server.new_client() done, defined at C:\Data\Python\platform_shooter_online\async_server.py:82> exception=AttributeError("'coroutine' object has no attribute 'decode'")>
+Traceback (most recent call last):
+  File "C:\Data\Python\platform_shooter_online\async_server.py", line 104, in new_client
+    choice = await self.join(reader, writer)
+  File "C:\Data\Python\platform_shooter_online\async_server.py", line 74, in join
+    response = await reader.read(length).decode()
+AttributeError: 'coroutine' object has no attribute 'decode'
+2021-10-08 15:24:23,535 [WARNING]: Server terminated by player.
+2021-10-08 15:24:27,142 [INFO]: ----------------------New log started---------------------------------
+2021-10-08 15:24:27,147 [INFO]: Server started at 0.0.0.0:8887
+2021-10-08 15:24:35,773 [INFO]: Total connections: 1, new connection from: 
+2021-10-08 15:24:35,778 [ERROR]: Task exception was never retrieved
+future: <Task finished name='Task-5' coro=<Server.new_client() done, defined at C:\Data\Python\platform_shooter_online\async_server.py:83> exception=ValueError('invalid literal for int() with base 10: "1: msg received is \'[]\'"')>
+Traceback (most recent call last):
+  File "C:\Data\Python\platform_shooter_online\async_server.py", line 108, in new_client
+    choice = int(choice)
+ValueError: invalid literal for int() with base 10: "1: msg received is '[]'"
+2021-10-08 15:27:11,102 [WARNING]: Server terminated by player.
+2021-10-08 15:27:48,842 [INFO]: ----------------------New log started---------------------------------
+2021-10-08 15:27:48,847 [INFO]: Server started at 0.0.0.0:8887
+2021-10-08 15:27:57,298 [INFO]: Total connections: 1, new connection from: 
+2021-10-08 15:27:57,303 [ERROR]: Task exception was never retrieved
+future: <Task finished name='Task-5' coro=<Server.new_client() done, defined at C:\Data\Python\platform_shooter_online\async_server.py:83> exception=ValueError('invalid literal for int() with base 10: "1: msg received is \'[]\'"')>
+Traceback (most recent call last):
+  File "C:\Data\Python\platform_shooter_online\async_server.py", line 109, in new_client
+    choice = int(choice)
+ValueError: invalid literal for int() with base 10: "1: msg received is '[]'"
+2021-10-08 15:28:40,186 [WARNING]: Server terminated by player.
+2021-10-08 15:28:45,759 [INFO]: ----------------------New log started---------------------------------
+2021-10-08 15:28:45,764 [INFO]: Server started at 0.0.0.0:8887
+2021-10-08 15:28:51,339 [INFO]: Total connections: 1, new connection from: 
+2021-10-08 15:29:02,131 [WARNING]: Server terminated by player.
+2021-10-08 15:29:02,189 [ERROR]: Task exception was never retrieved
+future: <Task finished name='Task-5' coro=<Server.new_client() done, defined at C:\Data\Python\platform_shooter_online\async_server.py:83> exception=KeyboardInterrupt()>
+Traceback (most recent call last):
+  File "C:\Data\Python\platform_shooter_online\async_server.py", line 184, in <module>
+    asyncio.run(s.main('0.0.0.0', 8887))
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 629, in run_until_complete
+    self.run_forever()
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\windows_events.py", line 316, in run_forever
+    super().run_forever()
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 596, in run_forever
+    self._run_once()
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 1890, in _run_once
+    handle._run()
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Data\Python\platform_shooter_online\async_server.py", line 117, in new_client
+    clock.tick(FPS)
+KeyboardInterrupt
+2021-10-08 15:29:53,557 [INFO]: ----------------------New log started---------------------------------
+2021-10-08 15:29:53,561 [INFO]: Server started at 0.0.0.0:8887
+2021-10-08 15:30:00,694 [INFO]: Total connections: 1, new connection from: 
+2021-10-08 15:31:58,584 [WARNING]: Server terminated by player.
+2021-10-08 15:31:58,625 [ERROR]: Task exception was never retrieved
+future: <Task finished name='Task-5' coro=<Server.new_client() done, defined at C:\Data\Python\platform_shooter_online\async_server.py:83> exception=KeyboardInterrupt()>
+Traceback (most recent call last):
+  File "C:\Data\Python\platform_shooter_online\async_server.py", line 185, in <module>
+    asyncio.run(s.main('0.0.0.0', 8887))
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 629, in run_until_complete
+    self.run_forever()
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\windows_events.py", line 316, in run_forever
+    super().run_forever()
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 596, in run_forever
+    self._run_once()
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 1890, in _run_once
+    handle._run()
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Data\Python\platform_shooter_online\async_server.py", line 118, in new_client
+    clock.tick(FPS)
+KeyboardInterrupt
+2021-10-08 15:32:05,866 [INFO]: ----------------------New log started---------------------------------
+2021-10-08 15:32:05,871 [INFO]: Server started at 0.0.0.0:8887
+2021-10-08 15:32:27,193 [INFO]: Total connections: 1, new connection from: Amy
+2021-10-08 15:33:00,201 [WARNING]: Server terminated by player.
+2021-10-08 15:33:00,274 [ERROR]: Task exception was never retrieved
+future: <Task finished name='Task-5' coro=<Server.new_client() done, defined at C:\Data\Python\platform_shooter_online\async_server.py:83> exception=KeyboardInterrupt()>
+Traceback (most recent call last):
+  File "C:\Data\Python\platform_shooter_online\async_server.py", line 185, in <module>
+    asyncio.run(s.main('0.0.0.0', 8887))
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 629, in run_until_complete
+    self.run_forever()
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\windows_events.py", line 316, in run_forever
+    super().run_forever()
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 596, in run_forever
+    self._run_once()
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 1890, in _run_once
+    handle._run()
+  File "C:\Users\nxa16243\AppData\Local\Programs\Python\Python39\lib\asyncio\events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Data\Python\platform_shooter_online\async_server.py", line 118, in new_client
+    clock.tick(FPS)
+KeyboardInterrupt
