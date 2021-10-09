@@ -1,7 +1,11 @@
 """
-File_id: 07oct2021_async_client
-Related file id:  07oct2021_async_server, 07oct2021_menu
-This is the alpha client code for the "shooter" game
+File_id: 14may2020_async_client
+Related file id:  14may2020_async_server
+This is a test client program to confirm the following functionalities:
+1. server-client connection establishment through asyncio streams
+2. async task structures to handle new game room creation and existing game room joining
+    based on the client request
+3. client frame rate control with server tick rate (clock.tick()) over the connection
 """
 
 import asyncio
@@ -30,12 +34,12 @@ class Network:
         timer = 0  # used to simulate the waiting time for the player to enter room#
         # input "0" to simulate the request to join a room
         choice = input("Input 'c' to create a new game room, or 'j' to join one: ")
-        if choice[0] == "c":
+        if choice == "c":
             self.reader, self.writer = await asyncio.open_connection(self.server_ip, self.server_port)
             data = await self.reader.read(100)
             self.client_id = data.decode()
             print(f"This is client# {self.client_id}")
-            self.writer.write(choice.encode())
+            self.writer.write("c".encode())
             await self.client()
         else:
             self.reader, self.writer = await asyncio.open_connection(self.server_ip, self.server_port)
@@ -97,7 +101,7 @@ class Network:
         return tuple(map(int, string.split(',')))
 
 
-def main(server_ip='127.0.0.1', server_port="8887"):
+def main(server_ip='192.168.3.10', server_port="8888"):
     new_client = Network(server_ip, server_port)
     asyncio.run(new_client.start())
 
