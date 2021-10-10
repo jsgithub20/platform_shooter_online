@@ -24,11 +24,11 @@ WINDOW_SIZE = (1024, 768)
 GAME_ROOMS = ["Amy's game", "Jacky's game", "Dora's game", "Amy's game", "Jacky's game", "Dora's game",
               "Amy's game", "Jacky's game", "Dora's game", "Amy's game", "Jacky's game", "Dora's game"]
 
-
 # -----------------------------------------------------------------------------
 # Load image
 # -----------------------------------------------------------------------------
 background_image = pygame.image.load("resources\gui\Window_19_1024-768.png")
+
 
 # -----------------------------------------------------------------------------
 # Methods
@@ -125,20 +125,49 @@ class Menu:
         self.room_selected1 = "Join an existing game: "
         self.room_selected2 = "<click to choose>"
         self.t_loop = EventLoop()
-        self.connection: Optional [async_client.Network] = None
+        self.connection: Optional[async_client.Network] = None
         self.server_ip: str = "47.94.100.39"
         self.server_port: str = "8887"
-        self.main_menu: Optional [pygame_menu.menu] = None
+        self.player_name = ""
+        self.game_rooms = [[False, "no rooms"], ]
+        self.chosen_room = ""
+        self.start_type = ""  # "create" or "join"
+        self.main_menu: Optional[pygame_menu.menu] = None
         self.surface: Optional['pygame.Surface'] = pygame.image.load("resources\gui\Window_06.png")
         self.sound: Optional['pygame_menu.sound.Sound'] = None
 
     def conn_task(self):
-        self.connection = async_client.Network(self.server_ip, self.server_port)
-        self.t_loop.create_task(self.connection.start())
+        print(self.server_ip, self.server_port, self.player_name, self.start_type)
 
-    def start_game(self, server_ip, server_port):
+        self.connection = async_client.Network(self.server_ip, self.server_port)
+        print(self.server_ip, self.server_port, self.player_name, self.start_type)
+        self.t_loop.create_task(self.connection.start(self.player_name, self.start_type))
+
+    def refresh(self, server_ip, server_port, player_name):
+        self.start_type = "join"
         self.server_ip = server_ip
         self.server_port = server_port
+        self.player_name = player_name
+        self.conn_task()
+        try:
+            # 3 lines of get_nowait() to make sure even the Queue() is full, only the last item is returned
+            self.game_rooms = self.connection.q_game_rooms.get_nowait()
+            self.game_rooms = self.connection.q_game_rooms.get_nowait()
+            self.game_rooms = self.connection.q_game_rooms.get_nowait()
+        except queue.Empty:
+            pass
+
+    def join(self, server_ip, server_port, player_name):
+        self.start_type = "join"
+        self.demo_game(server_ip, server_port, player_name)
+
+    def set_create(self):
+        self.start_type = "create"
+
+    def demo_game(self, server_ip, server_port, player_name):
+        self.server_ip = server_ip
+        self.server_port = server_port
+        self.player_name = player_name
         self.conn_task()
         self.my_logger.my_logger.info(f"Connected to server: {self.server_ip}:{self.server_port}")
         self.main_menu.disable()
@@ -198,6 +227,7 @@ class Menu:
 
     def game_room_selected(self, room: str, choose_game):
         choose_game.set_title(f"{self.room_selected1} {room}")
+        self.chosen_room = room
         self.my_logger.my_logger.info(room)
 
     def main(self, test: bool = False) -> None:
@@ -206,8 +236,6 @@ class Menu:
         :param test: Indicate function is being tested
         :return: None
         """
-
-
 
         all_sound = pygame_menu.sound.Sound()
         # engine.set_sound(pygame_menu.sound.SOUND_TYPE_CLICK_MOUSE, 'resources/sound/Designer_Stubble.ogg', volume=0.5)
@@ -256,7 +284,7 @@ class Menu:
             position=[40, 30],
         )
 
-        join_game_menu = pygame_menu.Menu(
+        self.join_game_menu = pygame_menu.Menu(
             'Choosing Games', WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.8,
             center_content=False,
             onclose=pygame_menu.events.EXIT,  # User press ESC button
@@ -268,7 +296,7 @@ class Menu:
 
         server_ip = self.main_menu.add.text_input(
             'Server ip address: ',
-            default='47.94.100.39',
+            default='127.0.0.1',  # '47.94.100.39'
             onreturn=None,
             textinput_id='server_ip',
         )
@@ -280,34 +308,38 @@ class Menu:
             textinput_id='server_port'
         )
 
-        self.main_menu.add.text_input(
+        player_name = self.main_menu.add.text_input(
             'Your name: ',
             default="Amy",
             onreturn=None,
             textinput_id='new_game'
         )
 
-        self.main_menu.add.button("Create a new game")
+        self.main_menu.add.button("Create a new game", self.set_create)
 
-        choose_game = self.main_menu.add.button(self.room_selected1 + self.room_selected2, join_game_menu)
+        choose_game = self.main_menu.add.button(self.room_selected1 + self.room_selected2, self.join_game_menu)
 
-        join_game_menu.add.vertical_margin(30)
+        self.join_game_menu.add.vertical_margin(30)
 
-        refresh_frame = join_game_menu.add.frame_h(400, 50, padding=0, align=ALIGN_CENTER)
+        refresh_frame = self.join_game_menu.add.frame_h(400, 50, padding=0, align=ALIGN_CENTER)
 
-        b_refresh = join_game_menu.add.button("refresh",
+        b_refresh = self.join_game_menu.add.button("refresh",
+                                              self.refresh,
+                                              server_ip.get_value(),
+                                              server_port.get_value(),
+                                              player_name.get_value(),
                                               font_color=(51, 94, 28),
                                               background_color=(255, 221, 119),
                                               selection_color=(249, 7, 7),
                                               cursor=CURSOR_HAND)
 
-        refresh_frame.pack(join_game_menu.add.label("Please"))
+        refresh_frame.pack(self.join_game_menu.add.label("Please"))
         refresh_frame.pack(b_refresh)
-        refresh_frame.pack(join_game_menu.add.label(" the game list!"))
+        refresh_frame.pack(self.join_game_menu.add.label(" the game list!"))
 
-        join_game_menu.add.vertical_margin(10)
+        self.join_game_menu.add.vertical_margin(10)
 
-        frame = join_game_menu.add.frame_v(600, 1500,
+        frame = self.join_game_menu.add.frame_v(600, 1500,
                                            background_color=(240, 230, 185),
                                            padding=0,
                                            max_width=600,
@@ -317,29 +349,44 @@ class Menu:
 
         frame.clear()
 
-        for i in range(len(GAME_ROOMS)):
-            frame.pack(join_game_menu.add.button(GAME_ROOMS[i],
+        for i in range(len(self.game_rooms)):
+            room = ""
+            if self.game_rooms[i][0]:
+                room = f"{self.game_rooms[i]} (full)"
+            else:
+                room = self.game_rooms[i][1]
+            frame.pack(self.join_game_menu.add.button(room,
                                                  self.game_room_selected,
-                                                 GAME_ROOMS[i],
+                                                 self.game_rooms[i],
                                                  choose_game,
                                                  font_color='red',
                                                  button_id=f'b{i}'), align=ALIGN_CENTER)
 
-        join_game_menu.add.vertical_margin(30)
+        self.join_game_menu.add.vertical_margin(30)
 
-        b_return = join_game_menu.add.button("Return",
-                                             pygame_menu.events.BACK,
+        b_return = self.join_game_menu.add.button("Join",
+                                             self.join,
+                                             server_ip.get_value(),
+                                             server_port.get_value(),
+                                             player_name.get_value(),
                                              font_color=(51, 94, 28),
                                              background_color=(255, 221, 119),
                                              selection_color=(249, 7, 7),
                                              align=ALIGN_CENTER,
                                              cursor=CURSOR_HAND)
 
-        self.main_menu.add.button("Start", self.start_game, server_ip.get_value(), server_port.get_value())
+        self.main_menu.add.button("Start",
+                                  self.demo_game,
+                                  server_ip.get_value(),
+                                  server_port.get_value(),
+                                  player_name.get_value())
 
         self.main_menu.add.button('Quit', pygame_menu.events.EXIT)
         self.main_menu.add.vertical_margin(50)
-        self.main_menu.add.label("Disclaimer: you agree to use this program on your own risks.", font_color="red")
+        self.main_menu.add.label("Disclaimer: you agree to use this program on your own risks.",
+                                 font_color="red",
+                                 font_size=20,
+                                 align=ALIGN_CENTER)
         self.main_menu.set_sound(all_sound, recursive=True)  # Apply on menu and all sub-menus
 
         # -------------------------------------------------------------------------
@@ -363,6 +410,8 @@ class Menu:
                     self.main_menu.draw(self.screen)
             else:
                 break
+
+            self.join_game_menu.update(events)
 
             # Main menu
             # self.main_menu.mainloop(surface, main_background, disable_loop=test, fps_limit=FPS)

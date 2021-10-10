@@ -71,8 +71,9 @@ class Server:
             rooms_lst_enc = json.dumps(rooms_lst).encode()
             length = len(json.dumps(rooms_lst))
             writer.write(str(length).encode())  # send the receiving length first
-            response_data = await reader.read(length)
-            response = response_data.decode()
+            # this will be the "length" returned from client, just to complete a write/read cycle
+            await reader.read(length)
+
             writer.write(rooms_lst_enc)
             received = await reader.read(100)
             choice = received.decode()
@@ -89,21 +90,21 @@ class Server:
         clock = pygame.time.Clock()
         writer.write(str(self.cnt).encode())  # the number of connections is sent as client_id
         received = await reader.read(200)
-        player_info = received.decode()
+        player_info = received.decode().split(",")
         print(player_info)
         print(player_info[0], player_info[1:])
-        self.my_logger.info(f"Total connections: {self.cnt}, new connection from: {player_info[1:]}")
+        self.my_logger.info(f"Total connections: {self.cnt}, new connection from: {player_info[1]}")
 
-        if player_info[0] == "c":  # first msg received from client will be "c"+player's name to create a new game
+        if player_info[0] == "create":  # first msg received from client will be "c"+player's name to create a new game
             player_id = 0
             room = RoomState()
             room.room_id = self.room_cnt
-            room.player_0_name = player_info[1:]
+            room.player_0_name = player_info[1]
             room.player_0_reader = reader
             room.player_0_writer = writer
             self.game_dict[room.room_id] = room
             self.room_cnt += 1
-        elif player_info[0] == "j":  # first msg received from client will be "j"+player's name to create a new game
+        elif player_info[0] == "join":  # first msg received from client will be "j"+player's name to create a new game
             choice = await self.join(reader, writer)
             # once a number is provided by the client, it's used as a room number
             # that this client wants to join and join() is returned back here
@@ -144,8 +145,9 @@ class Server:
                     msg0 = await room.player_0_reader.read(100)
                     # logging.info(f"Received: '{msg0.decode()}'")
                 except Exception as e:
-                    # logging.warning(f"Something's wrong with room {room.room_id} - player0: {e}")
+                    logging.warning(f"Something's wrong with room {room.room_id} - player0: {e}")
                     room.player_0_writer.close()
+                    self.cnt -= 1
                     # print the information if the key to pop up doesn't exist in the following line
                     # logging.warning(game_dict.pop(room.room_id, f"room '{room.room_id}' is not running"))
                     break
@@ -158,6 +160,7 @@ class Server:
             except ConnectionError:
                 room.player_0_writer.close()
                 self.my_logger.warning(f"Connection to room {room.room_id}: player 0 is lost")
+                self.cnt -= 1
                 break
 
             try:
@@ -166,6 +169,7 @@ class Server:
             except ConnectionError:
                 room.player_1_writer.close()
                 self.my_logger.warning(f"Connection to room {room.room_id}: player 1 is lost")
+                self.cnt -= 1
                 break
 
             room.player_0_writer.write(msg1)
