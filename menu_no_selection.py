@@ -3,7 +3,7 @@ File_id: 07oct2021_menu
 Related file id:  07oct2021_async_client, 07oct2021_async_server
 This is the alpha player menu code for the "shooter" game
 """
-
+import time
 from threading import Thread
 from pygame_menu.locals import *
 from typing import Optional
@@ -137,11 +137,9 @@ class Menu:
         self.sound: Optional['pygame_menu.sound.Sound'] = None
 
     def conn_task(self):
-        print(self.server_ip, self.server_port, self.player_name, self.start_type)
-
         self.connection = async_client.Network(self.server_ip, self.server_port)
-        print(self.server_ip, self.server_port, self.player_name, self.start_type)
         self.t_loop.create_task(self.connection.start(self.player_name, self.start_type))
+        time.sleep(1)  # wait for connection to be established
 
     def refresh(self, server_ip, server_port, player_name):
         self.start_type = "join"
@@ -149,9 +147,12 @@ class Menu:
         self.server_port = server_port
         self.player_name = player_name
         self.conn_task()
+        print("'Join' connected")
         try:
+            print(f"starting 'try', q size = {self.connection.q_game_rooms.qsize()}")
             # 3 lines of get_nowait() to make sure even the Queue() is full, only the last item is returned
             self.game_rooms = self.connection.q_game_rooms.get_nowait()
+            print(f"get from q: {self.game_rooms}")
             self.game_rooms = self.connection.q_game_rooms.get_nowait()
             self.game_rooms = self.connection.q_game_rooms.get_nowait()
         except queue.Empty:
@@ -324,14 +325,14 @@ class Menu:
         refresh_frame = self.join_game_menu.add.frame_h(400, 50, padding=0, align=ALIGN_CENTER)
 
         b_refresh = self.join_game_menu.add.button("refresh",
-                                              self.refresh,
-                                              server_ip.get_value(),
-                                              server_port.get_value(),
-                                              player_name.get_value(),
-                                              font_color=(51, 94, 28),
-                                              background_color=(255, 221, 119),
-                                              selection_color=(249, 7, 7),
-                                              cursor=CURSOR_HAND)
+                                                   self.refresh,
+                                                   server_ip.get_value(),
+                                                   server_port.get_value(),
+                                                   player_name.get_value(),
+                                                   font_color=(51, 94, 28),
+                                                   background_color=(255, 221, 119),
+                                                   selection_color=(249, 7, 7),
+                                                   cursor=CURSOR_HAND)
 
         refresh_frame.pack(self.join_game_menu.add.label("Please"))
         refresh_frame.pack(b_refresh)
@@ -340,11 +341,11 @@ class Menu:
         self.join_game_menu.add.vertical_margin(10)
 
         frame = self.join_game_menu.add.frame_v(600, 1500,
-                                           background_color=(240, 230, 185),
-                                           padding=0,
-                                           max_width=600,
-                                           max_height=300,
-                                           align=ALIGN_CENTER)
+                                                background_color=(240, 230, 185),
+                                                padding=0,
+                                                max_width=600,
+                                                max_height=300,
+                                                align=ALIGN_CENTER)
         frame.set_title('Game Rooms', title_font_color=(247, 159, 7), padding_inner=(2, 5))
 
         frame.clear()
@@ -356,24 +357,24 @@ class Menu:
             else:
                 room = self.game_rooms[i][1]
             frame.pack(self.join_game_menu.add.button(room,
-                                                 self.game_room_selected,
-                                                 self.game_rooms[i],
-                                                 choose_game,
-                                                 font_color='red',
-                                                 button_id=f'b{i}'), align=ALIGN_CENTER)
+                                                      self.game_room_selected,
+                                                      self.game_rooms[i][1],
+                                                      choose_game,
+                                                      font_color='red',
+                                                      button_id=f'b{i}'), align=ALIGN_CENTER)
 
         self.join_game_menu.add.vertical_margin(30)
 
         b_return = self.join_game_menu.add.button("Join",
-                                             self.join,
-                                             server_ip.get_value(),
-                                             server_port.get_value(),
-                                             player_name.get_value(),
-                                             font_color=(51, 94, 28),
-                                             background_color=(255, 221, 119),
-                                             selection_color=(249, 7, 7),
-                                             align=ALIGN_CENTER,
-                                             cursor=CURSOR_HAND)
+                                                  self.join,
+                                                  server_ip.get_value(),
+                                                  server_port.get_value(),
+                                                  player_name.get_value(),
+                                                  font_color=(51, 94, 28),
+                                                  background_color=(255, 221, 119),
+                                                  selection_color=(249, 7, 7),
+                                                  align=ALIGN_CENTER,
+                                                  cursor=CURSOR_HAND)
 
         self.main_menu.add.button("Start",
                                   self.demo_game,
@@ -410,8 +411,6 @@ class Menu:
                     self.main_menu.draw(self.screen)
             else:
                 break
-
-            self.join_game_menu.update(events)
 
             # Main menu
             # self.main_menu.mainloop(surface, main_background, disable_loop=test, fps_limit=FPS)

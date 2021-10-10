@@ -37,25 +37,26 @@ class Network:
             self.reader, self.writer = await asyncio.open_connection(self.server_ip, self.server_port)
             data = await self.reader.read(100)
             self.client_id = data.decode()
-            print(f"This is client# {self.client_id}")
+            print(f"This is 'create' client# {self.client_id}")
             self.writer.write(f"{start_type},{player_name}".encode())
             await self.client()
         elif start_type == "join":
             self.reader, self.writer = await asyncio.open_connection(self.server_ip, self.server_port)
             data = await self.reader.read(100)
             self.client_id = data.decode()
-            print(f"This is client# {self.client_id}")
+            print(f"This is 'join' client# {self.client_id}")
             self.writer.write(f"{start_type},{player_name}".encode())
             while True:  # the loop to receive new room list from server
                 len_data = await self.reader.read(100)
                 self.writer.write(len_data)
                 rooms_data = await self.reader.read(int(len_data.decode()))
                 self.game_rooms = list(json.loads(rooms_data.decode()))
+                print(f"received by client: {self.game_rooms}")
                 try:
                     self.q_game_rooms.put_nowait(self.game_rooms)
+                    print(f"put in q: {self.q_game_rooms.qsize()}")
                 except queue.Full:
                     pass  # TODO: code to handle the exception
-                print(f"Rooms available to join: {self.game_rooms}")
                 self.writer.write(self.chosen_room.encode())
 
     async def client(self):
@@ -101,7 +102,7 @@ class Network:
 
 def main(server_ip='127.0.0.1', server_port="8887"):
     new_client = Network(server_ip, server_port)
-    asyncio.run(new_client.start("Amy", "Amy's game", "create"))
+    asyncio.run(new_client.start("Amy", "create"))
 
 
 if __name__ == "__main__":

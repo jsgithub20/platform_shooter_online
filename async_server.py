@@ -46,6 +46,7 @@ class RoomState:
 class Server:
     def __init__(self):
         pygame.init()
+        self.clock = pygame.time.Clock()
         self.cnt = 0  # total number of connections to the server
         self.game_dict = {}  # used to store game room information
         self.room_cnt = 1  # total number of game rooms
@@ -65,6 +66,7 @@ class Server:
     async def join(self, reader, writer):
         # if the client request to join an existing game, a new coroutine will be created with this function
         while True:
+            self.clock.tick(FPS)
             # sending room list to the client, no matter full or not
             rooms_lst = [[self.game_dict[room_id].game_ready, self.game_dict[room_id].player_0_name]
                          for room_id in [*self.game_dict]]
@@ -75,6 +77,7 @@ class Server:
             await reader.read(length)
 
             writer.write(rooms_lst_enc)
+            print(f"server sent: {rooms_lst}")
             received = await reader.read(100)
             choice = received.decode()
             print("Room choice = ", choice)
@@ -87,12 +90,9 @@ class Server:
         self.cnt += 1
         room = None
         player_id = 0
-        clock = pygame.time.Clock()
         writer.write(str(self.cnt).encode())  # the number of connections is sent as client_id
         received = await reader.read(200)
         player_info = received.decode().split(",")
-        print(player_info)
-        print(player_info[0], player_info[1:])
         self.my_logger.info(f"Total connections: {self.cnt}, new connection from: {player_info[1]}")
 
         if player_info[0] == "create":  # first msg received from client will be "c"+player's name to create a new game
@@ -116,7 +116,7 @@ class Server:
             room = self.game_dict[choice]
 
         while True:  # wait for the 2nd player to join the room
-            clock.tick(FPS)
+            self.clock.tick(FPS)
 
             """
             once there are two players in one game room, game_ready for that room is set to 
@@ -153,7 +153,7 @@ class Server:
                     break
 
         while True:  # this is the routine game tick
-            clock.tick(FPS)
+            self.clock.tick(FPS)
             try:
                 msg0 = await loop.create_task(room.player_0_reader.read(LEN))
                 # logging.info(f"Received: '{msg0.decode()}'")
