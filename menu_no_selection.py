@@ -131,6 +131,7 @@ class Menu:
         self.player_name = ""
         self.game_rooms = [[False, "no rooms"], ]
         self.chosen_room = ""
+        self.room_frame = None
         self.start_type = ""  # "create" or "join"
         self.main_menu: Optional[pygame_menu.menu] = None
         self.surface: Optional['pygame.Surface'] = pygame.image.load("resources\gui\Window_06.png")
@@ -157,6 +158,23 @@ class Menu:
             self.game_rooms = self.connection.q_game_rooms.get_nowait()
         except queue.Empty:
             pass
+
+        self.update_rooms()
+
+    def update_rooms(self):
+        # self.room_frame.clear()
+
+        for i in range(len(self.game_rooms)):
+            room = ""
+            if self.game_rooms[i][0]:
+                room = f"{self.game_rooms[i]} (full)"
+            else:
+                room = self.game_rooms[i][1]
+            self.room_frame.pack(self.join_game_menu.add.button(room,
+                                                                self.game_room_selected,
+                                                                self.game_rooms[i][1],
+                                                                font_color='red',
+                                                                button_id=f'b{i}'), align=ALIGN_CENTER)
 
     def join(self, server_ip, server_port, player_name):
         self.start_type = "join"
@@ -226,8 +244,8 @@ class Menu:
 
             pygame.display.flip()
 
-    def game_room_selected(self, room: str, choose_game):
-        choose_game.set_title(f"{self.room_selected1} {room}")
+    def game_room_selected(self, room: str):
+        # choose_game.set_title(f"{self.room_selected1} {room}")
         self.chosen_room = room
         self.my_logger.my_logger.info(room)
 
@@ -340,28 +358,22 @@ class Menu:
 
         self.join_game_menu.add.vertical_margin(10)
 
-        frame = self.join_game_menu.add.frame_v(600, 1500,
-                                                background_color=(240, 230, 185),
-                                                padding=0,
-                                                max_width=600,
-                                                max_height=300,
-                                                align=ALIGN_CENTER)
-        frame.set_title('Game Rooms', title_font_color=(247, 159, 7), padding_inner=(2, 5))
+        self.room_frame = self.join_game_menu.add.frame_v(600, 1500,
+                                                          background_color=(240, 230, 185),
+                                                          padding=0,
+                                                          max_width=600,
+                                                          max_height=300,
+                                                          align=ALIGN_CENTER)
+        self.room_frame.set_title('Game Rooms', title_font_color=(247, 159, 7), padding_inner=(2, 5))
 
-        frame.clear()
+        for i in range(100):
+            self.room_frame.pack(self.join_game_menu.add.button("Empty room",
+                                                                self.game_room_selected,
+                                                                self.game_rooms[i][1],
+                                                                font_color='red',
+                                                                button_id=f'b{i}'), align=ALIGN_CENTER)
 
-        for i in range(len(self.game_rooms)):
-            room = ""
-            if self.game_rooms[i][0]:
-                room = f"{self.game_rooms[i]} (full)"
-            else:
-                room = self.game_rooms[i][1]
-            frame.pack(self.join_game_menu.add.button(room,
-                                                      self.game_room_selected,
-                                                      self.game_rooms[i][1],
-                                                      choose_game,
-                                                      font_color='red',
-                                                      button_id=f'b{i}'), align=ALIGN_CENTER)
+        self.update_rooms()
 
         self.join_game_menu.add.vertical_margin(30)
 
