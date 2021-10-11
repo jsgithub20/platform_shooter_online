@@ -129,7 +129,7 @@ class Menu:
         self.server_ip: str = "47.94.100.39"
         self.server_port: str = "8887"
         self.player_name = ""
-        self.game_rooms = [[False, "no rooms"], ]
+        self.game_rooms = [(False, "no rooms"), ]
         self.chosen_room = ""
         self.room_frame = None
         self.start_type = ""  # "create" or "join"
@@ -159,7 +159,7 @@ class Menu:
         except queue.Empty:
             pass
 
-        self.update_rooms()
+        # self.update_rooms()
 
     def update_rooms(self):
         # self.room_frame.clear()
@@ -336,7 +336,14 @@ class Menu:
 
         self.main_menu.add.button("Create a new game", self.set_create)
 
-        choose_game = self.main_menu.add.button(self.room_selected1 + self.room_selected2, self.join_game_menu)
+        selector_epic = self.main_menu.add.dropselect(
+            title='Is pygame-menu epic?',
+            items=self.game_rooms,
+            font_size=16,
+            selection_option_font_size=20
+        )
+
+        # choose_game = self.main_menu.add.button(self.room_selected1 + self.room_selected2, self.join_game_menu)
 
         self.join_game_menu.add.vertical_margin(30)
 
@@ -373,7 +380,7 @@ class Menu:
                                                                 font_color='red',
                                                                 button_id=f'b{i}'), align=ALIGN_CENTER)
 
-        self.update_rooms()
+        # self.update_rooms()
 
         self.join_game_menu.add.vertical_margin(30)
 
