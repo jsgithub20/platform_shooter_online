@@ -318,14 +318,21 @@ class Menu:
             default='127.0.0.1',  # '47.94.100.39'
             onreturn=None,
             textinput_id='server_ip',
-        )
-
+            input_underline='_',
+            input_underline_len=100,
+            maxwidth=100)
         server_port = self.main_menu.add.text_input(
             'Server port#: ',
             default='8887',
             onreturn=None,
-            textinput_id='server_port'
-        )
+            textinput_id='server_port',
+            input_underline='_',
+            input_underline_len=100,
+            maxwidth=100)
+
+        net_frame = self.main_menu.add.frame_h(400, 50, padding=0, align=ALIGN_CENTER)
+        net_frame.pack(server_ip)
+        net_frame.pack(server_port)
 
         player_name = self.main_menu.add.text_input(
             'Your name: ',
