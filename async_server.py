@@ -68,7 +68,7 @@ class Server:
         while True:
             self.clock.tick(FPS)
             # sending room list to the client, no matter full or not
-            rooms_lst = [[self.game_dict[room_id].game_ready, self.game_dict[room_id].player_0_name]
+            rooms_lst = [[self.game_dict[room_id].player_0_name, self.game_dict[room_id].game_ready]
                          for room_id in [*self.game_dict]]
             rooms_lst_enc = json.dumps(rooms_lst).encode()
             length = len(json.dumps(rooms_lst))

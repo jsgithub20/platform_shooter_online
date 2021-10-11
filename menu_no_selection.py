@@ -129,7 +129,7 @@ class Menu:
         self.server_ip: str = "47.94.100.39"
         self.server_port: str = "8887"
         self.player_name = ""
-        self.game_rooms = [(False, "no rooms"), ]
+        self.game_rooms = [("no rooms", False), ]
         self.chosen_room = ""
         self.room_frame = None
         self.start_type = ""  # "create" or "join"
@@ -337,10 +337,8 @@ class Menu:
         self.main_menu.add.button("Create a new game", self.set_create)
 
         selector_epic = self.main_menu.add.dropselect(
-            title='Is pygame-menu epic?',
+            title='Choose a game to join?',
             items=self.game_rooms,
-            font_size=16,
-            selection_option_font_size=20
         )
 
         # choose_game = self.main_menu.add.button(self.room_selected1 + self.room_selected2, self.join_game_menu)
@@ -373,12 +371,12 @@ class Menu:
                                                           align=ALIGN_CENTER)
         self.room_frame.set_title('Game Rooms', title_font_color=(247, 159, 7), padding_inner=(2, 5))
 
-        for i in range(100):
-            self.room_frame.pack(self.join_game_menu.add.button("Empty room",
-                                                                self.game_room_selected,
-                                                                self.game_rooms[i][1],
-                                                                font_color='red',
-                                                                button_id=f'b{i}'), align=ALIGN_CENTER)
+        # for i in range(100):
+        #     self.room_frame.pack(self.join_game_menu.add.button("Empty room",
+        #                                                         self.game_room_selected,
+        #                                                         self.game_rooms[i][1],
+        #                                                         font_color='red',
+        #                                                         button_id=f'b{i}'), align=ALIGN_CENTER)
 
         # self.update_rooms()
 
