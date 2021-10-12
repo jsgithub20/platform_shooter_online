@@ -319,18 +319,16 @@ class Menu:
             onreturn=None,
             textinput_id='server_ip',
             input_underline='_',
-            input_underline_len=100,
-            maxwidth=100)
+            input_underline_len=5)
         server_port = self.main_menu.add.text_input(
             'Server port#: ',
             default='8887',
             onreturn=None,
             textinput_id='server_port',
             input_underline='_',
-            input_underline_len=100,
-            maxwidth=100)
+            input_underline_len=4)
 
-        net_frame = self.main_menu.add.frame_h(400, 50, padding=0, align=ALIGN_CENTER)
+        net_frame = self.main_menu.add.frame_h(800, 50, padding=0, background_color=(0, 0, 0))
         net_frame.pack(server_ip)
         net_frame.pack(server_port)
 
