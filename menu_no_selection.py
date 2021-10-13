@@ -129,7 +129,7 @@ class Menu:
         self.server_ip: str = "47.94.100.39"
         self.server_port: str = "8887"
         self.player_name = ""
-        self.game_rooms = [("no rooms", False), ]
+        self.game_rooms = [("No game", False), ]
         self.chosen_room = ""
         self.room_frame = None
         self.start_type = ""  # "create" or "join"
@@ -317,20 +317,12 @@ class Menu:
             'Server ip address: ',
             default='127.0.0.1',  # '47.94.100.39'
             onreturn=None,
-            textinput_id='server_ip',
-            input_underline='_',
-            input_underline_len=5)
+            textinput_id='server_ip')
         server_port = self.main_menu.add.text_input(
             'Server port#: ',
             default='8887',
             onreturn=None,
-            textinput_id='server_port',
-            input_underline='_',
-            input_underline_len=4)
-
-        net_frame = self.main_menu.add.frame_h(800, 50, padding=0, background_color=(0, 0, 0))
-        net_frame.pack(server_ip)
-        net_frame.pack(server_port)
+            textinput_id='server_port')
 
         player_name = self.main_menu.add.text_input(
             'Your name: ',
@@ -342,8 +334,9 @@ class Menu:
         self.main_menu.add.button("Create a new game", self.set_create)
 
         selector_epic = self.main_menu.add.dropselect(
-            title='Choose a game to join?',
+            title='Choose a game to join:',
             items=self.game_rooms,
+            selection_box_bgcolor=(200, 200, 50)
         )
 
         # choose_game = self.main_menu.add.button(self.room_selected1 + self.room_selected2, self.join_game_menu)
