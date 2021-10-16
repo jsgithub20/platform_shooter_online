@@ -50,6 +50,9 @@ class Server:
         self.cnt = 0  # total number of connections to the server
         self.game_dict = {}  # used to store game room information
         self.room_cnt = 1  # total number of game rooms
+        self.player_info: [list] = []  # f"{start_type},{player_name}"
+        self.writer: [asyncio.streams.StreamWriter] = None
+        self.reader: [asyncio.streams.StreamReader] = None
 
         self.my_logger = logging.getLogger()
         fmt = "%(asctime)s [%(levelname)s]: %(message)s"
@@ -84,19 +87,38 @@ class Server:
             if choice != "j":  # use a number to simulate the game room selection
                 return choice
 
+    def create(self):
+        room = RoomState()
+        room.room_id = self.room_cnt
+        room.player_0_name = self.player_info[1]
+        room.player_0_reader = self.reader
+        room.player_0_writer = self.writer
+        self.game_dict[room.room_id] = room
+        self.room_cnt += 1
+
     async def new_client(self, reader, writer):
         # any new client connection goes here first
-        loop = asyncio.get_running_loop()
         self.cnt += 1
+        self.reader = reader
+        self.writer = writer
+        loop = asyncio.get_running_loop()
         room = None
-        player_id = 0
-        writer.write(str(self.cnt).encode())  # the number of connections is sent as client_id
-        received = await reader.read(200)
-        player_info = received.decode().split(",")
+        self.writer.write(str(self.cnt).encode())  # the number of connections is sent as client_id
+        recv_data = await self.reader.read(200)  # client reply: f"{start_type},{player_name}"
+        self.player_info = recv_data.decode().split(",")
         self.my_logger.info(f"Total connections: {self.cnt}, new connection from: {player_info[1]}")
 
+        if self.player_info[0] == "handshake":  # handshake connection, waiting for other start_type
+            while True:
+                self.writer.write("Waiting".encode())
+                start_type_data = await self.reader.read(200)  # waiting for "create" or "join"
+                start_type = start_type_data.decode.split(",")[0]  # # client reply: f"{start_type},{player_name}"
+                if start_type == "create":
+                    self.create()
+                elif start_type == "join":
+                    self.join()
+
         if player_info[0] == "create":  # first msg received from client will be "c"+player's name to create a new game
-            player_id = 0
             room = RoomState()
             room.room_id = self.room_cnt
             room.player_0_name = player_info[1]
@@ -104,7 +126,7 @@ class Server:
             room.player_0_writer = writer
             self.game_dict[room.room_id] = room
             self.room_cnt += 1
-        elif player_info[0] == "join":  # first msg received from client will be "j"+player's name to create a new game
+        elif player_info[0] == "join":
             choice = await self.join(reader, writer)
             # once a number is provided by the client, it's used as a room number
             # that this client wants to join and join() is returned back here

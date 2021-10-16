@@ -33,6 +33,13 @@ class Network:
 
     async def start(self, player_name, start_type):
         self.player_name = player_name
+        if start_type == "handshake":
+            self.reader, self.writer = await asyncio.open_connection(self.server_ip, self.server_port)
+            id_data = await self.reader.read(100)
+            self.client_id = id_data.decode()
+            print(f"This is 'create' client# {self.client_id}")
+
+
         if start_type == "create":
             self.reader, self.writer = await asyncio.open_connection(self.server_ip, self.server_port)
             data = await self.reader.read(100)
@@ -58,6 +65,8 @@ class Network:
                 except queue.Full:
                     pass  # TODO: code to handle the exception
                 self.writer.write(self.chosen_room.encode())
+        else:
+            raise ValueError(f"Wrong start_type: {start_type}")
 
     async def client(self):
         while True:  # this is the loop waiting for the 2nd player to join

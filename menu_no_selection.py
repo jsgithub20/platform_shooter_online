@@ -84,6 +84,7 @@ class EventLoop(Thread):
 
     def create_task(self, coro):
         self.game_task = asyncio.run_coroutine_threadsafe(coro, self._loop)
+        return self.game_task
 
 
 class MyLogger:
@@ -132,15 +133,26 @@ class Menu:
         self.game_rooms = [("No game", False), ]
         self.chosen_room = ""
         self.room_frame = None
-        self.start_type = ""  # "create" or "join"
+        self.start_type = "handshake"  # "create" or "join"
         self.main_menu: Optional[pygame_menu.menu] = None
+        self.b_connect: Optional[pygame_menu.widgets.widget.button] = None
         self.surface: Optional['pygame.Surface'] = pygame.image.load("resources\gui\Window_06.png")
         self.sound: Optional['pygame_menu.sound.Sound'] = None
 
-    def conn_task(self):
+    def conn_task(self, server_ip, server_port, player_name, **kwargs):
+        self.server_ip = server_ip
+        self.server_port = server_port
+        self.player_name = player_name
         self.connection = async_client.Network(self.server_ip, self.server_port)
         self.t_loop.create_task(self.connection.start(self.player_name, self.start_type))
-        time.sleep(1)  # wait for connection to be established
+        try:
+            self.t_loop.game_task.result()
+        except Exception as e:
+            kwargs["widget"].set_title(f"Connection status: error - {e}")
+            self.my_logger.my_logger.error(f"Connection status: error - {e}")
+        else:
+            kwargs["widget"].set_title("Connection status: connected")
+            self.my_logger.my_logger.info(f"Connected to server: {self.server_ip}:{self.server_port}")
 
     def refresh(self, server_ip, server_port, player_name):
         self.start_type = "join"
@@ -187,8 +199,8 @@ class Menu:
         self.server_ip = server_ip
         self.server_port = server_port
         self.player_name = player_name
-        self.conn_task()
-        self.my_logger.my_logger.info(f"Connected to server: {self.server_ip}:{self.server_port}")
+        self.conn_task(server_ip, server_port, player_name)
+
         self.main_menu.disable()
 
         my_msg = DrawText("My msg:")
@@ -318,6 +330,7 @@ class Menu:
             default='127.0.0.1',  # '47.94.100.39'
             onreturn=None,
             textinput_id='server_ip')
+
         server_port = self.main_menu.add.text_input(
             'Server port#: ',
             default='8887',
@@ -330,6 +343,14 @@ class Menu:
             onreturn=None,
             textinput_id='new_game'
         )
+
+        b_connect = self.main_menu.add.button("Connection status: disconnected",
+                                              self.conn_task,
+                                              server_ip.get_value(),
+                                              server_port.get_value(),
+                                              player_name.get_value())
+
+        b_connect.add_self_to_kwargs()
 
         self.main_menu.add.button("Create a new game", self.set_create)
 
