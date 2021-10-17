@@ -49,11 +49,11 @@ class Server:
         self.clock = pygame.time.Clock()
         self.cnt = 0  # total number of connections to the server
         self.game_dict = {}  # used to store game room information
-        self.room_cnt = 1  # total number of game rooms
+        self.room_cnt = 0  # total number of game rooms
         self.player_info: [list] = []  # f"{start_type},{player_name}"
         self.writer: [asyncio.streams.StreamWriter] = None
         self.reader: [asyncio.streams.StreamReader] = None
-
+        self.loop = None  # asyncio loop
         self.my_logger = logging.getLogger()
         fmt = "%(asctime)s [%(levelname)s]: %(message)s"
         coloredlogs.install(level=logging.INFO,
@@ -66,6 +66,16 @@ class Server:
         fh.setFormatter(format_str)
         self.my_logger.addHandler(fh)
 
+    def create(self):
+        self.room_cnt += 1
+        room = RoomState()
+        room.room_id = self.room_cnt
+        room.player_0_name = self.player_info[1]
+        room.player_0_reader = self.reader
+        room.player_0_writer = self.writer
+        self.game_dict[room.room_id] = room
+        return room
+
     async def join(self, reader, writer):
         # if the client request to join an existing game, a new coroutine will be created with this function
         while True:
@@ -74,30 +84,25 @@ class Server:
             rooms_lst = [[self.game_dict[room_id].player_0_name, self.game_dict[room_id].game_ready]
                          for room_id in [*self.game_dict]]
             rooms_lst_enc = json.dumps(rooms_lst).encode()
-            length = len(json.dumps(rooms_lst))
+            length = len(rooms_lst_enc)
             writer.write(str(length).encode())  # send the receiving length first
             # this will be the "length" returned from client, just to complete a write/read cycle
             await reader.read(length)
 
             writer.write(rooms_lst_enc)
             print(f"server sent: {rooms_lst}")
-            received = await reader.read(100)
-            choice = received.decode()
-            print("Room choice = ", choice)
+            recv_data = await reader.read(100)
+            choice = recv_data.decode()
+            if choice in rooms_lst:
+                print("Room choice = ", choice)
+                return
+
             if choice != "j":  # use a number to simulate the game room selection
                 return choice
 
-    def create(self):
-        room = RoomState()
-        room.room_id = self.room_cnt
-        room.player_0_name = self.player_info[1]
-        room.player_0_reader = self.reader
-        room.player_0_writer = self.writer
-        self.game_dict[room.room_id] = room
-        self.room_cnt += 1
-
     async def new_client(self, reader, writer):
         # any new client connection goes here first
+        player_id = 0  # player_id will be assigned according to start_type: create - 0, join - 1
         self.cnt += 1
         self.reader = reader
         self.writer = writer
@@ -110,13 +115,19 @@ class Server:
 
         if self.player_info[0] == "handshake":  # handshake connection, waiting for other start_type
             while True:
+                self.clock.tick(FPS)
                 self.writer.write("Waiting".encode())
-                start_type_data = await self.reader.read(200)  # waiting for "create" or "join"
-                start_type = start_type_data.decode.split(",")[0]  # # client reply: f"{start_type},{player_name}"
+                recv_data = await self.reader.read(200)  # waiting for "create" or "join"
+                self.player_info = recv_data.decode().split(",")
+                start_type = self.player_info[0]  # # client reply: f"{start_type},{player_name}"
                 if start_type == "create":
-                    self.create()
+                    player_id = 0
+                    room = self.create()
+                    break
                 elif start_type == "join":
-                    self.join()
+                    player_id = 1
+                    room = self.join()
+                    break
 
         if player_info[0] == "create":  # first msg received from client will be "c"+player's name to create a new game
             room = RoomState()
@@ -139,7 +150,6 @@ class Server:
 
         while True:  # wait for the 2nd player to join the room
             self.clock.tick(FPS)
-
             """
             once there are two players in one game room, game_ready for that room is set to 
             True, then the task for player_1 who joins the room after player_0 created the room
