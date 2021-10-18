@@ -130,14 +130,15 @@ class Menu:
         self.server_ip: str = "47.94.100.39"
         self.server_port: str = "8887"
         self.player_name = ""
-        self.game_rooms = [("No game", False), ]
+        self.game_rooms = [("No game", False, 1), ]  # [[player0_name, game_ready, room_id],]
         self.chosen_room = ""
         self.room_frame = None
         self.start_type = "handshake"  # "create" or "join"
-        self.main_menu: Optional[pygame_menu.menu] = None
-        self.b_connect: Optional[pygame_menu.widgets.widget.button] = None
-        self.surface: Optional['pygame.Surface'] = pygame.image.load("resources\gui\Window_06.png")
-        self.sound: Optional['pygame_menu.sound.Sound'] = None
+        self.main_menu: [pygame_menu.menu] = None
+        self.b_connect: [pygame_menu.widgets.widget.button] = None
+        self.selector_game: [pygame_menu.widgets.widget.selector] = None
+        self.surface: [pygame.Surface] = pygame.image.load("resources/gui/Window_06.png")
+        self.sound: [pygame_menu.sound.Sound] = None
 
     def conn_task(self, server_ip, server_port, player_name, **kwargs):
         self.server_ip = server_ip
@@ -154,13 +155,7 @@ class Menu:
             kwargs["widget"].set_title("Connection status: connected")
             self.my_logger.my_logger.info(f"Connected to server: {self.server_ip}:{self.server_port}")
 
-    def refresh(self, server_ip, server_port, player_name):
-        self.start_type = "join"
-        self.server_ip = server_ip
-        self.server_port = server_port
-        self.player_name = player_name
-        self.conn_task()
-        print("'Join' connected")
+    def refresh(self):
         try:
             print(f"starting 'try', q size = {self.connection.q_game_rooms.qsize()}")
             # 3 lines of get_nowait() to make sure even the Queue() is full, only the last item is returned
@@ -170,23 +165,10 @@ class Menu:
             self.game_rooms = self.connection.q_game_rooms.get_nowait()
         except queue.Empty:
             pass
-
-        # self.update_rooms()
-
-    def update_rooms(self):
-        # self.room_frame.clear()
-
-        for i in range(len(self.game_rooms)):
-            room = ""
-            if self.game_rooms[i][0]:
-                room = f"{self.game_rooms[i]} (full)"
-            else:
-                room = self.game_rooms[i][1]
-            self.room_frame.pack(self.join_game_menu.add.button(room,
-                                                                self.game_room_selected,
-                                                                self.game_rooms[i][1],
-                                                                font_color='red',
-                                                                button_id=f'b{i}'), align=ALIGN_CENTER)
+        else:
+            # change [[..],] to [(..),] to fit requirement as items in dropselect
+            self.game_rooms = [tuple(lst) for lst in self.game_rooms]
+            self.selector_game.update_items(self.game_rooms)
 
     def join(self, server_ip, server_port, player_name):
         self.start_type = "join"
@@ -354,7 +336,7 @@ class Menu:
 
         self.main_menu.add.button("Create a new game", self.set_create)
 
-        selector_epic = self.main_menu.add.dropselect(
+        self.selector_game = self.main_menu.add.dropselect(
             title='Choose a game to join:',
             items=self.game_rooms,
             selection_box_bgcolor=(200, 200, 50)

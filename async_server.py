@@ -80,10 +80,11 @@ class Server:
         # if the client request to join an existing game, a new coroutine will be created with this function
         while True:
             self.clock.tick(FPS)
-            # sending room list to the client, no matter full or not
-            rooms_lst = [[self.game_dict[room_id].player_0_name, self.game_dict[room_id].game_ready]
+            # sending room list to the client, no matter full or not [[player0_name, game_ready, room_id],]
+            rooms_lst = [[self.game_dict[room_id].player_0_name, self.game_dict[room_id].game_ready, room_id]
                          for room_id in [*self.game_dict]]
             rooms_lst_enc = json.dumps(rooms_lst).encode()
+
             length = len(rooms_lst_enc)
             writer.write(str(length).encode())  # send the receiving length first
             # this will be the "length" returned from client, just to complete a write/read cycle

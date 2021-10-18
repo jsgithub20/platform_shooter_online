@@ -25,6 +25,13 @@ items = [('Yes', 0),
 def call_back_print(widget):
     print(widget.title)
 
+def call_back_select(selected, widget, menu):
+    print(widget.get_title())
+
+def cb_onchange(selectecd_ii, a):
+    print(selectecd_ii[0])
+    print(a)
+
 menu = pygame_menu.Menu(
     'Choosing Games', 1024 * 0.8, 768 * 0.8,
     center_content=False,
@@ -70,7 +77,8 @@ selector_country = menu.add.dropselect(
     selection_box_height=5,
     selection_box_width=212,
     selection_infinite=True,
-    selection_option_font_size=20
+    selection_option_font_size=20,
+    onchange=cb_onchange
 )
 
 while True:
