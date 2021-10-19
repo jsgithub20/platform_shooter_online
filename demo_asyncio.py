@@ -1,29 +1,29 @@
 import asyncio, logging, time, datetime
 #
-# # logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
-# logging.basicConfig(format='\033[92m%(asctime)s %(levelname)s: %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
-# # logging.addLevelName(logging.INFO, "\x1b[32m%s\x1b[32m" % logging.getLevelName(logging.INFO)) # change the color
+# logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
+logging.basicConfig(format='\033[92m%(asctime)s %(levelname)s: %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
+# logging.addLevelName(logging.INFO, "\x1b[32m%s\x1b[32m" % logging.getLevelName(logging.INFO)) # change the color
 
 # test 1 starts here:
-# async def main():
-#     logging.info(f'starting')
-#     task = asyncio.create_task(foo('text'))
-#     # print("task not started?")
-#     # print("it seems task is not executed when created")
-#     await asyncio.sleep(1)
-#     logging.info(f'main() sleep done')
-#     await task
-#     logging.info(f'await task done')
-#
-#
-# async def foo(text):
-#     logging.info(f'foo() print(text) starting')
-#     print(text)
-#     logging.info(f'foo() sleep starting')
-#     await asyncio.sleep(3)
-#     logging.info(f'foo() completed')
-#
-# asyncio.run(main())
+async def main():
+    logging.info(f'starting')
+    task = asyncio.create_task(foo('text'))
+    # print("task not started?")
+    # print("it seems task is not executed when created")
+    await asyncio.sleep(1)
+    logging.info(f'main() sleep done')
+    await task
+    logging.info(f'await task done')
+
+
+async def foo(text):
+    logging.info(f'foo() print(text) starting')
+    print(text)
+    logging.info(f'foo() sleep starting')
+    await asyncio.sleep(3)
+    logging.info(f'foo() completed')
+
+asyncio.run(main())
 # test 1 ends here.
 
 
@@ -121,7 +121,3 @@ import json
 # # for key in [*d]:
 # #     print(key)
 # # print(type(*d))
-
-import demo_async_client
-
-asyncio.run(demo_async_client.start())

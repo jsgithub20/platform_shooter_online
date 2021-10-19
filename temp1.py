@@ -15,5 +15,12 @@ def test(a, **kwargs):
         print(kwargs["key"])
 
 
-test("a")
-test("a", key="content")
+# test("a")
+# test("a", key="content")
+
+# print(f"{lt == ltld}")
+
+d = {0: "this is 0", 1: "this is 1"}
+
+print(d)
+print(type([*d][0]))

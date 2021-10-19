@@ -31,27 +31,28 @@ class Network:
         self.pos_send = [0, 0]
         self.pos_recv = Queue(maxsize=3)  # (x, Y) coordinates as tuple for each item in the Queue
 
-    async def start(self, player_name, start_type):
+    async def conn(self, player_name):
+        conn_type = "handshake"
         self.player_name = player_name
-        if start_type == "handshake":
-            self.reader, self.writer = await asyncio.open_connection(self.server_ip, self.server_port)
-            id_data = await self.reader.read(100)
-            self.client_id = id_data.decode()
-            print(f"This is 'create' client# {self.client_id}")
+        self.reader, self.writer = await asyncio.open_connection(self.server_ip, self.server_port)
+        id_data = await self.reader.read(100)
+        self.client_id = id_data.decode()
+        self.writer.write(f"{conn_type},{self.player_name}".encode())
 
-        if start_type == "create":
-            self.reader, self.writer = await asyncio.open_connection(self.server_ip, self.server_port)
-            data = await self.reader.read(100)
-            self.client_id = data.decode()
-            print(f"This is 'create' client# {self.client_id}")
-            self.writer.write(f"{start_type},{player_name}".encode())
-            await self.client()
-        elif start_type == "join":
+    async def create(self):  # create a new game room
+        conn_type = "create"
+        # receiving "waiting" from the server to get the read/write cycle read to write "create" or "join"
+        # this operation also checks whether the connection is live after waiting for the player's input
+        await self.reader.read(100)
+        self.writer.write(f"{conn_type},{self.player_name}".encode())
+        await self.client()
+
+        if conn_type == "join":
             self.reader, self.writer = await asyncio.open_connection(self.server_ip, self.server_port)
             data = await self.reader.read(100)
             self.client_id = data.decode()
             print(f"This is 'join' client# {self.client_id}")
-            self.writer.write(f"{start_type},{player_name}".encode())
+            self.writer.write(f"{conn_type},{player_name}".encode())
             while True:  # the loop to receive new room list from server
                 len_data = await self.reader.read(100)
                 self.writer.write(len_data)  # just to complete a read/write cycle before receiving the next data
@@ -65,7 +66,7 @@ class Network:
                     pass  # TODO: code to handle the exception
                 self.writer.write(self.chosen_room.encode())
         else:
-            raise ValueError(f"Wrong start_type: {start_type}")
+            raise ValueError(f"Wrong conn_type: {conn_type}")
 
     async def client(self):
         while True:  # this is the loop waiting for the 2nd player to join

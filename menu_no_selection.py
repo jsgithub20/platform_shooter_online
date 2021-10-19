@@ -84,7 +84,6 @@ class EventLoop(Thread):
 
     def create_task(self, coro):
         self.game_task = asyncio.run_coroutine_threadsafe(coro, self._loop)
-        return self.game_task
 
 
 class MyLogger:
@@ -127,35 +126,50 @@ class Menu:
         self.room_selected2 = "<click to choose>"
         self.t_loop = EventLoop()
         self.connection: Optional[async_client.Network] = None
-        self.server_ip: str = "47.94.100.39"
-        self.server_port: str = "8887"
+        self.server_ip = "47.94.100.39"
+        self.server_port = "8887"
         self.player_name = ""
         self.game_rooms = [("No game", False, 1), ]  # [[player0_name, game_ready, room_id],]
-        self.chosen_room = ""
+        self.chosen_room_id: str = "0"  # used to retrieve room info from game_dict on server
         self.room_frame = None
         self.start_type = "handshake"  # "create" or "join"
+        self.client_id = "0"
         self.main_menu: [pygame_menu.menu] = None
         self.b_connect: [pygame_menu.widgets.widget.button] = None
         self.selector_game: [pygame_menu.widgets.widget.selector] = None
         self.surface: [pygame.Surface] = pygame.image.load("resources/gui/Window_06.png")
         self.sound: [pygame_menu.sound.Sound] = None
 
-    def conn_task(self, server_ip, server_port, player_name, **kwargs):
+    def conn_conn(self, server_ip, server_port, player_name, **kwargs):
         self.server_ip = server_ip
         self.server_port = server_port
         self.player_name = player_name
         self.connection = async_client.Network(self.server_ip, self.server_port)
-        self.t_loop.create_task(self.connection.start(self.player_name, self.start_type))
+        self.t_loop.create_task(self.connection.conn(self.player_name))
+        try:
+            self.t_loop.game_task.result()
+            self.client_id = self.connection.client_id
+        except Exception as e:
+            kwargs["widget"].set_title(f"Connection status: error - {e}")
+            self.my_logger.my_logger.error(f"Connection status: error - {e}")
+        else:
+            kwargs["widget"].set_title(f"Connection status: connected with client id - {self.client_id}")
+            self.my_logger.my_logger.info(f"Connected to server: {self.server_ip}:{self.server_port}")
+
+    def conn_create(self):
+        self.start_type = "create"
+        self.t_loop.create_task(self.connection.create(self.player_name, self.start_type))
         try:
             self.t_loop.game_task.result()
         except Exception as e:
             kwargs["widget"].set_title(f"Connection status: error - {e}")
             self.my_logger.my_logger.error(f"Connection status: error - {e}")
         else:
-            kwargs["widget"].set_title("Connection status: connected")
+            kwargs["widget"].set_title(f"Connection status: connected with client id - {self.client_id}")
             self.my_logger.my_logger.info(f"Connected to server: {self.server_ip}:{self.server_port}")
 
     def refresh(self):
+        current_game_rooms = self.game_rooms
         try:
             print(f"starting 'try', q size = {self.connection.q_game_rooms.qsize()}")
             # 3 lines of get_nowait() to make sure even the Queue() is full, only the last item is returned
@@ -165,17 +179,18 @@ class Menu:
             self.game_rooms = self.connection.q_game_rooms.get_nowait()
         except queue.Empty:
             pass
-        else:
+        finally:
             # change [[..],] to [(..),] to fit requirement as items in dropselect
-            self.game_rooms = [tuple(lst) for lst in self.game_rooms]
-            self.selector_game.update_items(self.game_rooms)
+            # only update the game room list if the received list is different than current
+            if self.game_rooms != current_game_rooms:
+                self.game_rooms = [tuple(lst) for lst in self.game_rooms]
+                self.selector_game.update_items(self.game_rooms)
+                self.selector_game.render()  # force re-render the dropselect object
 
     def join(self, server_ip, server_port, player_name):
         self.start_type = "join"
         self.demo_game(server_ip, server_port, player_name)
 
-    def set_create(self):
-        self.start_type = "create"
 
     def demo_game(self, server_ip, server_port, player_name):
         self.server_ip = server_ip
@@ -238,10 +253,8 @@ class Menu:
 
             pygame.display.flip()
 
-    def game_room_selected(self, room: str):
-        # choose_game.set_title(f"{self.room_selected1} {room}")
-        self.chosen_room = room
-        self.my_logger.my_logger.info(room)
+    def cb_dropselecton_onchange(self, item_index: tuple, game_ready, room_id):  # [[player0_name, game_ready, room_id],]
+        self.chosen_room = room_id
 
     def main(self, test: bool = False) -> None:
         """
@@ -327,7 +340,7 @@ class Menu:
         )
 
         b_connect = self.main_menu.add.button("Connection status: disconnected",
-                                              self.conn_task,
+                                              self.conn_conn,
                                               server_ip.get_value(),
                                               server_port.get_value(),
                                               player_name.get_value())
@@ -412,8 +425,6 @@ class Menu:
         # Main loop
         # -------------------------------------------------------------------------
         while True:
-
-            # Tick
             self.clock.tick(FPS)
 
             events = pygame.event.get()
