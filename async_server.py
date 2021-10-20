@@ -79,7 +79,7 @@ class Server:
         self.game_dict[room.room_id] = room
         return room
 
-    async def join(self, reader, writer):
+    async def join(self):
         # if the client request to join an existing game, a new coroutine will be created with this function
         while True:
             self.clock.tick(FPS)
@@ -87,15 +87,13 @@ class Server:
             rooms_lst = [[self.game_dict[room_id].player_0_name, self.game_dict[room_id].game_ready, room_id]
                          for room_id in [*self.game_dict]]
             rooms_lst_enc = json.dumps(rooms_lst).encode()
-
             length = len(rooms_lst_enc)
-            writer.write(str(length).encode())  # send the receiving length first
+            self.writer.write(str(length).encode())  # send the receiving length first
             # this will be the "length" returned from client, just to complete a write/read cycle
-            await reader.read(length)
-
-            writer.write(rooms_lst_enc)
+            await self.reader.read(length)
+            self.writer.write(rooms_lst_enc)
             print(f"server sent: {rooms_lst}")
-            recv_data = await reader.read(100)
+            recv_data = await self.reader.read(100)
             choice = recv_data.decode()
             if choice in rooms_lst:
                 print("Room choice = ", choice)
@@ -121,13 +119,13 @@ class Server:
             self.writer.write("Waiting".encode())
             recv_data = await self.reader.read(200)  # waiting for "create" or "join"
             self.player_info = recv_data.decode().split(",")
-            conn_type = self.player_info[0]  # # client reply: f"{conn_type},{player_name}"
+            conn_type = self.player_info[0]  # client reply: f"{conn_type},{player_name}"
             if conn_type == "create":
                 player_id = 0
                 room = self.create()
             elif conn_type == "join":
                 player_id = 1
-                room = self.join()
+                room = await self.join()
 
         if player_info[0] == "create":  # first msg received from client will be "c"+player's name to create a new game
             room = RoomState()
@@ -167,22 +165,20 @@ class Server:
                 # await game_dict[game_id][2].drain()
                 room.player_1_writer.write(data)
                 # await game_dict[game_id][4].drain()
-                break  # break current while loop to start the game playing data exchange loop
-
+                break  # break current while loop to start the routine game tick
             else:  # if game_ready is False, it means there is only player_0 in the game room
-                data = f"[{datetime.datetime.now().strftime('%H:%M:%S.%f')}]server msg: tasks - {len(asyncio.all_tasks())}".encode()
+                data = f"New game is created, waiting for the second player to join...".encode()
                 room.player_0_writer.write(data)
                 # await game_dict[game_id][2].drain()
                 try:
-                    msg0 = await room.player_0_reader.read(100)
-                    # logging.info(f"Received: '{msg0.decode()}'")
+                    await room.player_0_reader.read(100)  # keep the read/write cycle running to check the connection
                 except Exception as e:
                     logging.warning(f"Something's wrong with room {room.room_id} - player0: {e}")
                     room.player_0_writer.close()
                     self.cnt -= 1
                     # print the information if the key to pop up doesn't exist in the following line
                     # logging.warning(game_dict.pop(room.room_id, f"room '{room.room_id}' is not running"))
-                    break
+                    return
 
         while True:  # this is the routine game tick
             self.clock.tick(FPS)

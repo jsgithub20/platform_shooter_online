@@ -23,6 +23,7 @@ FPS = 60
 WINDOW_SIZE = (1024, 768)
 GAME_ROOMS = ["Amy's game", "Jacky's game", "Dora's game", "Amy's game", "Jacky's game", "Dora's game",
               "Amy's game", "Jacky's game", "Dora's game", "Amy's game", "Jacky's game", "Dora's game"]
+TIMEOUT = 2
 
 # -----------------------------------------------------------------------------
 # Load image
@@ -84,6 +85,7 @@ class EventLoop(Thread):
 
     def create_task(self, coro):
         self.game_task = asyncio.run_coroutine_threadsafe(coro, self._loop)
+        return self.game_task
 
 
 class MyLogger:
@@ -132,7 +134,7 @@ class Menu:
         self.game_rooms = [("No game", False, 1), ]  # [[player0_name, game_ready, room_id],]
         self.chosen_room_id: str = "0"  # used to retrieve room info from game_dict on server
         self.room_frame = None
-        self.start_type = "handshake"  # "create" or "join"
+        self.conn_type = "handshake"  # "create" or "join"
         self.client_id = "0"
         self.main_menu: [pygame_menu.menu] = None
         self.b_connect: [pygame_menu.widgets.widget.button] = None
@@ -147,7 +149,8 @@ class Menu:
         self.connection = async_client.Network(self.server_ip, self.server_port)
         self.t_loop.create_task(self.connection.conn(self.player_name))
         try:
-            self.t_loop.game_task.result()
+            # this connection should be established immediately otherwise there's a network issue
+            self.t_loop.game_task.result(TIMEOUT)
             self.client_id = self.connection.client_id
         except Exception as e:
             kwargs["widget"].set_title(f"Connection status: error - {e}")
@@ -156,17 +159,17 @@ class Menu:
             kwargs["widget"].set_title(f"Connection status: connected with client id - {self.client_id}")
             self.my_logger.my_logger.info(f"Connected to server: {self.server_ip}:{self.server_port}")
 
-    def conn_create(self):
-        self.start_type = "create"
-        self.t_loop.create_task(self.connection.create(self.player_name, self.start_type))
+    def conn_create(self, **kwargs):
+        self.conn_type = "create"
+        conn_result = self.t_loop.create_task(self.connection.create())
         try:
-            self.t_loop.game_task.result()
+            conn_result.result()
         except Exception as e:
-            kwargs["widget"].set_title(f"Connection status: error - {e}")
-            self.my_logger.my_logger.error(f"Connection status: error - {e}")
+            kwargs["widget"].set_title(f"Create a new game: error - {e}")
+            self.my_logger.my_logger.error(f"Create a new game: error - {e}")
         else:
-            kwargs["widget"].set_title(f"Connection status: connected with client id - {self.client_id}")
-            self.my_logger.my_logger.info(f"Connected to server: {self.server_ip}:{self.server_port}")
+            kwargs["widget"].set_title(f"Create a new game: created with name - {self.player_name}")
+            self.my_logger.my_logger.info(f"Create a new game: created with name - {self.player_name}")
 
     def refresh(self):
         current_game_rooms = self.game_rooms
@@ -188,7 +191,7 @@ class Menu:
                 self.selector_game.render()  # force re-render the dropselect object
 
     def join(self, server_ip, server_port, player_name):
-        self.start_type = "join"
+        self.conn_type = "join"
         self.demo_game(server_ip, server_port, player_name)
 
 
@@ -344,10 +347,10 @@ class Menu:
                                               server_ip.get_value(),
                                               server_port.get_value(),
                                               player_name.get_value())
-
         b_connect.add_self_to_kwargs()
 
-        self.main_menu.add.button("Create a new game", self.set_create)
+        b_create = self.main_menu.add.button("Create a new game", self.conn_create)
+        b_create.add_self_to_kwargs()
 
         self.selector_game = self.main_menu.add.dropselect(
             title='Choose a game to join:',
