@@ -28,48 +28,47 @@ logging.basicConfig(format='\033[92m%(asctime)s %(levelname)s: %(message)s', dat
 
 
 # test2 starts here:
-async def fetch_data():
-    print("start fetching")
-    # await asyncio.sleep(2)
-    time.sleep(2)
-    print("done fetching")
-    return {"data": 1}
-
-
-async def print_numbers(loop):
-    for i in range(10):
-        print(i)
-        # if i == 3:
-            # print(f"current task: {asyncio.current_task()}")
-            # asyncio.current_task().cancel()
-            # return
-        await asyncio.sleep(0.25)
-    loop.stop()
-    await asyncio.sleep(1)
-    print(loop.is_running())
-    loop.close()
-
-
-# async def main():
-#     task1 = asyncio.create_task(fetch_data())
-#     task2 = asyncio.create_task(print_numbers())
-#     # print(f"all tasks: {len(asyncio.all_tasks())}")
-#     # value = await task1
-#     # print(task1)
-#     # print(f"all tasks: {len(asyncio.all_tasks())}")
+# async def fetch_data():
+#     print("start fetching")
+#     # await asyncio.sleep(2)
+#     time.sleep(2)  # this is a blocking call because it's not asyncio.sleep!
+#     print("done fetching")
+#     return {"data": 1}
 #
-#     # print(f"fetched value: {value}")
 #
-#     await task2
-#     # print(f"all tasks: {len(asyncio.all_tasks())}")
-
-
-# asyncio.run(main())
-
-loop = asyncio.get_event_loop()
-loop.create_task(fetch_data())
-loop.create_task(print_numbers(loop))
-loop.run_forever()
+# async def print_numbers(loop):
+#     for i in range(10):
+#         print(i)
+#         # if i == 3:
+#             # print(f"current task: {asyncio.current_task()}")
+#             # asyncio.current_task().cancel()
+#             # return
+#         await asyncio.sleep(0.25)
+#     loop.stop()
+#     await asyncio.sleep(1)  # it seems loop.stop() needs a little time to complete the job
+#     print(loop.is_running())
+#     loop.close()
+#
+#
+# # async def main():
+# #     task1 = asyncio.create_task(fetch_data())
+# #     task2 = asyncio.create_task(print_numbers())
+# #     # print(f"all tasks: {len(asyncio.all_tasks())}")
+# #     # value = await task1
+# #     # print(task1)
+# #     # print(f"all tasks: {len(asyncio.all_tasks())}")
+# #
+# #     # print(f"fetched value: {value}")
+# #
+# #     await task2
+# #     # print(f"all tasks: {len(asyncio.all_tasks())}")
+#
+#
+# # asyncio.run(main())
+#
+# loop = asyncio.get_event_loop()
+# asyncio.gather(fetch_data(), print_numbers(loop))
+# loop.run_forever()
 
 # test2 ends here
 
@@ -88,6 +87,46 @@ loop.run_forever()
 # asyncio.run(main())
 
 # test3 ends here
+
+# test4 starts here:
+async def fetch_data():
+    print("start fetching")
+    # await asyncio.sleep(2)
+    await asyncio.sleep(2)
+    print("done fetching")
+    return {"data": 1}
+
+
+async def print_numbers():
+    for i in range(10):
+        print(i)
+        # if i == 3:
+            # print(f"current task: {asyncio.current_task()}")
+            # asyncio.current_task().cancel()
+            # return
+        await asyncio.sleep(0.25)
+
+
+async def main():
+    await fetch_data()  # await a coroutine is blocking
+    await print_numbers()
+    # task1 = asyncio.create_task(fetch_data())
+    # task2 = asyncio.create_task(print_numbers())
+    # # print(f"all tasks: {len(asyncio.all_tasks())}")
+    # value = await task1
+    # # print(task1)
+    # # print(f"all tasks: {len(asyncio.all_tasks())}")
+    #
+    # # print(f"fetched value: {value}")
+    #
+    # await task2
+    # print(f"all tasks: {len(asyncio.all_tasks())}")
+
+
+asyncio.run(main())
+
+# test4 ends here
+
 
 # from typing import *
 # from dataclasses import dataclass
