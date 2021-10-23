@@ -80,9 +80,7 @@ class Network:
                 reply = f"{int(self.client_id)}: msg received is {self.server_msg!r}"
                 self.writer.write(reply.encode())
                 await self.writer.drain()
-            else:
-                await self.stop()
-                break
+            self.writer.write("Waiting".encode())
 
         while True:  # this is the routine game tick
             reply = self.pos2str(self.pos_send)

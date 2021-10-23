@@ -147,10 +147,10 @@ class Menu:
         self.server_port = server_port
         self.player_name = player_name
         self.connection = async_client.Network(self.server_ip, self.server_port)
-        self.t_loop.create_task(self.connection.conn(self.player_name))
+        conn_result = self.t_loop.create_task(self.connection.conn(self.player_name))
         try:
             # this connection should be established immediately otherwise there's a network issue
-            self.t_loop.game_task.result(TIMEOUT)
+            conn_result.result(TIMEOUT)
             self.client_id = self.connection.client_id
         except Exception as e:
             kwargs["widget"].set_title(f"Connection status: error - {e}")
