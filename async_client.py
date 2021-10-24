@@ -47,26 +47,32 @@ class Network:
         self.writer.write(f"{conn_type},{self.player_name}".encode())
         await self.client()
 
-        if conn_type == "join":
-            self.reader, self.writer = await asyncio.open_connection(self.server_ip, self.server_port)
-            data = await self.reader.read(100)
-            self.client_id = data.decode()
-            print(f"This is 'join' client# {self.client_id}")
-            self.writer.write(f"{conn_type},{player_name}".encode())
-            while True:  # the loop to receive new room list from server
-                len_data = await self.reader.read(100)
-                self.writer.write(len_data)  # just to complete a read/write cycle before receiving the next data
-                rooms_data = await self.reader.read(int(len_data.decode()))
-                self.game_rooms = list(json.loads(rooms_data.decode()))  # [[player0_name, game_ready, room_id],]
-                print(f"received by client: {self.game_rooms}")
-                try:
-                    self.q_game_rooms.put_nowait(self.game_rooms)
-                    print(f"put in q: {self.q_game_rooms.qsize()}")
-                except queue.Full:
-                    pass  # TODO: code to handle the exception
-                self.writer.write(self.chosen_room.encode())
-        else:
-            raise ValueError(f"Wrong conn_type: {conn_type}")
+    async def join(self):
+        conn_type = "join"
+        await self.reader.read(100)
+        self.writer.write(f"{conn_type},{self.player_name}".encode())
+        await self.client()
+
+        # if conn_type == "join":
+        #     self.reader, self.writer = await asyncio.open_connection(self.server_ip, self.server_port)
+        #     data = await self.reader.read(100)
+        #     self.client_id = data.decode()
+        #     print(f"This is 'join' client# {self.client_id}")
+        #     self.writer.write(f"{conn_type},{player_name}".encode())
+        #     while True:  # the loop to receive new room list from server
+        #         len_data = await self.reader.read(100)
+        #         self.writer.write(len_data)  # just to complete a read/write cycle before receiving the next data
+        #         rooms_data = await self.reader.read(int(len_data.decode()))
+        #         self.game_rooms = list(json.loads(rooms_data.decode()))  # [[player0_name, game_ready, room_id],]
+        #         print(f"received by client: {self.game_rooms}")
+        #         try:
+        #             self.q_game_rooms.put_nowait(self.game_rooms)
+        #             print(f"put in q: {self.q_game_rooms.qsize()}")
+        #         except queue.Full:
+        #             pass  # TODO: code to handle the exception
+        #         self.writer.write(self.chosen_room.encode())
+        # else:
+        #     raise ValueError(f"Wrong conn_type: {conn_type}")
 
     async def client(self):
         while True:  # this is the loop waiting for the 2nd player to join

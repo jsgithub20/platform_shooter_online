@@ -171,6 +171,17 @@ class Menu:
             kwargs["widget"].set_title(f"Create a new game: created with name - {self.player_name}")
             self.my_logger.my_logger.info(f"Create a new game: created with name - {self.player_name}")
 
+    def conn_join(self):
+        self.conn_type = "join"
+        conn_result = self.t_loop.create_task(self.connection.join())
+
+    def cb_dropselecton_onchange(self, item_index: tuple, game_ready, room_id):  # [[player0_name, game_ready, room_id],]
+        self.chosen_room_id = room_id
+
+    def cb_dropselection_onselect(self, selected, widget, menu):
+        if selected:
+            self.refresh()
+
     def refresh(self):
         current_game_rooms = self.game_rooms
         try:
@@ -190,16 +201,11 @@ class Menu:
                 self.selector_game.update_items(self.game_rooms)
                 self.selector_game.render()  # force re-render the dropselect object
 
-    def join(self, server_ip, server_port, player_name):
-        self.conn_type = "join"
-        self.demo_game(server_ip, server_port, player_name)
-
-
     def demo_game(self, server_ip, server_port, player_name):
         self.server_ip = server_ip
         self.server_port = server_port
         self.player_name = player_name
-        self.conn_task(server_ip, server_port, player_name)
+        # self.conn_task(server_ip, server_port, player_name)
 
         self.main_menu.disable()
 
@@ -255,9 +261,6 @@ class Menu:
             msg_grp.draw(self.screen)
 
             pygame.display.flip()
-
-    def cb_dropselecton_onchange(self, item_index: tuple, game_ready, room_id):  # [[player0_name, game_ready, room_id],]
-        self.chosen_room = room_id
 
     def main(self, test: bool = False) -> None:
         """
@@ -355,8 +358,11 @@ class Menu:
         self.selector_game = self.main_menu.add.dropselect(
             title='Choose a game to join:',
             items=self.game_rooms,
+            onchange=self.cb_dropselecton_onchange,
             selection_box_bgcolor=(200, 200, 50)
         )
+
+        self.main_menu.add.button("Join The Selected Game", self.conn_join)
 
         # choose_game = self.main_menu.add.button(self.room_selected1 + self.room_selected2, self.join_game_menu)
 
@@ -400,21 +406,21 @@ class Menu:
         self.join_game_menu.add.vertical_margin(30)
 
         b_return = self.join_game_menu.add.button("Join",
-                                                  self.join,
-                                                  server_ip.get_value(),
-                                                  server_port.get_value(),
-                                                  player_name.get_value(),
+                                                  # self.join,
+                                                  # server_ip.get_value(),
+                                                  # server_port.get_value(),
+                                                  # player_name.get_value(),
                                                   font_color=(51, 94, 28),
                                                   background_color=(255, 221, 119),
                                                   selection_color=(249, 7, 7),
                                                   align=ALIGN_CENTER,
                                                   cursor=CURSOR_HAND)
 
-        self.main_menu.add.button("Start",
-                                  self.demo_game,
-                                  server_ip.get_value(),
-                                  server_port.get_value(),
-                                  player_name.get_value())
+        # self.main_menu.add.button("Start",
+        #                           self.demo_game,
+        #                           server_ip.get_value(),
+        #                           server_port.get_value(),
+        #                           player_name.get_value())
 
         self.main_menu.add.button('Quit', pygame_menu.events.EXIT)
         self.main_menu.add.vertical_margin(50)

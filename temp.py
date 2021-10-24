@@ -22,8 +22,11 @@ no_title_theme_join_game.widget_padding = 5
 items = [('Yes', 0),
          ('Absolutely Yes', 1)]
 
-def cb_select(selected, widget, menu):
-    print(widget.get_items())
+def cb_onselect(selected, widget, menu):
+    if selected:
+        print("selected")
+    else:
+        print("not selected")
 
 def cb_onchange(selectecd_ii: tuple, a):
     print(selectecd_ii)
@@ -93,6 +96,7 @@ selector_country = menu.add.dropselect(
     selection_infinite=True,
     selection_option_font_size=20,
     onchange=cb_onchange,
+    onselect=cb_onselect
 )
 
 while True:

@@ -90,9 +90,8 @@ class Server:
             length = len(rooms_lst_enc)
             self.writer.write(str(length).encode())  # send the receiving length first
             # this will be the "length" returned from client, just to complete a write/read cycle
-            await self.reader.read(length)
+            await self.reader.read(100)
             self.writer.write(rooms_lst_enc)
-            print(f"server sent: {rooms_lst}")
             recv_data = await self.reader.read(100)
             choice = recv_data.decode()
             if choice in rooms_lst:
@@ -102,11 +101,14 @@ class Server:
             if choice != "j":  # use a number to simulate the game room selection
                 return choice
 
+    def new_connection(self):
+        self.cnt += 1
+        self.client_id += 1
+        self.my_logger.info(f"Total connections: {self.cnt}, new connection to: {self.player_info[1]}")
+
     async def new_client(self, reader, writer):
         # any new client connection goes here first
         player_id = 0  # player_id will be assigned according to conn_type: create - 0, join - 1
-        self.cnt += 1
-        self.client_id += 1
         self.reader = reader
         self.writer = writer
         loop = asyncio.get_running_loop()
@@ -114,8 +116,12 @@ class Server:
         self.writer.write(str(self.client_id).encode())  # send client_id
         recv_data = await self.reader.read(200)  # client reply: f"{conn_type},{player_name}"
         self.player_info = recv_data.decode().split(",")
-        self.my_logger.info(f"Total connections: {self.cnt}, new connection to: {self.player_info[1]}")
-        if self.player_info[0] == "handshake":  # handshake connection, waiting for other conn_type
+        if self.player_info[0] != "handshake":  # if not "handshake", it's an invalid connection request
+            self.writer.close()
+            await self.writer.wait_closed()
+            return
+        elif self.player_info[0] == "handshake":  # handshake connection, waiting for other conn_type
+            self.new_connection()
             self.writer.write("Waiting".encode())
             recv_data = await self.reader.read(200)  # waiting for "create" or "join"
             self.player_info = recv_data.decode().split(",")
@@ -127,24 +133,24 @@ class Server:
                 player_id = 1
                 room = await self.join()
 
-        if player_info[0] == "create":  # first msg received from client will be "c"+player's name to create a new game
-            room = RoomState()
-            room.room_id = self.room_cnt
-            room.player_0_name = player_info[1]
-            room.player_0_reader = reader
-            room.player_0_writer = writer
-            self.game_dict[room.room_id] = room
-            self.room_cnt += 1
-        elif player_info[0] == "join":
-            choice = await self.join(reader, writer)
-            # once a number is provided by the client, it's used as a room number
-            # that this client wants to join and join() is returned back here
-            choice = int(choice)
-            player_id = 1
-            self.game_dict[choice].player_1_reader = reader
-            self.game_dict[choice].player_1_writer = writer
-            self.game_dict[choice].game_ready = True
-            room = self.game_dict[choice]
+        # if player_info[0] == "create":  # first msg received from client will be "c"+player's name to create a new game
+        #     room = RoomState()
+        #     room.room_id = self.room_cnt
+        #     room.player_0_name = player_info[1]
+        #     room.player_0_reader = reader
+        #     room.player_0_writer = writer
+        #     self.game_dict[room.room_id] = room
+        #     self.room_cnt += 1
+        # elif player_info[0] == "join":
+        #     choice = await self.join(reader, writer)
+        #     # once a number is provided by the client, it's used as a room number
+        #     # that this client wants to join and join() is returned back here
+        #     choice = int(choice)
+        #     player_id = 1
+        #     self.game_dict[choice].player_1_reader = reader
+        #     self.game_dict[choice].player_1_writer = writer
+        #     self.game_dict[choice].game_ready = True
+        #     room = self.game_dict[choice]
 
         while True:  # wait for the 2nd player to join the room
             self.clock.tick(FPS)
