@@ -35,9 +35,15 @@ class Network:
         conn_type = "handshake"
         self.player_name = player_name
         self.reader, self.writer = await asyncio.open_connection(self.server_ip, self.server_port)
-        id_data = await self.reader.read(100)
-        self.client_id = id_data.decode()
+        # id_data = await self.reader.read(100)
+        # self.client_id = id_data.decode()
         self.writer.write(f"{conn_type},{self.player_name}".encode())
+        svr_data = await self.reader.read(100)
+        if svr_data.decode() != "ok":
+            print("Server error")
+        self.writer.write(f"{conn_type},{self.player_name}".encode())
+        client_id_data = await self.reader.read(100)
+        self.client_id = client_id_data.decode()
 
     async def create(self):  # create a new game room
         conn_type = "create"
@@ -81,12 +87,8 @@ class Network:
             if self.server_msg == "Game Ready":
                 # logging.info("Game Ready")
                 break
-            elif self.server_msg != "quit":
-                # print(f'Received: {self.server_msg!r}')
-                reply = f"{int(self.client_id)}: msg received is {self.server_msg!r}"
-                self.writer.write(reply.encode())
-                await self.writer.drain()
-            self.writer.write("Waiting".encode())
+            else:
+                self.writer.write("Waiting".encode())
 
         while True:  # this is the routine game tick
             reply = self.pos2str(self.pos_send)

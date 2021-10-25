@@ -113,16 +113,18 @@ class Server:
         self.writer = writer
         loop = asyncio.get_running_loop()
         room = None
-        self.writer.write(str(self.client_id).encode())  # send client_id
-        recv_data = await self.reader.read(200)  # client reply: f"{conn_type},{player_name}"
+        recv_data = await self.reader.read(200)  # first to check whether this is a valid request
         self.player_info = recv_data.decode().split(",")
         if self.player_info[0] != "handshake":  # if not "handshake", it's an invalid connection request
             self.writer.close()
             await self.writer.wait_closed()
             return
         elif self.player_info[0] == "handshake":  # handshake connection, waiting for other conn_type
+            self.writer.write("ok".encode())  # handshake reply to client
+            dummy_data = await self.reader.read(200)  # dummy receiving
             self.new_connection()
-            self.writer.write("Waiting".encode())
+            self.writer.write(str(self.client_id).encode())
+
             recv_data = await self.reader.read(200)  # waiting for "create" or "join"
             self.player_info = recv_data.decode().split(",")
             conn_type = self.player_info[0]  # client reply: f"{conn_type},{player_name}"
