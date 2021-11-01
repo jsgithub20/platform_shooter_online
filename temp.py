@@ -19,6 +19,9 @@ no_title_theme_join_game.widget_alignment = pygame_menu.locals.ALIGN_LEFT
 # no_title_theme_join_game.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_SIMPLE
 no_title_theme_join_game.widget_padding = 5
 
+sub_menu_theme = pygame_menu.themes.THEME_ORANGE.copy()
+sub_menu_theme.widget_alignment = pygame_menu.locals.ALIGN_LEFT
+
 items = [('Yes', 0),
          ('Absolutely Yes', 1)]
 
@@ -51,7 +54,23 @@ menu = pygame_menu.Menu(
     theme=no_title_theme_join_game,
     position=[40, 20])
 
-menu.add.button("test", cb_btn)
+sub_menu = pygame_menu.Menu(
+    'Choosing Games', 1024 * 0.8, 768 * 0.8,
+    center_content=False,
+    onclose=pygame_menu.events.EXIT,  # User press ESC button
+    theme=sub_menu_theme,
+    position=[40, 20])
+
+sub_menu.add.button("button")
+
+ds = sub_menu.add.dropselect(
+    title='Choose a game to join:',
+    items=[("No game", False, 1), ],
+    onchange=cb_onchange,
+    selection_box_bgcolor=(200, 200, 50)
+    )
+
+menu.add.button("test", sub_menu)
 
 selector_epic = menu.add.dropselect(
     title='Is pygame-menu epic?',
@@ -73,7 +92,7 @@ selector_sum = menu.add.dropselect(
     selection_option_padding=(0, 5),
     selection_option_font_size=20
 )
-selector_country = menu.add.dropselect(
+selector_country = sub_menu.add.dropselect(
     title='Pick a country',
     items=[('Argentina', 'ar'),
            ('Australia', 'au'),
@@ -90,7 +109,7 @@ selector_country = menu.add.dropselect(
            ('United States', 'us')],
     font_size=20,
     default=3,
-    open_middle=True,  # Opens in the middle of the menu
+    # open_middle=True,  # Opens in the middle of the menu
     selection_box_height=5,
     selection_box_width=212,
     selection_infinite=True,

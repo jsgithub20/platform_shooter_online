@@ -20,7 +20,7 @@ class Network:
         self.server_ip = server_ip
         self.server_port = server_port
         self.client_id = 0
-        self.server_msg = "Initial msg"
+        self.server_msg = "Waiting for 2nd player"
         self.player_name = ""
         self.reader = None
         self.writer = None

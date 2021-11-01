@@ -157,25 +157,28 @@ class Menu:
             self.my_logger.my_logger.error(f"Connection status: error - {e}")
         else:
             kwargs["widget"].set_title(f"Connection status: connected with client id - {self.client_id}")
-            self.my_logger.my_logger.info(f"Connected to server: {self.server_ip}:{self.server_port}")
+            self.my_logger.my_logger.info(f"Connected to server: {self.server_ip}:{self.server_port} "
+                                          f"with client id - {self.client_id}")
 
     def conn_create(self, **kwargs):
         self.conn_type = "create"
         conn_result = self.t_loop.create_task(self.connection.create())
-        try:
-            conn_result.result()
-        except Exception as e:
-            kwargs["widget"].set_title(f"Create a new game: error - {e}")
-            self.my_logger.my_logger.error(f"Create a new game: error - {e}")
-        else:
-            kwargs["widget"].set_title(f"Create a new game: created with name - {self.player_name}")
-            self.my_logger.my_logger.info(f"Create a new game: created with name - {self.player_name}")
+        self.demo_game()
+        # try:
+        #     conn_result.result()
+        # except Exception as e:
+        #     kwargs["widget"].set_title(f"Create a new game: error - {e}")
+        #     self.my_logger.my_logger.error(f"Create a new game: error - {e}")
+        # else:
+        #     kwargs["widget"].set_title(f"Create a new game: created with name - {self.player_name}")
+        #     self.my_logger.my_logger.info(f"Create a new game: created with name - {self.player_name}")
 
     def conn_join(self):
         self.conn_type = "join"
         conn_result = self.t_loop.create_task(self.connection.join())
 
-    def cb_dropselecton_onchange(self, item_index: tuple, game_ready, room_id):  # [[player0_name, game_ready, room_id],]
+    def cb_dropselecton_onchange(self, item_index: tuple, game_ready,
+                                 room_id):  # [[player0_name, game_ready, room_id],]
         self.chosen_room_id = room_id
 
     def cb_dropselection_onselect(self, selected, widget, menu):
@@ -201,16 +204,11 @@ class Menu:
                 self.selector_game.update_items(self.game_rooms)
                 self.selector_game.render()  # force re-render the dropselect object
 
-    def demo_game(self, server_ip, server_port, player_name):
-        self.server_ip = server_ip
-        self.server_port = server_port
-        self.player_name = player_name
-        # self.conn_task(server_ip, server_port, player_name)
-
+    def demo_game(self):
         self.main_menu.disable()
 
         my_msg = DrawText("My msg:")
-        their_msg = DrawText("Their msg:")
+        their_msg = DrawText(f"{self.connection.server_msg}")
         msg_grp = pygame.sprite.Group()
         msg_grp.add(my_msg, their_msg)
         while True:
@@ -246,6 +244,7 @@ class Menu:
             if self.connection.server_msg != "Game Ready":
                 my_msg.rect.x, my_msg.rect.y = (100, 100)
                 their_msg.rect.x, their_msg.rect.y = (100, 200)
+                their_msg.text = (100, 200)
             else:
                 try:
                     # 3 lines of get_nowait() to make sure even the Queue() is full, only the last item is returned
@@ -254,13 +253,17 @@ class Menu:
                     their_msg.rect.x, their_msg.rect.y = self.connection.pos_recv.get_nowait()
                 except queue.Empty:
                     pass
-            my_msg.text = f"I'm at {str((my_msg.rect.x, my_msg.rect.x))}"
+            my_msg.text = f"I'm client {self.connection.client_id}, {str((my_msg.rect.x, my_msg.rect.y))}"
             self.connection.pos_send = my_msg.pos()
-            their_msg.text = f"They are at {str((their_msg.rect.x, their_msg.rect.x))}"
+            their_msg.text = f"{self.connection.server_msg}, {str((their_msg.rect.x, their_msg.rect.y))}"
             msg_grp.update()
             msg_grp.draw(self.screen)
 
             pygame.display.flip()
+
+    def cb_click(self, **kwargs):
+        effect = pygame_menu.widgets.selection.HighlightSelection(5)
+        kwargs['widget'].set_selection_effect(effect)
 
     def main(self, test: bool = False) -> None:
         """
@@ -345,7 +348,7 @@ class Menu:
             textinput_id='new_game'
         )
 
-        b_connect = self.main_menu.add.button("Connection status: disconnected",
+        b_connect = self.main_menu.add.button("Connection status: <click to connect>",
                                               self.conn_conn,
                                               server_ip.get_value(),
                                               server_port.get_value(),
@@ -355,44 +358,62 @@ class Menu:
         b_create = self.main_menu.add.button("Create a new game", self.conn_create)
         b_create.add_self_to_kwargs()
 
-        self.selector_game = self.main_menu.add.dropselect(
+        self.main_menu.add.button("Join The Selected Game", self.join_game_menu)
+
+        self.join_game_menu.add.vertical_margin(30)
+
+        refresh_frame = self.join_game_menu.add.frame_h(400, 50, padding=0, align=ALIGN_LEFT,)
+
+        b_refresh = self.join_game_menu.add.button("refresh",
+                                                   font_color=(51, 94, 28),
+                                                   background_color=(255, 221, 119),
+                                                   selection_color=(249, 7, 7),
+                                                   cursor=CURSOR_HAND)
+
+        b_refresh.add_self_to_kwargs()
+
+        refresh_frame.pack(self.join_game_menu.add.label("Please"))
+        refresh_frame.pack(b_refresh)
+        refresh_frame.pack(self.join_game_menu.add.label(" the game list!"))
+
+        # current_menu = self.join_game_menu.get_current()
+
+        self.selector_game = self.join_game_menu.add.dropselect(
             title='Choose a game to join:',
             items=self.game_rooms,
             onchange=self.cb_dropselecton_onchange,
             selection_box_bgcolor=(200, 200, 50)
         )
 
-        self.main_menu.add.button("Join The Selected Game", self.conn_join)
-
         # choose_game = self.main_menu.add.button(self.room_selected1 + self.room_selected2, self.join_game_menu)
 
-        self.join_game_menu.add.vertical_margin(30)
-
-        refresh_frame = self.join_game_menu.add.frame_h(400, 50, padding=0, align=ALIGN_CENTER)
-
-        b_refresh = self.join_game_menu.add.button("refresh",
-                                                   self.refresh,
-                                                   server_ip.get_value(),
-                                                   server_port.get_value(),
-                                                   player_name.get_value(),
-                                                   font_color=(51, 94, 28),
-                                                   background_color=(255, 221, 119),
-                                                   selection_color=(249, 7, 7),
-                                                   cursor=CURSOR_HAND)
-
-        refresh_frame.pack(self.join_game_menu.add.label("Please"))
-        refresh_frame.pack(b_refresh)
-        refresh_frame.pack(self.join_game_menu.add.label(" the game list!"))
-
-        self.join_game_menu.add.vertical_margin(10)
-
-        self.room_frame = self.join_game_menu.add.frame_v(600, 1500,
-                                                          background_color=(240, 230, 185),
-                                                          padding=0,
-                                                          max_width=600,
-                                                          max_height=300,
-                                                          align=ALIGN_CENTER)
-        self.room_frame.set_title('Game Rooms', title_font_color=(247, 159, 7), padding_inner=(2, 5))
+        # self.join_game_menu.add.vertical_margin(30)
+        #
+        # refresh_frame = self.join_game_menu.add.frame_h(400, 50, padding=0, align=ALIGN_CENTER)
+        #
+        # b_refresh = self.join_game_menu.add.button("refresh",
+        #                                            self.refresh,
+        #                                            server_ip.get_value(),
+        #                                            server_port.get_value(),
+        #                                            player_name.get_value(),
+        #                                            font_color=(51, 94, 28),
+        #                                            background_color=(255, 221, 119),
+        #                                            selection_color=(249, 7, 7),
+        #                                            cursor=CURSOR_HAND)
+        #
+        # refresh_frame.pack(self.join_game_menu.add.label("Please"))
+        # refresh_frame.pack(b_refresh)
+        # refresh_frame.pack(self.join_game_menu.add.label(" the game list!"))
+        #
+        # self.join_game_menu.add.vertical_margin(10)
+        #
+        # self.room_frame = self.join_game_menu.add.frame_v(600, 1500,
+        #                                                   background_color=(240, 230, 185),
+        #                                                   padding=0,
+        #                                                   max_width=600,
+        #                                                   max_height=300,
+        #                                                   align=ALIGN_CENTER)
+        # self.room_frame.set_title('Game Rooms', title_font_color=(247, 159, 7), padding_inner=(2, 5))
 
         # for i in range(100):
         #     self.room_frame.pack(self.join_game_menu.add.button("Empty room",
@@ -406,10 +427,6 @@ class Menu:
         self.join_game_menu.add.vertical_margin(30)
 
         b_return = self.join_game_menu.add.button("Join",
-                                                  # self.join,
-                                                  # server_ip.get_value(),
-                                                  # server_port.get_value(),
-                                                  # player_name.get_value(),
                                                   font_color=(51, 94, 28),
                                                   background_color=(255, 221, 119),
                                                   selection_color=(249, 7, 7),
@@ -442,9 +459,11 @@ class Menu:
                     pygame.quit()
                     exit()
 
+            self.main_menu.update(events)
+            # self.join_game_menu.update(events)
+
             if self.main_menu.is_enabled():
                 self.screen.blit(background_image, (0, 0))
-                self.main_menu.update(events)
                 if self.main_menu.is_enabled():
                     self.main_menu.draw(self.screen)
             else:

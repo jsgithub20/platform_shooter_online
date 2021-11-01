@@ -178,6 +178,8 @@ def main(test: bool = False) -> None:
     game_rooms = ["Amy's game", "Jacky's game", "Dora's game", "Amy's game", "Jacky's game", "Dora's game",
                   "Amy's game", "Jacky's game", "Dora's game", "Amy's game", "Jacky's game", "Dora's game"]
 
+    game_rooms_drop_select = [("No game", False, 1), ]
+
     # -------------------------------------------------------------------------
     # Create window
     # -------------------------------------------------------------------------
@@ -272,6 +274,12 @@ def main(test: bool = False) -> None:
     choose_game = main_menu.add.button(room_selected, join_game_menu)
 
     join_game_menu.add.vertical_margin(30)
+
+    # selector_game = join_game_menu.add.dropselect(
+    #     title='Choose a game to join:',
+    #     items=game_rooms_drop_select,
+    #     selection_box_bgcolor=(200, 200, 50)
+    # )
 
     refresh_frame = join_game_menu.add.frame_h(400, 50, padding=0, align=ALIGN_CENTER)
 
