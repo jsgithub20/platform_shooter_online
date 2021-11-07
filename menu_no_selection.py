@@ -362,12 +362,10 @@ class Menu:
 
         self.join_game_menu.add.vertical_margin(30)
 
-        refresh_frame = self.join_game_menu.add.frame_h(400, 50, padding=0, align=ALIGN_LEFT,)
+        refresh_frame = self.join_game_menu.add.frame_h(400, 50, align=ALIGN_LEFT)
 
         b_refresh = self.join_game_menu.add.button("refresh",
-                                                   font_color=(51, 94, 28),
-                                                   background_color=(255, 221, 119),
-                                                   selection_color=(249, 7, 7),
+                                                   underline=True,
                                                    cursor=CURSOR_HAND)
 
         b_refresh.add_self_to_kwargs()
@@ -376,7 +374,7 @@ class Menu:
         refresh_frame.pack(b_refresh)
         refresh_frame.pack(self.join_game_menu.add.label(" the game list!"))
 
-        # current_menu = self.join_game_menu.get_current()
+        self.join_game_menu.add.vertical_margin(15)
 
         self.selector_game = self.join_game_menu.add.dropselect(
             title='Choose a game to join:',
@@ -384,54 +382,15 @@ class Menu:
             onchange=self.cb_dropselecton_onchange,
             selection_box_bgcolor=(200, 200, 50)
         )
+        self.join_game_menu.add.vertical_margin(15)
 
-        # choose_game = self.main_menu.add.button(self.room_selected1 + self.room_selected2, self.join_game_menu)
+        self.join_game_menu.add.button("Join", cursor=CURSOR_HAND)
+        self.join_game_menu.add.vertical_margin(15)
 
-        # self.join_game_menu.add.vertical_margin(30)
-        #
-        # refresh_frame = self.join_game_menu.add.frame_h(400, 50, padding=0, align=ALIGN_CENTER)
-        #
-        # b_refresh = self.join_game_menu.add.button("refresh",
-        #                                            self.refresh,
-        #                                            server_ip.get_value(),
-        #                                            server_port.get_value(),
-        #                                            player_name.get_value(),
-        #                                            font_color=(51, 94, 28),
-        #                                            background_color=(255, 221, 119),
-        #                                            selection_color=(249, 7, 7),
-        #                                            cursor=CURSOR_HAND)
-        #
-        # refresh_frame.pack(self.join_game_menu.add.label("Please"))
-        # refresh_frame.pack(b_refresh)
-        # refresh_frame.pack(self.join_game_menu.add.label(" the game list!"))
-        #
-        # self.join_game_menu.add.vertical_margin(10)
-        #
-        # self.room_frame = self.join_game_menu.add.frame_v(600, 1500,
-        #                                                   background_color=(240, 230, 185),
-        #                                                   padding=0,
-        #                                                   max_width=600,
-        #                                                   max_height=300,
-        #                                                   align=ALIGN_CENTER)
-        # self.room_frame.set_title('Game Rooms', title_font_color=(247, 159, 7), padding_inner=(2, 5))
+        self.join_game_menu.add.button("Back", pygame_menu.events.BACK)
+        self.join_game_menu.add.vertical_margin(15)
 
-        # for i in range(100):
-        #     self.room_frame.pack(self.join_game_menu.add.button("Empty room",
-        #                                                         self.game_room_selected,
-        #                                                         self.game_rooms[i][1],
-        #                                                         font_color='red',
-        #                                                         button_id=f'b{i}'), align=ALIGN_CENTER)
-
-        # self.update_rooms()
-
-        self.join_game_menu.add.vertical_margin(30)
-
-        b_return = self.join_game_menu.add.button("Join",
-                                                  font_color=(51, 94, 28),
-                                                  background_color=(255, 221, 119),
-                                                  selection_color=(249, 7, 7),
-                                                  align=ALIGN_CENTER,
-                                                  cursor=CURSOR_HAND)
+        self.join_game_menu.add.button("Quit", pygame_menu.events.EXIT)
 
         # self.main_menu.add.button("Start",
         #                           self.demo_game,
