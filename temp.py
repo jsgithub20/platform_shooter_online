@@ -38,6 +38,10 @@ def cb_onchange(selectecd_ii: tuple, a):
 def cb_btn():
     print("test btn pressed")
 
+def cb_sub_menu_open(from_menu, to_menu):
+    print("sub_menu opened")
+    print(f"from menu: {from_menu.get_title()}")
+    print(f"to menu: {to_menu.get_title()}")
 
 async def add_item(widget_drop_select: pygame_menu.widgets.widget.dropselect):
     drop_items = widget_drop_select.get_items()
@@ -61,7 +65,10 @@ sub_menu = pygame_menu.Menu(
     theme=sub_menu_theme,
     position=[40, 20])
 
+
 sub_menu.add.button("button")
+
+sub_menu.set_onbeforeopen(cb_sub_menu_open)
 
 ds = sub_menu.add.dropselect(
     title='Choose a game to join:',
@@ -115,7 +122,7 @@ selector_country = sub_menu.add.dropselect(
     selection_infinite=True,
     selection_option_font_size=20,
     onchange=cb_onchange,
-    onselect=cb_onselect
+    # onselect=cb_onselect
 )
 
 while True:

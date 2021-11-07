@@ -53,7 +53,7 @@ class Network:
         self.writer.write(f"{conn_type},{self.player_name}".encode())
         await self.client()
 
-    async def join(self):
+    async def  join(self):
         conn_type = "join"
         await self.reader.read(100)
         self.writer.write(f"{conn_type},{self.player_name}".encode())

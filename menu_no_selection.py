@@ -185,6 +185,9 @@ class Menu:
         if selected:
             self.refresh()
 
+    def cb_join_menu_openned(self, from_menu, to_menu):
+        pass
+
     def refresh(self):
         current_game_rooms = self.game_rooms
         try:
@@ -327,6 +330,8 @@ class Menu:
             position=[40, 20],
         )
 
+        self.join_game_menu.set_onbeforeopen(self.cb_join_menu_openned)
+
         self.main_menu.add.vertical_margin(30)
 
         server_ip = self.main_menu.add.text_input(
@@ -358,7 +363,7 @@ class Menu:
         b_create = self.main_menu.add.button("Create a new game", self.conn_create)
         b_create.add_self_to_kwargs()
 
-        self.main_menu.add.button("Join The Selected Game", self.join_game_menu)
+        self.main_menu.add.button("Choose an existing game to join", self.join_game_menu)
 
         self.join_game_menu.add.vertical_margin(30)
 
@@ -382,6 +387,7 @@ class Menu:
             onchange=self.cb_dropselecton_onchange,
             selection_box_bgcolor=(200, 200, 50)
         )
+
         self.join_game_menu.add.vertical_margin(15)
 
         self.join_game_menu.add.button("Join", cursor=CURSOR_HAND)
