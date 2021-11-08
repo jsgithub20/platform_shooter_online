@@ -11,7 +11,6 @@ import queue
 from queue import Queue
 from time import perf_counter
 
-
 LEN = 15
 
 
@@ -39,23 +38,19 @@ class Network:
         # self.client_id = id_data.decode()
         self.writer.write(f"{conn_type},{self.player_name}".encode())
         svr_data = await self.reader.read(100)
-        if svr_data.decode() != "ok":
+        if svr_data.decode() != "ok":  # if server doesn't send back "ok", there should be some connection issue
             print("Server error")
-        self.writer.write(f"{conn_type},{self.player_name}".encode())
+        self.writer.write(f"{conn_type},{self.player_name}".encode())  # just to complete the r/w cycle
         client_id_data = await self.reader.read(100)
         self.client_id = client_id_data.decode()
 
     async def create(self):  # create a new game room
         conn_type = "create"
-        # receiving "waiting" from the server to get the read/write cycle read to write "create" or "join"
-        # this operation also checks whether the connection is live after waiting for the player's input
-        await self.reader.read(100)
         self.writer.write(f"{conn_type},{self.player_name}".encode())
         await self.client()
 
-    async def  join(self):
+    async def join(self):
         conn_type = "join"
-        await self.reader.read(100)
         self.writer.write(f"{conn_type},{self.player_name}".encode())
         await self.client()
 
