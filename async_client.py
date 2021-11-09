@@ -76,7 +76,7 @@ class Network:
         self.game_rooms = list(json.loads(rooms_data.decode()))  # [[player0_name, game_ready, room_id],]
 
     async def refresh(self):
-        self.writer.write(self.chosen_room)
+        self.writer.write(self.chosen_room.encode())
         await self.get_games()
 
     async def client(self):

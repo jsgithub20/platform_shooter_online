@@ -51,6 +51,9 @@ async def add_item(widget_drop_select: pygame_menu.widgets.widget.dropselect):
     widget_drop_select.update_items(drop_items)
     print(drop_items)
 
+def cb_get_text(txt):
+    print(txt)
+
 menu = pygame_menu.Menu(
     'Choosing Games', 1024 * 0.8, 768 * 0.8,
     center_content=False,
@@ -124,6 +127,9 @@ selector_country = sub_menu.add.dropselect(
     onchange=cb_onchange,
     # onselect=cb_onselect
 )
+
+txt = menu.add.text_input("Text Input: ", default="test", onreturn=None)
+btn1 = menu.add.button("Get text", cb_get_text, txt.get_value())
 
 while True:
     clock.tick(60)

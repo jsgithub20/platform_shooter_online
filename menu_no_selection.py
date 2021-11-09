@@ -143,9 +143,9 @@ class Menu:
         self.sound: [pygame_menu.sound.Sound] = None
 
     def conn_conn(self, server_ip, server_port, player_name, **kwargs):
-        self.server_ip = server_ip
-        self.server_port = server_port
-        self.player_name = player_name
+        self.server_ip = server_ip.get_value()
+        self.server_port = server_port.get_value()
+        self.player_name = player_name.get_value()
         self.connection = async_client.Network(self.server_ip, self.server_port)
         conn_result = self.t_loop.create_task(self.connection.conn(self.player_name))
         try:
@@ -175,39 +175,56 @@ class Menu:
 
     def conn_join(self):
         self.conn_type = "join"
-        self.t_loop.create_task(self.connection.join())
-        self.game_rooms = self.connection.game_rooms
-        self.game_rooms = [tuple(lst) for lst in self.game_rooms]
+        task = self.t_loop.create_task(self.connection.join())
+        try:
+            # this connection should be established immediately otherwise there's a network issue
+            task.result(TIMEOUT)
+            self.game_rooms = self.connection.game_rooms
+            self.game_rooms = [tuple(lst) for lst in self.game_rooms]
+            self.selector_game.update_items(self.game_rooms)
+        except Exception as e:
+            self.my_logger.my_logger.error(f"Connection issue - {e}")
 
     def cb_dropselecton_onchange(self, item_index: tuple, game_ready,
                                  room_id):  # [[player0_name, game_ready, room_id],]
         self.chosen_room_id = room_id
 
-    def cb_dropselection_onselect(self, selected, widget, menu):
-        if selected:
-            self.refresh()
+    # def cb_dropselection_onselect(self, selected, widget, menu):
+    #     if selected:
+    #         self.refresh()
 
     def cb_join_menu_openned(self, from_menu, to_menu):
         self.conn_join()
 
-    def refresh(self):
+    def cb_refresh(self):
         current_game_rooms = self.game_rooms
+        task = self.t_loop.create_task(self.connection.refresh())
         try:
-            print(f"starting 'try', q size = {self.connection.q_game_rooms.qsize()}")
-            # 3 lines of get_nowait() to make sure even the Queue() is full, only the last item is returned
-            self.game_rooms = self.connection.q_game_rooms.get_nowait()
-            print(f"get from q: {self.game_rooms}")
-            self.game_rooms = self.connection.q_game_rooms.get_nowait()
-            self.game_rooms = self.connection.q_game_rooms.get_nowait()
-        except queue.Empty:
-            pass
-        finally:
-            # change [[..],] to [(..),] to fit requirement as items in dropselect
-            # only update the game room list if the received list is different than current
-            if self.game_rooms != current_game_rooms:
-                self.game_rooms = [tuple(lst) for lst in self.game_rooms]
-                self.selector_game.update_items(self.game_rooms)
-                self.selector_game.render()  # force re-render the dropselect object
+            # this connection should be established immediately otherwise there's a network issue
+            task.result(TIMEOUT)
+            self.game_rooms = self.connection.game_rooms
+            self.game_rooms = [tuple(lst) for lst in self.game_rooms]
+            print(self.game_rooms)
+            self.selector_game.update_items(self.game_rooms)
+            self.selector_game.render()
+        except Exception as e:
+            self.my_logger.my_logger.error(f"Connection issue - {e}")
+        # try:
+        #     print(f"starting 'try', q size = {self.connection.q_game_rooms.qsize()}")
+        #     # 3 lines of get_nowait() to make sure even the Queue() is full, only the last item is returned
+        #     self.game_rooms = self.connection.q_game_rooms.get_nowait()
+        #     print(f"get from q: {self.game_rooms}")
+        #     self.game_rooms = self.connection.q_game_rooms.get_nowait()
+        #     self.game_rooms = self.connection.q_game_rooms.get_nowait()
+        # except queue.Empty:
+        #     pass
+        # finally:
+        #     # change [[..],] to [(..),] to fit requirement as items in dropselect
+        #     # only update the game room list if the received list is different than current
+        #     if self.game_rooms != current_game_rooms:
+        #         self.game_rooms = [tuple(lst) for lst in self.game_rooms]
+        #         self.selector_game.update_items(self.game_rooms)
+        #         self.selector_game.render()  # force re-render the dropselect object
 
     def demo_game(self):
         self.main_menu.disable()
@@ -258,7 +275,7 @@ class Menu:
                     their_msg.rect.x, their_msg.rect.y = self.connection.pos_recv.get_nowait()
                 except queue.Empty:
                     pass
-            my_msg.text = f"I'm client {self.connection.client_id}, {str((my_msg.rect.x, my_msg.rect.y))}"
+            my_msg.text = f"{self.player_name}'s client {self.connection.client_id}, {str((my_msg.rect.x, my_msg.rect.y))}"
             self.connection.pos_send = my_msg.pos()
             their_msg.text = f"{self.connection.server_msg}, {str((their_msg.rect.x, their_msg.rect.y))}"
             msg_grp.update()
@@ -353,9 +370,9 @@ class Menu:
 
         b_connect = self.main_menu.add.button("Connection status: <click to connect>",
                                               self.conn_conn,
-                                              server_ip.get_value(),
-                                              server_port.get_value(),
-                                              player_name.get_value())
+                                              server_ip,
+                                              server_port,
+                                              player_name)
         b_connect.add_self_to_kwargs()
 
         b_create = self.main_menu.add.button("Create a new game", self.conn_create)
@@ -368,10 +385,11 @@ class Menu:
         refresh_frame = self.join_game_menu.add.frame_h(400, 50, align=ALIGN_LEFT)
 
         b_refresh = self.join_game_menu.add.button("refresh",
+                                                   self.cb_refresh,
                                                    underline=True,
                                                    cursor=CURSOR_HAND)
 
-        b_refresh.add_self_to_kwargs()
+        # b_refresh.add_self_to_kwargs()
 
         refresh_frame.pack(self.join_game_menu.add.label("Please"))
         refresh_frame.pack(b_refresh)
