@@ -89,7 +89,7 @@ class Server:
             rooms_lst_enc = json.dumps(rooms_lst).encode()
             length = len(rooms_lst_enc)
             self.writer.write(str(length).encode())  # send the receiving length first
-            # this will be the "length" returned from client, just to complete a write/read cycle
+            # this will be "ok" returned from client, just to complete a write/read cycle
             await self.reader.read(100)
             self.writer.write(rooms_lst_enc)
             recv_data = await self.reader.read(100)
@@ -97,9 +97,6 @@ class Server:
             if choice in rooms_lst:
                 print("Room choice = ", choice)
                 return
-
-            if choice != "j":  # use a number to simulate the game room selection
-                return choice
 
     def new_connection(self):
         self.cnt += 1

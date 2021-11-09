@@ -162,7 +162,7 @@ class Menu:
 
     def conn_create(self, **kwargs):
         self.conn_type = "create"
-        conn_result = self.t_loop.create_task(self.connection.create())
+        self.t_loop.create_task(self.connection.create())
         self.demo_game()
         # try:
         #     conn_result.result()
@@ -175,7 +175,9 @@ class Menu:
 
     def conn_join(self):
         self.conn_type = "join"
-        conn_result = self.t_loop.create_task(self.connection.join())
+        self.t_loop.create_task(self.connection.join())
+        self.game_rooms = self.connection.game_rooms
+        self.game_rooms = [tuple(lst) for lst in self.game_rooms]
 
     def cb_dropselecton_onchange(self, item_index: tuple, game_ready,
                                  room_id):  # [[player0_name, game_ready, room_id],]
@@ -186,7 +188,7 @@ class Menu:
             self.refresh()
 
     def cb_join_menu_openned(self, from_menu, to_menu):
-        pass
+        self.conn_join()
 
     def refresh(self):
         current_game_rooms = self.game_rooms
@@ -263,10 +265,6 @@ class Menu:
             msg_grp.draw(self.screen)
 
             pygame.display.flip()
-
-    def cb_click(self, **kwargs):
-        effect = pygame_menu.widgets.selection.HighlightSelection(5)
-        kwargs['widget'].set_selection_effect(effect)
 
     def main(self, test: bool = False) -> None:
         """
