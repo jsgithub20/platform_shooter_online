@@ -179,11 +179,12 @@ class Menu:
         try:
             # this connection should be established immediately otherwise there's a network issue
             task.result(TIMEOUT)
+            print(task.done())
             self.game_rooms = self.connection.game_rooms
             self.game_rooms = [tuple(lst) for lst in self.game_rooms]
             self.selector_game.update_items(self.game_rooms)
         except Exception as e:
-            self.my_logger.my_logger.error(f"Connection issue - {e}")
+            self.my_logger.my_logger.error(f"Connection issue during joining - {e}")
 
     def cb_dropselecton_onchange(self, item_index: tuple, game_ready,
                                  room_id):  # [[player0_name, game_ready, room_id],]
@@ -208,7 +209,7 @@ class Menu:
             self.selector_game.update_items(self.game_rooms)
             self.selector_game.render()
         except Exception as e:
-            self.my_logger.my_logger.error(f"Connection issue - {e}")
+            self.my_logger.my_logger.error(f"Connection issue during refreshing - {e}")
         # try:
         #     print(f"starting 'try', q size = {self.connection.q_game_rooms.qsize()}")
         #     # 3 lines of get_nowait() to make sure even the Queue() is full, only the last item is returned
