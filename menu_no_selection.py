@@ -179,7 +179,6 @@ class Menu:
         try:
             # this connection should be established immediately otherwise there's a network issue
             task.result(TIMEOUT)
-            print(task.done())
             self.game_rooms = self.connection.game_rooms
             self.game_rooms = [tuple(lst) for lst in self.game_rooms]
             self.selector_game.update_items(self.game_rooms)
@@ -207,7 +206,7 @@ class Menu:
             self.game_rooms = [tuple(lst) for lst in self.game_rooms]
             print(self.game_rooms)
             self.selector_game.update_items(self.game_rooms)
-            self.selector_game.render()
+            # self.selector_game.render()
         except Exception as e:
             self.my_logger.my_logger.error(f"Connection issue during refreshing - {e}")
         # try:

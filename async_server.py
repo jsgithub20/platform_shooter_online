@@ -92,8 +92,11 @@ class Server:
             # this will be "ok" returned from client, just to complete a write/read cycle
             await self.reader.read(100)
             self.writer.write(rooms_lst_enc)
+            print(f"writing game list {rooms_lst}")
             recv_data = await self.reader.read(100)
             choice = recv_data.decode()
+            print(f"game choice received: {choice}")
+
             if choice in rooms_lst:
                 print("Room choice = ", choice)
                 return
