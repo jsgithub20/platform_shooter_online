@@ -15,8 +15,9 @@ from logging import handlers
 from dataclasses import dataclass
 from typing import Any
 
-FPS = 100
-LEN = 15
+FPS = 60
+LEN = 20
+CONNECTED = True
 
 FIELD_STYLES = {'asctime': {'color': 'green'},
                 'levelname': {'bold': False, 'color': (200, 200, 200)},
@@ -68,74 +69,91 @@ class Server:
         fh.setFormatter(format_str)
         self.my_logger.addHandler(fh)
 
-    def create(self):
+    async def check_conn(self, player_name, reader, length):
+        string = None
+        connected = CONNECTED
+        try:
+            received = await reader.read(length)
+            string = received.decode()
+        except ConnectionError:
+            self.cnt -= 1
+            self.my_logger.warning(f"Connection to player {player_name} is lost")
+            connected = not CONNECTED
+        return connected, string
+
+    def create(self, player_name, reader, writer):
         self.room_cnt += 1
         self.room_id += 1
         room = RoomState()
         room.room_id = self.room_id
-        room.player_0_name = self.player_info[1]
-        room.player_0_reader = self.reader
-        room.player_0_writer = self.writer
+        room.player_0_name = player_name
+        room.player_0_reader = reader
+        room.player_0_writer = writer
         self.game_dict[room.room_id] = room
         return room
 
-    async def join(self):
+    async def join(self, player_name, reader, writer):
         # if the client request to join an existing game, a new coroutine will be created with this function
+        choice = None
         while True:
             self.clock.tick(FPS)
             # sending room list to the client, no matter full or not [[player0_name, game_ready, room_id],]
+            # if game_dict is empty, an empty list will be assigned to "rooms_lst" and no exception will be raised
             rooms_lst = [[self.game_dict[room_id].player_0_name, self.game_dict[room_id].game_ready, room_id]
                          for room_id in [*self.game_dict]]
+            if not rooms_lst:
+                rooms_lst = [["no game", False, 0]]
             rooms_lst_enc = json.dumps(rooms_lst).encode()
             length = len(rooms_lst_enc)
-            self.writer.write(str(length).encode())  # send the receiving length first
+            writer.write(str(length).encode())  # send the receiving length first
             # this will be "ok" returned from client, just to complete a write/read cycle
-            ok = await self.reader.read(100)
-            print(f"ok received: {ok}, reader = {self.reader}")
-            self.writer.write(rooms_lst_enc)
-            print(f"writing game list {rooms_lst}, reader = {self.reader}")
-            recv_data = await self.reader.read(100)
+            r = await self.check_conn(player_name, reader, LEN)  # r = (connected, info)
+            if not r[0]:
+                return not CONNECTED, choice
+            writer.write(rooms_lst_enc)
+            r = await self.check_conn(player_name, reader, LEN)
+            if not r[0]:
+                return not CONNECTED, choice
+            recv_data = await reader.read(100)
             choice = recv_data.decode()
-            print(f"game choice received: {choice}, reader = {self.reader}")
 
             if choice in rooms_lst:
                 print("Room choice = ", choice)
                 return
 
-    def new_connection(self):
+    def new_connection(self, player_name):
         self.cnt += 1
         self.client_id += 1
-        self.my_logger.info(f"Total connections: {self.cnt}, new connection to: {self.player_info[1]}")
-        self.my_logger.info(f"reader = {self.reader}")
+        self.my_logger.info(f"Total connections: {self.cnt}, new connection to: {player_name}")
 
     async def new_client(self, reader, writer):
         # any new client connection goes here first
         player_id = 0  # player_id will be assigned according to conn_type: create - 0, join - 1
-        self.reader = reader
-        self.writer = writer
+        # self.reader = reader
+        # self.writer = writer
         loop = asyncio.get_running_loop()
         room = None
-        recv_data = await self.reader.read(200)  # first to check whether this is a valid request
-        self.player_info = recv_data.decode().split(",")
-        if self.player_info[0] != "handshake":  # if not "handshake", it's an invalid connection request
-            self.writer.close()
-            await self.writer.wait_closed()
+        recv_data = await reader.read(200)  # first to check whether this is a valid request
+        player_info = recv_data.decode().split(",")
+        if player_info[0] != "handshake":  # if not "handshake", it's an invalid connection request
+            writer.close()
+            await writer.wait_closed()
             return
-        elif self.player_info[0] == "handshake":  # handshake connection, waiting for other conn_type
-            self.writer.write("ok".encode())  # handshake reply to client
-            dummy_data = await self.reader.read(200)  # dummy receiving
-            self.new_connection()
-            self.writer.write(str(self.client_id).encode())
+        elif player_info[0] == "handshake":  # handshake connection, waiting for other conn_type
+            writer.write("ok".encode())  # handshake reply to client
+            dummy_data = await reader.read(200)  # dummy receiving
+            self.new_connection(player_info[1])
+            writer.write(str(self.client_id).encode())
 
-            recv_data = await self.reader.read(200)  # waiting for "create" or "join"
-            self.player_info = recv_data.decode().split(",")
-            conn_type = self.player_info[0]  # client reply: f"{conn_type},{player_name}"
+            recv_data = await reader.read(200)  # waiting for "create" or "join"
+            player_info = recv_data.decode().split(",")
+            conn_type = player_info[0]  # client reply: f"{conn_type},{player_name}"
             if conn_type == "create":
                 player_id = 0
-                room = self.create()
+                room = self.create(player_info[1], reader, writer)
             elif conn_type == "join":
                 player_id = 1
-                room = await self.join()
+                room = await self.join(player_info[1], reader, writer)
 
         # if player_info[0] == "create":  # first msg received from client will be "c"+player's name to create a new game
         #     room = RoomState()

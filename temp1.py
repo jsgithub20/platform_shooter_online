@@ -2,25 +2,15 @@ import json
 
 lt = [("name1", False, 1), ("name2", True, 2)]
 
-ltde = json.dumps(lt).encode()
+game_dict = {}
 
-ltld = json.loads(ltde.decode())
+rooms_lst = [[game_dict[room_id].player_0_name, game_dict[room_id].game_ready, room_id]
+             for room_id in [*game_dict]]
 
-ltld = [tuple(lst) for lst in ltld]
+# print(rooms_lst)
 
+def check():
+    connected = True
+    return not connected
 
-def test(a, **kwargs):
-    print(a)
-    if kwargs:
-        print(kwargs["key"])
-
-
-# test("a")
-# test("a", key="content")
-
-# print(f"{lt == ltld}")
-
-d = {0: "this is 0", 1: "this is 1"}
-
-print(d)
-print(type([*d][0]))
+print(check())

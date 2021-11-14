@@ -174,7 +174,7 @@ class Menu:
         #     self.my_logger.my_logger.info(f"Create a new game: created with name - {self.player_name}")
 
     def conn_join(self):
-        self.conn_type = "join"
+        # self.conn_type = "join"
         task = self.t_loop.create_task(self.connection.join())
         try:
             # this connection should be established immediately otherwise there's a network issue
@@ -207,8 +207,8 @@ class Menu:
             print(self.game_rooms)
             self.selector_game.update_items(self.game_rooms)
             # self.selector_game.render()
-        except Exception as e:
-            self.my_logger.my_logger.error(f"Connection issue during refreshing - {e}")
+        except asyncio.TimeoutError:
+            self.my_logger.my_logger.error(f"Connection issue during refreshing")
         # try:
         #     print(f"starting 'try', q size = {self.connection.q_game_rooms.qsize()}")
         #     # 3 lines of get_nowait() to make sure even the Queue() is full, only the last item is returned
