@@ -90,12 +90,13 @@ class Server:
             length = len(rooms_lst_enc)
             self.writer.write(str(length).encode())  # send the receiving length first
             # this will be "ok" returned from client, just to complete a write/read cycle
-            await self.reader.read(100)
+            ok = await self.reader.read(100)
+            print(f"ok received: {ok}, reader = {self.reader}")
             self.writer.write(rooms_lst_enc)
-            print(f"writing game list {rooms_lst}")
+            print(f"writing game list {rooms_lst}, reader = {self.reader}")
             recv_data = await self.reader.read(100)
             choice = recv_data.decode()
-            print(f"game choice received: {choice}")
+            print(f"game choice received: {choice}, reader = {self.reader}")
 
             if choice in rooms_lst:
                 print("Room choice = ", choice)
@@ -105,6 +106,7 @@ class Server:
         self.cnt += 1
         self.client_id += 1
         self.my_logger.info(f"Total connections: {self.cnt}, new connection to: {self.player_info[1]}")
+        self.my_logger.info(f"reader = {self.reader}")
 
     async def new_client(self, reader, writer):
         # any new client connection goes here first
@@ -212,7 +214,7 @@ class Server:
             room.player_1_writer.write(msg0)
 
     async def main(self, host, port):
-        server = await asyncio.start_server(self.new_client, host, port)
+        server = await asyncio.start_server(self.new_client, host, port, )
         self.my_logger.info(f"Server started at {host}:{port}")
         await server.serve_forever()
 

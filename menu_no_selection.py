@@ -75,7 +75,7 @@ class DrawText(pygame.sprite.Sprite):
 
 class EventLoop(Thread):
     def __init__(self):
-        self._loop = asyncio.get_event_loop()
+        self._loop = asyncio.new_event_loop()
         super().__init__(target=self._loop.run_forever, daemon=True)
         self.start()
         self.game_task = None
