@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from typing import Any
 
 FPS = 60
-LEN = 20
+READ_LEN = 20
 CONNECTED = True
 
 FIELD_STYLES = {'asctime': {'color': 'green'},
@@ -69,7 +69,7 @@ class Server:
         fh.setFormatter(format_str)
         self.my_logger.addHandler(fh)
 
-    async def check_conn(self, player_name, reader, length):
+    async def check_read(self, player_name, reader, length):
         string = None
         connected = CONNECTED
         try:
@@ -107,72 +107,71 @@ class Server:
             length = len(rooms_lst_enc)
             writer.write(str(length).encode())  # send the receiving length first
             # this will be "ok" returned from client, just to complete a write/read cycle
-            r = await self.check_conn(player_name, reader, LEN)  # r = (connected, info)
+            r = await self.check_read(player_name, reader, READ_LEN)  # return connected, string
             if not r[0]:
                 return not CONNECTED, choice
             writer.write(rooms_lst_enc)
-            r = await self.check_conn(player_name, reader, LEN)
+            r = await self.check_read(player_name, reader, READ_LEN)  # return connected, string
             if not r[0]:
                 return not CONNECTED, choice
-            recv_data = await reader.read(100)
-            choice = recv_data.decode()
-
-            if choice in rooms_lst:
+            # recv_data = await reader.read(100)
+            # choice = recv_data.decode()
+            elif r[1] in rooms_lst:
+                choice = r[1]
                 print("Room choice = ", choice)
-                return
+                return CONNECTED, choice
 
     def new_connection(self, player_name):
         self.cnt += 1
         self.client_id += 1
-        self.my_logger.info(f"Total connections: {self.cnt}, new connection to: {player_name}")
+        self.my_logger.info(f"New connection to: {player_name}, total connections: {self.cnt}")
 
     async def new_client(self, reader, writer):
         # any new client connection goes here first
-        player_id = 0  # player_id will be assigned according to conn_type: create - 0, join - 1
-        # self.reader = reader
-        # self.writer = writer
         loop = asyncio.get_running_loop()
+
+        player_id = 0  # player_id will be assigned according to conn_type: create - 0, join - 1
+        player_info = None
         room = None
-        recv_data = await reader.read(200)  # first to check whether this is a valid request
-        player_info = recv_data.decode().split(",")
+        player_name = None
+
+        try:  # initial read() needs different handling than self.check_read
+            received = await reader.read(READ_LEN)
+            player_info = received.decode().split(",")  # "{conn_type},{self.player_name}"
+        except ConnectionError:
+            self.my_logger.warning(f"Connection to player {player_name} is lost")
+
         if player_info[0] != "handshake":  # if not "handshake", it's an invalid connection request
             writer.close()
             await writer.wait_closed()
             return
-        elif player_info[0] == "handshake":  # handshake connection, waiting for other conn_type
-            writer.write("ok".encode())  # handshake reply to client
-            dummy_data = await reader.read(200)  # dummy receiving
-            self.new_connection(player_info[1])
+        elif player_info[0] == "handshake":  # handshake connection, waiting for conn_type
+            player_name = player_info[1]
+            writer.write("ok".encode())  # for client to confirm successful handshake
+
+            try:  # initial read() needs different handling than self.check_read, this is just for r/w cycle
+                await reader.read(READ_LEN)
+            except ConnectionError:
+                self.my_logger.warning(f"Connection to player {player_name} is lost")
+
+            self.new_connection(player_name)
             writer.write(str(self.client_id).encode())
 
-            recv_data = await reader.read(200)  # waiting for "create" or "join"
-            player_info = recv_data.decode().split(",")
+            r = await self.check_read(player_name, reader, READ_LEN)  # waiting for "create" or "join"
+            if not r[0]:  # return connected, string
+                return
+            else:
+                player_info = r[1].split(",")
+
             conn_type = player_info[0]  # client reply: f"{conn_type},{player_name}"
             if conn_type == "create":
                 player_id = 0
                 room = self.create(player_info[1], reader, writer)
             elif conn_type == "join":
                 player_id = 1
-                room = await self.join(player_info[1], reader, writer)
-
-        # if player_info[0] == "create":  # first msg received from client will be "c"+player's name to create a new game
-        #     room = RoomState()
-        #     room.room_id = self.room_cnt
-        #     room.player_0_name = player_info[1]
-        #     room.player_0_reader = reader
-        #     room.player_0_writer = writer
-        #     self.game_dict[room.room_id] = room
-        #     self.room_cnt += 1
-        # elif player_info[0] == "join":
-        #     choice = await self.join(reader, writer)
-        #     # once a number is provided by the client, it's used as a room number
-        #     # that this client wants to join and join() is returned back here
-        #     choice = int(choice)
-        #     player_id = 1
-        #     self.game_dict[choice].player_1_reader = reader
-        #     self.game_dict[choice].player_1_writer = writer
-        #     self.game_dict[choice].game_ready = True
-        #     room = self.game_dict[choice]
+                room = await self.join(player_info[1], reader, writer)  # return CONNECTED, choice
+                if not room[0]:
+                    return
 
         while True:  # wait for the 2nd player to join the room
             self.clock.tick(FPS)
@@ -211,7 +210,7 @@ class Server:
         while True:  # this is the routine game tick
             self.clock.tick(FPS)
             try:
-                msg0 = await loop.create_task(room.player_0_reader.read(LEN))
+                msg0 = await loop.create_task(room.player_0_reader.read(READ_LEN))
                 # logging.info(f"Received: '{msg0.decode()}'")
             except ConnectionError:
                 room.player_0_writer.close()
@@ -220,7 +219,7 @@ class Server:
                 break
 
             try:
-                msg1 = await loop.create_task(room.player_1_reader.read(LEN))
+                msg1 = await loop.create_task(room.player_1_reader.read(READ_LEN))
                 # logging.info(f"Received: '{msg1.decode()}'")
             except ConnectionError:
                 room.player_1_writer.close()
