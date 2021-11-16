@@ -9,7 +9,6 @@ import json
 
 import pygame
 import coloredlogs
-import datetime
 import logging
 from logging import handlers
 from dataclasses import dataclass
@@ -69,15 +68,18 @@ class Server:
         fh.setFormatter(format_str)
         self.my_logger.addHandler(fh)
 
-    async def check_read(self, player_name, reader, length):
+    async def check_read(self, player_name, reader, length, writer):
         string = None
         connected = CONNECTED
         try:
             received = await reader.read(length)
             string = received.decode()
+            print(string)
         except ConnectionError:
             self.cnt -= 1
             self.my_logger.warning(f"Connection to player {player_name} is lost")
+            writer.close()
+            await writer.wait_closed()
             connected = not CONNECTED
         return connected, string
 
@@ -107,11 +109,11 @@ class Server:
             length = len(rooms_lst_enc)
             writer.write(str(length).encode())  # send the receiving length first
             # this will be "ok" returned from client, just to complete a write/read cycle
-            r = await self.check_read(player_name, reader, READ_LEN)  # return connected, string
+            r = await self.check_read(player_name, reader, READ_LEN, writer)  # return connected, string
             if not r[0]:
                 return not CONNECTED, choice
             writer.write(rooms_lst_enc)
-            r = await self.check_read(player_name, reader, READ_LEN)  # return connected, string
+            r = await self.check_read(player_name, reader, READ_LEN, writer)  # return connected, string
             if not r[0]:
                 return not CONNECTED, choice
             # recv_data = await reader.read(100)
@@ -157,7 +159,7 @@ class Server:
             self.new_connection(player_name)
             writer.write(str(self.client_id).encode())
 
-            r = await self.check_read(player_name, reader, READ_LEN)  # waiting for "create" or "join"
+            r = await self.check_read(player_name, reader, READ_LEN, writer)  # waiting for "create" or "join"
             if not r[0]:  # return connected, string
                 return
             else:
@@ -166,7 +168,7 @@ class Server:
             conn_type = player_info[0]  # client reply: f"{conn_type},{player_name}"
             if conn_type == "create":
                 player_id = 0
-                room = self.create(player_info[1], reader, writer)
+                room = self.create(player_name, reader, writer)
             elif conn_type == "join":
                 player_id = 1
                 room = await self.join(player_info[1], reader, writer)  # return CONNECTED, choice
@@ -196,15 +198,12 @@ class Server:
             else:  # if game_ready is False, it means there is only player_0 in the game room
                 data = f"New game is created, waiting for the second player to join...".encode()
                 room.player_0_writer.write(data)
-                # await game_dict[game_id][2].drain()
-                try:
-                    await room.player_0_reader.read(100)  # keep the read/write cycle running to check the connection
-                except Exception as e:
-                    logging.warning(f"Something's wrong with room {room.room_id} - player0: {e}")
-                    room.player_0_writer.close()
-                    self.cnt -= 1
-                    # print the information if the key to pop up doesn't exist in the following line
-                    # logging.warning(game_dict.pop(room.room_id, f"room '{room.room_id}' is not running"))
+                # print("writing to player_0 completed")
+                r = await self.check_read(room.player_0_name,
+                                          room.player_0_reader,
+                                          READ_LEN,
+                                          room.player_0_writer)  # r/w cycle and check the connection
+                if not r[0]:  # return connected, string
                     return
 
         while True:  # this is the routine game tick
