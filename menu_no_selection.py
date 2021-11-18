@@ -88,6 +88,7 @@ class EventLoop(Thread):
 
     def create_task(self, coro):
         self.game_task = asyncio.run_coroutine_threadsafe(coro, self._loop)
+        print(self._loop)
         return self.game_task
 
 

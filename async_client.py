@@ -70,6 +70,7 @@ class Network:
         await self.get_games()
 
     async def client(self):
+        print(asyncio.get_running_loop())
         while True:  # this is the loop waiting for the 2nd player to join
             data = await self.reader.read(100)
             self.server_msg = data.decode()
