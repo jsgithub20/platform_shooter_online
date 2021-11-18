@@ -74,7 +74,6 @@ class Server:
         try:
             received = await reader.read(length)
             string = received.decode()
-            print(string)
         except ConnectionError:
             self.cnt -= 1
             self.my_logger.warning(f"Connection to player {player_name} is lost")

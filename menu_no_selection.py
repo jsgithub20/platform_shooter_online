@@ -83,6 +83,9 @@ class EventLoop(Thread):
     def stop(self):
         self._loop.call_soon_threadsafe(self._loop.stop)
 
+    def all_tasks(self):
+        return asyncio.tasks.all_tasks()
+
     def create_task(self, coro):
         self.game_task = asyncio.run_coroutine_threadsafe(coro, self._loop)
         return self.game_task
@@ -121,6 +124,7 @@ class MyLogger:
 class Menu:
     def __init__(self):
         pygame.init()
+        self.playing = True
         self.my_logger = MyLogger()
         self.clock = pygame.time.Clock()
         self.screen = pygame.display.set_mode(WINDOW_SIZE, flags=pygame.NOFRAME)
@@ -162,7 +166,7 @@ class Menu:
 
     def conn_create(self, **kwargs):
         self.conn_type = "create"
-        self.t_loop.create_task(self.connection.create())
+        self.task_conn_create = self.t_loop.create_task(self.connection.create())
         self.demo_game()
         # try:
         #     conn_result.result()
@@ -332,7 +336,7 @@ class Menu:
         self.main_menu = pygame_menu.Menu(
             "Platform Game", WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.8,
             center_content=False,
-            onclose=pygame_menu.events.EXIT,  # User press ESC button
+            # onclose=pygame_menu.events.EXIT,  # User press ESC button
             theme=no_title_theme,
             position=[40, 30],
         )
@@ -340,7 +344,7 @@ class Menu:
         self.join_game_menu = pygame_menu.Menu(
             'Choosing Games', WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.8,
             center_content=False,
-            onclose=pygame_menu.events.EXIT,  # User press ESC button
+            # onclose=pygame_menu.events.EXIT,  # User press ESC button
             theme=no_title_theme_join_game,
             position=[40, 20],
         )
@@ -431,7 +435,7 @@ class Menu:
         # -------------------------------------------------------------------------
         # Main loop
         # -------------------------------------------------------------------------
-        while True:
+        while self.playing:
             self.clock.tick(FPS)
 
             events = pygame.event.get()
@@ -460,6 +464,8 @@ class Menu:
             if test:
                 break
 
+        self.t_loop.stop()
+        print(self.t_loop.all_tasks())
 
 m = Menu()
 if __name__ == '__main__':
