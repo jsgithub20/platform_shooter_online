@@ -83,8 +83,10 @@ class EventLoop(Thread):
     def stop(self):
         self._loop.call_soon_threadsafe(self._loop.stop)
 
-    def all_tasks(self):
-        return asyncio.tasks.all_tasks()
+    async def stop_tasks(self):
+        for task in asyncio.tasks.all_tasks():
+            task.cancel()
+            await asyncio.sleep(1)
 
     def create_task(self, coro):
         self.game_task = asyncio.run_coroutine_threadsafe(coro, self._loop)
@@ -250,7 +252,7 @@ class Menu:
                     exit()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
-                        self.t_loop.game_task.cancel()
+                        self.task_conn_create.cancel()
                         self.t_loop.stop()
                         pygame.quit()
                         exit()
