@@ -74,13 +74,20 @@ class Server:
         try:
             received = await reader.read(length)
             string = received.decode()
-            print(string)
+            # print(length, received)
         except ConnectionError:
             self.cnt -= 1
             self.my_logger.warning(f"Connection to player {player_name} is lost")
             writer.close()
             await writer.wait_closed()
             connected = not CONNECTED
+        else:  # if the connection is properly connected, there will be no ConnectionError exception raised
+            if not string:
+                self.cnt -= 1
+                self.my_logger.warning(f"Connection to player {player_name} is lost")
+                writer.close()
+                await writer.wait_closed()
+                connected = not CONNECTED
         return connected, string
 
     def create(self, player_name, reader, writer):
