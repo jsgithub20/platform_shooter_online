@@ -82,7 +82,7 @@ class Server:
             await writer.wait_closed()
             connected = not CONNECTED
         else:  # if the connection is properly connected, there will be no ConnectionError exception raised
-            if not string:
+            if not received:
                 self.cnt -= 1
                 self.my_logger.warning(f"Connection to player {player_name} is lost")
                 writer.close()
@@ -149,6 +149,13 @@ class Server:
             player_info = received.decode().split(",")  # "{conn_type},{self.player_name}"
         except ConnectionError:
             self.my_logger.warning(f"Connection to player {player_name} is lost")
+            writer.close()
+            await writer.wait_closed()
+        else:  # if the connection is properly connected, there will be no ConnectionError exception raised
+            if not received:
+                self.my_logger.warning(f"Connection to player {player_name} is lost")
+                writer.close()
+                await writer.wait_closed()
 
         if player_info[0] != "handshake":  # if not "handshake", it's an invalid connection request
             writer.close()
@@ -159,9 +166,16 @@ class Server:
             writer.write("ok".encode())  # for client to confirm successful handshake
 
             try:  # initial read() needs different handling than self.check_read, this is just for r/w cycle
-                await reader.read(READ_LEN)
+                received = await reader.read(READ_LEN)
             except ConnectionError:
                 self.my_logger.warning(f"Connection to player {player_name} is lost")
+                writer.close()
+                await writer.wait_closed()
+            else:  # if the connection is properly connected, there will be no ConnectionError exception raised
+                if not received:
+                    self.my_logger.warning(f"Connection to player {player_name} is lost")
+                    writer.close()
+                    await writer.wait_closed()
 
             self.new_connection(player_name)
             writer.write(str(self.client_id).encode())
@@ -178,7 +192,12 @@ class Server:
                 room = self.create(player_name, reader, writer)
             elif conn_type == "join":
                 player_id = 1
-                room = await self.join(player_info[1], reader, writer)  # return CONNECTED, choice
+                try:
+                    room = await self.join(player_info[1], reader, writer)  # return CONNECTED, choice
+                except ConnectionError:
+                    self.my_logger.warning(f"Connection to player {player_name} is lost")
+                    return
+
                 if not room[0]:
                     return
 
