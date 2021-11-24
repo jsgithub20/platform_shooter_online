@@ -11,7 +11,8 @@ import queue
 from queue import Queue
 from time import perf_counter
 
-LEN = 15
+READ_LEN = 100
+CONNECTED = True
 
 
 class Network:
@@ -30,6 +31,25 @@ class Network:
         self.pos_send = [0, 0]
         self.pos_recv = Queue(maxsize=3)  # (x, Y) coordinates as tuple for each item in the Queue
 
+    async def check_read(self, length):
+        string = None
+        connected = CONNECTED
+        try:
+            received = await self.reader.read(length)
+            string = received.decode()
+        except ConnectionError:
+            print(f"Connection to server is lost")
+            self.writer.close()
+            await self.writer.wait_closed()
+            connected = not CONNECTED
+        else:  # if the connection is properly connected, there will be no ConnectionError exception raised
+            if not received:
+                print(f"Connection to server is lost")
+                self.writer.close()
+                await self.writer.wait_closed()
+                connected = not CONNECTED
+        return connected, string
+
     async def conn(self, player_name):
         conn_type = "handshake"
         self.player_name = player_name
@@ -37,12 +57,14 @@ class Network:
         # id_data = await self.reader.read(100)
         # self.client_id = id_data.decode()
         self.writer.write(f"{conn_type},{self.player_name}".encode())
-        svr_data = await self.reader.read(100)
-        if svr_data.decode() != "ok":  # if server doesn't send back "ok", there should be some connection issue
-            print("Server error")
+        r = await self.check_read(READ_LEN)
+        if r[0]:  # return connected, string
+            if r[1] != "ok":  # if server doesn't send back "ok", there should be some connection issue
+                print("Server error")
         self.writer.write(f"{conn_type},{self.player_name}".encode())  # just to complete the r/w cycle
-        client_id_data = await self.reader.read(100)
-        self.client_id = client_id_data.decode()
+        r = await self.check_read(READ_LEN)
+        if r[0]:  # return connected, string
+            self.client_id = r[1]
 
     async def create(self):  # create a new game room
         conn_type = "create"
@@ -71,6 +93,9 @@ class Network:
 
     async def client(self):
         while True:  # this is the loop waiting for the 2nd player to join
+            r = await self.check_read(READ_LEN)
+            if not r[0]:
+                return
             data = await self.reader.read(100)
             self.server_msg = data.decode()
             if self.server_msg == "Game Ready":
@@ -83,7 +108,7 @@ class Network:
             reply = self.pos2str(self.pos_send)
             self.writer.write(reply.encode())
             # start = perf_counter()
-            data = await self.reader.read(LEN)
+            data = await self.reader.read(READ_LEN)
             # print(perf_counter() - start)
             try:
                 self.pos_recv.put_nowait(self.str2pos(data.decode()))

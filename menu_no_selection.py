@@ -209,7 +209,6 @@ class Menu:
             task.result(TIMEOUT)
             self.game_rooms = self.connection.game_rooms
             self.game_rooms = [tuple(lst) for lst in self.game_rooms]
-            print(self.game_rooms)
             self.selector_game.update_items(self.game_rooms)
             # self.selector_game.render()
         except asyncio.TimeoutError:

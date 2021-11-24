@@ -195,7 +195,7 @@ class Server:
                 try:
                     room = await self.join(player_info[1], reader, writer)  # return CONNECTED, choice
                 except ConnectionError:
-                    self.my_logger.warning(f"Connection to player {player_name} is lost")
+                    # self.my_logger.warning(f"Connection to player {player_name} is lost")
                     return
 
                 if not room[0]:
