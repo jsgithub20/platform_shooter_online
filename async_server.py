@@ -69,6 +69,7 @@ class Server:
         self.my_logger.addHandler(fh)
 
     async def check_read(self, player_name, reader, length, writer):
+        # used for read() before the connected player is in a game room
         string = None
         connected = CONNECTED
         try:
@@ -90,6 +91,42 @@ class Server:
                 connected = not CONNECTED
         return connected, string
 
+    async def check_read_room(self, room: RoomState, player0: bool, player1: bool, length):
+        # used for read() after the connected player is in a game room
+        string = None
+        reader = None
+        writer = None
+        player_name = ""
+        connected = CONNECTED
+        if player0:
+            player_name = room.player_0_name
+            reader = room.player_0_reader
+            writer = room.player_0_writer
+        elif player1:
+            player_name = room.player_1_name
+            reader = room.player_1_reader
+            writer = room.player_1_writer
+        try:
+            received = await reader.read(length)
+            string = received.decode()
+            # print(length, received)
+        except ConnectionError:
+            self.cnt -= 1
+            self.my_logger.warning(f"Connection to player {player_name} is lost")
+            writer.close()
+            await writer.wait_closed()
+            self.game_dict.pop(room.room_id)
+            connected = not CONNECTED
+        else:  # if the connection is properly connected, there will be no ConnectionError exception raised
+            if not received:
+                self.cnt -= 1
+                self.my_logger.warning(f"Connection to player {player_name} is lost")
+                writer.close()
+                await writer.wait_closed()
+                self.game_dict.pop(room.room_id)
+                connected = not CONNECTED
+        return connected, string
+
     def create(self, player_name, reader, writer):
         self.room_cnt += 1
         self.room_id += 1
@@ -98,7 +135,7 @@ class Server:
         room.player_0_name = player_name
         room.player_0_reader = reader
         room.player_0_writer = writer
-        self.game_dict[room.room_id] = room
+        self.game_dict[self.room_id] = room
         return room
 
     async def join(self, player_name, reader, writer):
@@ -123,8 +160,6 @@ class Server:
             r = await self.check_read(player_name, reader, READ_LEN, writer)  # return connected, string
             if not r[0]:
                 return not CONNECTED, choice
-            # recv_data = await reader.read(100)
-            # choice = recv_data.decode()
             elif r[1] in rooms_lst:
                 choice = r[1]
                 print("Room choice = ", choice)
@@ -133,7 +168,8 @@ class Server:
     def new_connection(self, player_name):
         self.cnt += 1
         self.client_id += 1
-        self.my_logger.info(f"New connection to: {player_name}, total connections: {self.cnt}")
+        self.my_logger.info(f"New connection to player '{player_name}', client id = {self.client_id}, "
+                            f"total connections: {self.cnt}")
 
     async def new_client(self, reader, writer):
         # any new client connection goes here first
@@ -151,7 +187,9 @@ class Server:
             self.my_logger.warning(f"Connection to player {player_name} is lost")
             writer.close()
             await writer.wait_closed()
-        else:  # if the connection is properly connected, there will be no ConnectionError exception raised
+        # if the connection is properly closed, there will be no ConnectionError exception raised
+        # but empty byte will be received
+        else:
             if not received:
                 self.my_logger.warning(f"Connection to player {player_name} is lost")
                 writer.close()
@@ -171,7 +209,7 @@ class Server:
                 self.my_logger.warning(f"Connection to player {player_name} is lost")
                 writer.close()
                 await writer.wait_closed()
-            else:  # if the connection is properly connected, there will be no ConnectionError exception raised
+            else:  # if the connection is properly closed, there will be no ConnectionError exception raised
                 if not received:
                     self.my_logger.warning(f"Connection to player {player_name} is lost")
                     writer.close()

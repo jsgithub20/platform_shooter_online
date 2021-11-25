@@ -79,16 +79,18 @@ class Network:
         await self.get_games()
 
     async def get_games(self):
-        try:
-            len_data = await self.reader.read(100)
-        except Exception as e:
-            print(e)
-        self.writer.write("ok".encode())  # just to complete a read/write cycle before receiving the next data
-        rooms_data = await self.reader.read(int(len_data.decode()))
+        r = await self.check_read(READ_LEN)
+        if not r[0]:  # return connected, string
+            print("Connection issue to server during get_games")
+            return
+        else:
+            length = r[1]
+        self.writer.write("ok".encode())  # just to complete a r/w cycle before receiving the next data
+        rooms_data = await self.reader.read(int(length))
         self.game_rooms = list(json.loads(rooms_data.decode()))  # [[player0_name, game_ready, room_id],]
 
     async def refresh(self):
-        self.writer.write(self.chosen_room.encode())
+        self.writer.write("refreshing".encode())
         await self.get_games()
 
     async def client(self):
@@ -96,8 +98,7 @@ class Network:
             r = await self.check_read(READ_LEN)
             if not r[0]:
                 return
-            data = await self.reader.read(100)
-            self.server_msg = data.decode()
+            self.server_msg = r[1]
             if self.server_msg == "Game Ready":
                 # logging.info("Game Ready")
                 break

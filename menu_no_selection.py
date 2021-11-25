@@ -179,7 +179,6 @@ class Menu:
         #     self.my_logger.my_logger.info(f"Create a new game: created with name - {self.player_name}")
 
     def conn_join(self):
-        # self.conn_type = "join"
         task = self.t_loop.create_task(self.connection.join())
         try:
             # this connection should be established immediately otherwise there's a network issue
@@ -189,6 +188,10 @@ class Menu:
             self.selector_game.update_items(self.game_rooms)
         except Exception as e:
             self.my_logger.my_logger.error(f"Connection issue during joining - {e}")
+
+    def cb_join_game_btn(self):
+        print(self.chosen_room_id)
+        print(self.game_rooms)
 
     def cb_dropselecton_onchange(self, item_index: tuple, game_ready,
                                  room_id):  # [[player0_name, game_ready, room_id],]
@@ -202,7 +205,7 @@ class Menu:
         self.conn_join()
 
     def cb_refresh(self):
-        current_game_rooms = self.game_rooms
+        # self.game_rooms
         task = self.t_loop.create_task(self.connection.refresh())
         try:
             # this connection should be established immediately otherwise there's a network issue
@@ -212,7 +215,7 @@ class Menu:
             self.selector_game.update_items(self.game_rooms)
             # self.selector_game.render()
         except asyncio.TimeoutError:
-            self.my_logger.my_logger.error(f"Connection issue during refreshing")
+            self.my_logger.my_logger.error(f"Connection issue to server during refreshing")
         # try:
         #     print(f"starting 'try', q size = {self.connection.q_game_rooms.qsize()}")
         #     # 3 lines of get_nowait() to make sure even the Queue() is full, only the last item is returned
@@ -405,12 +408,13 @@ class Menu:
             title='Choose a game to join:',
             items=self.game_rooms,
             onchange=self.cb_dropselecton_onchange,
-            selection_box_bgcolor=(200, 200, 50)
+            selection_box_bgcolor=(200, 200, 50),
+            selection_box_height=10
         )
 
         self.join_game_menu.add.vertical_margin(15)
 
-        self.join_game_menu.add.button("Join", cursor=CURSOR_HAND)
+        self.join_game_menu.add.button("Join", self.cb_join_game_btn,cursor=CURSOR_HAND)
         self.join_game_menu.add.vertical_margin(15)
 
         self.join_game_menu.add.button("Back", pygame_menu.events.BACK)
