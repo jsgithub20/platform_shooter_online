@@ -69,7 +69,6 @@ class Network:
     async def create(self):  # create a new game room
         conn_type = "create"
         self.writer.write(f"{conn_type},{self.player_name}".encode())
-        await self.client()
 
     async def join(self):
         conn_type = "join"

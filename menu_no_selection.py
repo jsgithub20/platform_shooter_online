@@ -86,6 +86,10 @@ class EventLoop(Thread):
     def stop_tasks(self):
         for task in asyncio.tasks.all_tasks(self._loop):
             self._loop.call_soon_threadsafe(task.cancel)
+            done = False
+            while not done:
+                done = task.done()
+
 
     def create_task(self, coro):
         self.game_task = asyncio.run_coroutine_threadsafe(coro, self._loop)
@@ -167,7 +171,8 @@ class Menu:
 
     def conn_create(self, **kwargs):
         self.conn_type = "create"
-        self.task_conn_create = self.t_loop.create_task(self.connection.create())
+        self.t_loop.create_task(self.connection.create())
+        self.t_loop.create_task(self.connection.client())
         self.demo_game()
         # try:
         #     conn_result.result()
