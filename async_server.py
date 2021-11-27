@@ -263,10 +263,7 @@ class Server:
                 data = f"New game is created, waiting for the second player to join...".encode()
                 room.player_0_writer.write(data)
                 # print("writing to player_0 completed")
-                r = await self.check_read(room.player_0_name,
-                                          room.player_0_reader,
-                                          READ_LEN,
-                                          room.player_0_writer)  # r/w cycle and check the connection
+                r = await self.check_read_room(room, True, False, READ_LEN)  # r/w cycle and check the connection
                 if not r[0]:  # return connected, string
                     return
 
