@@ -140,7 +140,7 @@ class Server:
 
     async def join(self, player_name, reader, writer):
         # if the client request to join an existing game, a new coroutine will be created with this function
-        choice = None
+        chosen_room_id = None
         while True:
             self.clock.tick(FPS)
             # sending room list to the client, no matter full or not [[player0_name, game_ready, room_id],]
@@ -155,15 +155,19 @@ class Server:
             # this will be "ok" returned from client, just to complete a write/read cycle
             r = await self.check_read(player_name, reader, READ_LEN, writer)  # return connected, string
             if not r[0]:
-                return not CONNECTED, choice
+                return not CONNECTED, chosen_room_id
             writer.write(rooms_lst_enc)
             r = await self.check_read(player_name, reader, READ_LEN, writer)  # return connected, string
             if not r[0]:
-                return not CONNECTED, choice
-            elif r[1] in rooms_lst:
-                choice = r[1]
-                print("Room choice = ", choice)
-                return CONNECTED, choice
+                return not CONNECTED, chosen_room_id
+            elif int(r[1]) in [*self.game_dict]:
+                chosen_room_id = int(r[1])
+                self.game_dict[chosen_room_id].game_ready = True
+                self.game_dict[chosen_room_id].player_1_name = player_name
+                self.game_dict[chosen_room_id].player_1_reader = reader
+                self.game_dict[chosen_room_id].player_1_writer = writer
+                chosen_room = self.game_dict[chosen_room_id]
+                return CONNECTED, chosen_room
 
     def new_connection(self, player_name):
         self.cnt += 1
@@ -231,13 +235,15 @@ class Server:
             elif conn_type == "join":
                 player_id = 1
                 try:
-                    room = await self.join(player_info[1], reader, writer)  # return CONNECTED, choice
+                    join_room = await self.join(player_info[1], reader, writer)  # return CONNECTED, choice
                 except ConnectionError:
                     # self.my_logger.warning(f"Connection to player {player_name} is lost")
                     return
 
-                if not room[0]:
+                if not join_room[0]:
                     return
+                else:
+                    room = join_room[1]
 
         while True:  # wait for the 2nd player to join the room
             self.clock.tick(FPS)
@@ -249,15 +255,12 @@ class Server:
             """
             if room.game_ready:
                 if player_id == 1:  # player_id = 1 means this is the task for player_1
+                    self.my_logger.warning(f"Player '{room.player_1_name}' joined player '{room.player_0_name}''s game")
                     # logging.warning(f"Task for connection {cnt} in game_id {room.room_id} is being returned")
-                    return  # the task (for player_1) is returned once player_1 is in the room
-                # the following block is the routine communication between the server and
-                # both players in the same game room
+                    return  # the task (for player_1) is returned (completed) once player_1 is in the room
                 data = "Game Ready".encode()
                 room.player_0_writer.write(data)
-                # await game_dict[game_id][2].drain()
                 room.player_1_writer.write(data)
-                # await game_dict[game_id][4].drain()
                 break  # break current while loop to start the routine game tick
             else:  # if game_ready is False, it means there is only player_0 in the game room
                 data = f"New game is created, waiting for the second player to join...".encode()
@@ -269,26 +272,36 @@ class Server:
 
         while True:  # this is the routine game tick
             self.clock.tick(FPS)
-            try:
-                msg0 = await loop.create_task(room.player_0_reader.read(READ_LEN))
-                # logging.info(f"Received: '{msg0.decode()}'")
-            except ConnectionError:
-                room.player_0_writer.close()
-                self.my_logger.warning(f"Connection to room {room.room_id}: player 0 is lost")
-                self.cnt -= 1
+            r = await self.check_read_room(room, True, False, READ_LEN)
+            if not r[0]:
                 break
+            else:
+                msg0 = r[1]
+            # try:
+            #     msg0 = await loop.create_task(room.player_0_reader.read(READ_LEN))
+            # except ConnectionError:
+            #     room.player_0_writer.close()
+            #     self.my_logger.warning(f"Connection to room {room.room_id}: player 0 is lost")
+            #     self.cnt -= 1
+            #     break
 
-            try:
-                msg1 = await loop.create_task(room.player_1_reader.read(READ_LEN))
-                # logging.info(f"Received: '{msg1.decode()}'")
-            except ConnectionError:
-                room.player_1_writer.close()
-                self.my_logger.warning(f"Connection to room {room.room_id}: player 1 is lost")
-                self.cnt -= 1
+            r = await self.check_read_room(room, False, True, READ_LEN)
+            if not r[0]:
                 break
+            else:
+                msg1 = r[1]
 
-            room.player_0_writer.write(msg1)
-            room.player_1_writer.write(msg0)
+            # try:
+            #     msg1 = await loop.create_task(room.player_1_reader.read(READ_LEN))
+            #     # logging.info(f"Received: '{msg1.decode()}'")
+            # except ConnectionError:
+            #     room.player_1_writer.close()
+            #     self.my_logger.warning(f"Connection to room {room.room_id}: player 1 is lost")
+            #     self.cnt -= 1
+            #     break
+
+            room.player_0_writer.write(msg1.encode())
+            room.player_1_writer.write(msg0.encode())
 
     async def main(self, host, port):
         server = await asyncio.start_server(self.new_client, host, port, )

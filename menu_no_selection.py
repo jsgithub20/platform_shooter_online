@@ -132,7 +132,7 @@ class Menu:
         self.playing = True
         self.my_logger = MyLogger()
         self.clock = pygame.time.Clock()
-        self.screen = pygame.display.set_mode(WINDOW_SIZE, flags=pygame.NOFRAME)
+        self.screen = pygame.display.set_mode(WINDOW_SIZE)  # , flags=pygame.NOFRAME)
         self.room_selected1 = "Join an existing game: "
         self.room_selected2 = "<click to choose>"
         self.t_loop = EventLoop()
@@ -141,7 +141,7 @@ class Menu:
         self.server_port = "8887"
         self.player_name = ""
         self.game_rooms = [("No game", False, 1), ]  # [[player0_name, game_ready, room_id],]
-        self.chosen_room_id: str = "0"  # used to retrieve room info from game_dict on server
+        self.chosen_room: None  # [player0_name, game_ready, room_id], same as dropselect item
         self.room_frame = None
         self.conn_type = "handshake"  # "create" or "join"
         self.client_id = "0"
@@ -195,16 +195,13 @@ class Menu:
             self.my_logger.my_logger.error(f"Connection issue during joining - {e}")
 
     def cb_join_game_btn(self):
-        print(self.chosen_room_id)
-        print(self.game_rooms)
+        self.t_loop.create_task(self.connection.send_room_choice(self.chosen_room))
+        self.t_loop.create_task(self.connection.client())
+        self.demo_game()
 
-    def cb_dropselecton_onchange(self, item_index: tuple, game_ready,
-                                 room_id):  # [[player0_name, game_ready, room_id],]
-        self.chosen_room_id = room_id
-
-    # def cb_dropselection_onselect(self, selected, widget, menu):
-    #     if selected:
-    #         self.refresh()
+    def cb_dropselecton_onchange(self, item_index: tuple, game_ready, room_id):
+        # [[player0_name, game_ready, room_id],]
+        self.chosen_room = item_index[0]
 
     def cb_join_menu_openned(self, from_menu, to_menu):
         self.conn_join()

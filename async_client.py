@@ -77,6 +77,9 @@ class Network:
         print(f"This is 'join' client# {self.client_id}")
         await self.get_games()
 
+    async def send_room_choice(self, room):  # room = [player0_name, game_ready, room_id]
+        self.writer.write(f"{room[2]}".encode())
+
     async def get_games(self):
         r = await self.check_read(READ_LEN)
         if not r[0]:  # return connected, string
