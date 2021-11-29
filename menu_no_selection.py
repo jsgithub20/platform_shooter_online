@@ -137,9 +137,10 @@ class Menu:
         self.room_selected2 = "<click to choose>"
         self.t_loop = EventLoop()
         self.connection: Optional[async_client.Network] = None
+        self.connected_flag = False
         self.server_ip = "47.94.100.39"
         self.server_port = "8887"
-        self.player_name = ""
+        self.my_name = ""
         self.game_rooms = [("No game", False, 1), ]  # [[player0_name, game_ready, room_id],]
         self.chosen_room: None  # [player0_name, game_ready, room_id], same as dropselect item
         self.room_frame = None
@@ -152,11 +153,16 @@ class Menu:
         self.sound: [pygame_menu.sound.Sound] = None
 
     def conn_conn(self, server_ip, server_port, player_name, **kwargs):
+        if not self.connected_flag:
+            self.connected_flag = True
+        else:
+            kwargs["widget"].set_title(f"Connection status: already connected with client id - {self.client_id}")
+            return
         self.server_ip = server_ip.get_value()
         self.server_port = server_port.get_value()
-        self.player_name = player_name.get_value()
+        self.my_name = player_name.get_value()
         self.connection = async_client.Network(self.server_ip, self.server_port)
-        conn_result = self.t_loop.create_task(self.connection.conn(self.player_name))
+        conn_result = self.t_loop.create_task(self.connection.conn(self.my_name))
         try:
             # this connection should be established immediately otherwise there's a network issue
             conn_result.result(TIMEOUT)
@@ -238,6 +244,7 @@ class Menu:
     def demo_game(self):
         self.main_menu.disable()
 
+        player_disconnected_flag = False  # if the other player is disconnected, this will be set to True
         my_msg = DrawText("My msg:")
         their_msg = DrawText(f"{self.connection.server_msg}")
         msg_grp = pygame.sprite.Group()
@@ -272,11 +279,10 @@ class Menu:
                 if event.type == pygame.KEYUP:
                     my_msg.stop()
 
-            if self.connection.server_msg != "Game Ready":
+            if self.connection.server_msg[0] != "Game Ready":
                 my_msg.rect.x, my_msg.rect.y = (100, 100)
                 their_msg.rect.x, their_msg.rect.y = (100, 200)
-                their_msg.text = (100, 200)
-            else:
+            elif not player_disconnected_flag:
                 try:
                     # 3 lines of get_nowait() to make sure even the Queue() is full, only the last item is returned
                     their_msg.rect.x, their_msg.rect.y = self.connection.pos_recv.get_nowait()
@@ -284,9 +290,20 @@ class Menu:
                     their_msg.rect.x, their_msg.rect.y = self.connection.pos_recv.get_nowait()
                 except queue.Empty:
                     pass
-            my_msg.text = f"{self.player_name}'s client {self.connection.client_id}, {str((my_msg.rect.x, my_msg.rect.y))}"
+            else:
+                their_msg.rect.x, their_msg.rect.y = (200, 200)
+
+            my_msg.text = f"{self.my_name}'s client {self.connection.client_id}, {str((my_msg.rect.x, my_msg.rect.y))}"
+            if their_msg.rect.x == their_msg.rect.y == -99:
+                player_disconnected_flag = True
+
+            if player_disconnected_flag:
+                their_msg.text = f"Player '{self.connection.opponent_name}' is disconnected from the server"
+            else:
+                their_msg.text = f"{self.connection.server_msg[1]}, {str((their_msg.rect.x, their_msg.rect.y))}"
+
             self.connection.pos_send = my_msg.pos()
-            their_msg.text = f"{self.connection.server_msg}, {str((their_msg.rect.x, their_msg.rect.y))}"
+
             msg_grp.update()
             msg_grp.draw(self.screen)
 

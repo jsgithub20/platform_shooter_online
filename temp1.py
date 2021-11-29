@@ -13,4 +13,7 @@ def check():
     connected = True
     return not connected
 
-print(check())
+tpl = ("10", "20")
+string = str(tpl)
+
+print("".join(tpl))

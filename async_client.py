@@ -22,6 +22,7 @@ class Network:
         self.client_id = 0
         self.server_msg = "Waiting for 2nd player"
         self.player_name = ""
+        self.opponent_name = ""
         self.reader = None
         self.writer = None
         self.game_rooms = []
@@ -100,9 +101,10 @@ class Network:
             r = await self.check_read(READ_LEN)
             if not r[0]:
                 return
-            self.server_msg = r[1]
-            if self.server_msg == "Game Ready":
-                # logging.info("Game Ready")
+            else:
+                self.server_msg = tuple(r[1].split(","))  # f"Game Ready,{room.player_0_name}"
+            if self.server_msg[0] == "Game Ready":
+                self.opponent_name = self.server_msg[1]
                 break
             else:
                 self.writer.write("Waiting".encode())
@@ -129,7 +131,11 @@ class Network:
 
     def str2pos(self, string: str):
         # string must be "100,100" or "100, 100" which will be converted to (100, 100)
-        return tuple(map(int, string.split(',')))
+        local_string = string
+        if string == "Disconnected":
+            local_string = "-99,-99"  # indicating the server is disconnected from the other player
+
+        return tuple(map(int, local_string.split(',')))
 
 
 def main(server_ip='127.0.0.1', server_port="8887"):

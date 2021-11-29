@@ -109,7 +109,6 @@ class Server:
         try:
             received = await reader.read(length)
             string = received.decode()
-            # print(length, received)
         except ConnectionError:
             self.cnt -= 1
             self.my_logger.warning(f"Connection to player {player_name} is lost")
@@ -258,9 +257,9 @@ class Server:
                     self.my_logger.warning(f"Player '{room.player_1_name}' joined player '{room.player_0_name}''s game")
                     # logging.warning(f"Task for connection {cnt} in game_id {room.room_id} is being returned")
                     return  # the task (for player_1) is returned (completed) once player_1 is in the room
-                data = "Game Ready".encode()
-                room.player_0_writer.write(data)
-                room.player_1_writer.write(data)
+                # data = "Game Ready".encode()
+                room.player_0_writer.write(f"Game Ready,{room.player_1_name}".encode())
+                room.player_1_writer.write(f"Game Ready,{room.player_0_name}".encode())
                 break  # break current while loop to start the routine game tick
             else:  # if game_ready is False, it means there is only player_0 in the game room
                 data = f"New game is created, waiting for the second player to join...".encode()
@@ -274,31 +273,19 @@ class Server:
             self.clock.tick(FPS)
             r = await self.check_read_room(room, True, False, READ_LEN)
             if not r[0]:
+                room.player_1_writer.write("Disconnected".encode())
+                self.my_logger.warning(f"Connection to player {room.player_1_name} is disconnected")
                 break
             else:
                 msg0 = r[1]
-            # try:
-            #     msg0 = await loop.create_task(room.player_0_reader.read(READ_LEN))
-            # except ConnectionError:
-            #     room.player_0_writer.close()
-            #     self.my_logger.warning(f"Connection to room {room.room_id}: player 0 is lost")
-            #     self.cnt -= 1
-            #     break
 
             r = await self.check_read_room(room, False, True, READ_LEN)
             if not r[0]:
+                room.player_0_writer.write("Disconnected".encode())
+                self.my_logger.warning(f"Connection to player {room.player_0_name} is disconnected")
                 break
             else:
                 msg1 = r[1]
-
-            # try:
-            #     msg1 = await loop.create_task(room.player_1_reader.read(READ_LEN))
-            #     # logging.info(f"Received: '{msg1.decode()}'")
-            # except ConnectionError:
-            #     room.player_1_writer.close()
-            #     self.my_logger.warning(f"Connection to room {room.room_id}: player 1 is lost")
-            #     self.cnt -= 1
-            #     break
 
             room.player_0_writer.write(msg1.encode())
             room.player_1_writer.write(msg0.encode())
