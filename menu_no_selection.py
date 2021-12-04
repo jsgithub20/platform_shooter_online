@@ -25,11 +25,44 @@ GAME_ROOMS = ["Amy's game", "Jacky's game", "Dora's game", "Amy's game", "Jacky'
               "Amy's game", "Jacky's game", "Dora's game", "Amy's game", "Jacky's game", "Dora's game"]
 TIMEOUT = 2
 
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
+LIGHT_BLUE = (68, 105, 252)
+LIGHT_GREEN = (100, 250, 122)
+
 # -----------------------------------------------------------------------------
-# Load image
+# Load image & set game text
 # -----------------------------------------------------------------------------
 background_image = pygame.image.load("resources\gui\Window_19_1024-768.png")
+GIRL_idle_img = []
+for i in range(9):
+    GIRL_idle_img.append(pygame_menu.BaseImage(f"resources/gui/girl/Idle__00{i}.png"))
+BOY_idle_img = []
+for i in range(9):
+    BOY_idle_img.append(pygame_menu.BaseImage(f"resources/gui/boy/Idle__00{i}.png"))
 
+txt_l1 = [25, LIGHT_BLUE, 100, 450, "strength1", "Strength:", 0, 10]
+txt_l2 = [20, LIGHT_BLUE, 100, 500, "strength2", "Chopper", 0, 10]
+txt_l3 = [20, LIGHT_BLUE, 100, 550, "strength3", "Runner", 0, 10]
+txt_r1 = [25, RED, 670, 450, "weakness1", "Weakness:", 0, 10]
+txt_r2 = [20, RED, 670, 500, "weakness2", "Killed by", 0, 10]
+txt_r3 = [20, RED, 670, 550, "weakness3", "10 bullets", 0, 10]
+txt_b = [30, GREEN, 400, 650, "name", "Chopper", 0, 10]
+
+girl_txt = [txt_l1, txt_l2, txt_l3, txt_r1, txt_r2, txt_r3, txt_b]
+
+# Introduction text for the role Boy, used as DrawText() parameters
+
+txt_l1 = [25, LIGHT_BLUE, 100, 450, "strength1", "Strength:",  0,10]
+txt_l2 = [20, LIGHT_BLUE, 100, 500, "strength2", "shooter", 0, 10]
+txt_l3 = [20, LIGHT_BLUE, 100, 550, "strength3", "Runner", 0, 10]
+txt_r1 = [25, RED, 670, 450, "weakness1", "Weakness:", 0, 10]
+txt_r2 = [20, RED, 670, 500, "weakness2", "Killed by", 0, 10]
+txt_r3 = [20, RED, 670, 550, "weakness3", "3 chops", 0, 10]
+txt_b = [30, GREEN, 400, 650, "name", "Shooter", 0, 10]
 
 # -----------------------------------------------------------------------------
 # Methods
@@ -152,6 +185,9 @@ class Menu:
         self.surface: [pygame.Surface] = pygame.image.load("resources/gui/Window_06.png")
         self.sound: [pygame_menu.sound.Sound] = None
 
+
+
+
     def conn_conn(self, server_ip, server_port, player_name, **kwargs):
         if not self.connected_flag:
             self.connected_flag = True
@@ -180,14 +216,6 @@ class Menu:
         self.t_loop.create_task(self.connection.create())
         self.t_loop.create_task(self.connection.client())
         self.demo_game()
-        # try:
-        #     conn_result.result()
-        # except Exception as e:
-        #     kwargs["widget"].set_title(f"Create a new game: error - {e}")
-        #     self.my_logger.my_logger.error(f"Create a new game: error - {e}")
-        # else:
-        #     kwargs["widget"].set_title(f"Create a new game: created with name - {self.player_name}")
-        #     self.my_logger.my_logger.info(f"Create a new game: created with name - {self.player_name}")
 
     def conn_join(self):
         task = self.t_loop.create_task(self.connection.join())
@@ -224,22 +252,6 @@ class Menu:
             # self.selector_game.render()
         except asyncio.TimeoutError:
             self.my_logger.my_logger.error(f"Connection issue to server during refreshing")
-        # try:
-        #     print(f"starting 'try', q size = {self.connection.q_game_rooms.qsize()}")
-        #     # 3 lines of get_nowait() to make sure even the Queue() is full, only the last item is returned
-        #     self.game_rooms = self.connection.q_game_rooms.get_nowait()
-        #     print(f"get from q: {self.game_rooms}")
-        #     self.game_rooms = self.connection.q_game_rooms.get_nowait()
-        #     self.game_rooms = self.connection.q_game_rooms.get_nowait()
-        # except queue.Empty:
-        #     pass
-        # finally:
-        #     # change [[..],] to [(..),] to fit requirement as items in dropselect
-        #     # only update the game room list if the received list is different than current
-        #     if self.game_rooms != current_game_rooms:
-        #         self.game_rooms = [tuple(lst) for lst in self.game_rooms]
-        #         self.selector_game.update_items(self.game_rooms)
-        #         self.selector_game.render()  # force re-render the dropselect object
 
     def demo_game(self):
         self.main_menu.disable()

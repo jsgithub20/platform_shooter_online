@@ -1,19 +1,13 @@
-import json
+# PatternCount("ACTAT", "ACAACTATGCATACTATCGGGAACTATCCT")
 
-lt = [("name1", False, 1), ("name2", True, 2)]
+def pattern_count(pattern, text):
+    count = 0
+    i = 0
+    while i < (len(text) - len(pattern) + 1):
+        if text[i:(i+len(pattern))] == pattern:
+            count += 1
+        i += 1
+    print(count)
 
-game_dict = {}
 
-rooms_lst = [[game_dict[room_id].player_0_name, game_dict[room_id].game_ready, room_id]
-             for room_id in [*game_dict]]
-
-# print(rooms_lst)
-
-def check():
-    connected = True
-    return not connected
-
-tpl = ("10", "20")
-string = str(tpl)
-
-print("".join(tpl))
+pattern_count("ACAAC", "ACAACTATGCATACTATCGGGAAACAACCTATCCTACAAC")
