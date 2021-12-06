@@ -48,7 +48,7 @@ sub_menu1_theme.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_NONE
 sub_menu1_theme.title_offset = (200, 0)
 sub_menu1_theme.title_font_shadow = True
 sub_menu1_theme.title_font_color = (200, 50, 50)
-sub_menu1_theme.widget_font = pygame_menu.font.FONT_MUNRO
+sub_menu1_theme.widget_font = "resources/OvOV20.ttf"
 sub_menu1_theme.widget_alignment = pygame_menu.locals.ALIGN_LEFT
 sub_menu1_theme.widget_padding = 5
 
@@ -60,11 +60,22 @@ def cb_player_sel_lft():
     global current_img_sel
     global img_lst
     global current_img_lst
+    global girl_desc_lbl_lst
+    global boy_desc_lbl_lst
     if current_img_sel - 1 < 0:
         current_img_sel = len(img_lst) - 1
     else:
         current_img_sel -= 1
-    print(current_img_sel)
+
+    if current_img_sel == 0:
+        for j in range(len(girl_desc_lbl_lst)):
+            girl_desc_lbl_lst[j].show()
+            boy_desc_lbl_lst[j].hide()
+    elif current_img_sel == 1:
+        for j in range(len(girl_desc_lbl_lst)):
+            girl_desc_lbl_lst[j].hide()
+            boy_desc_lbl_lst[j].show()
+
     current_img_lst = img_lst[current_img_sel]
 
 def cb_onselect(selected, widget, menu):
@@ -236,6 +247,24 @@ img = sub_menu1.add.surface(current_img_lst[0])
 img.set_float(True, False, True)
 img.translate(350, 100)
 
+girl_desc_lbl_lst = []
+for i in range(len(role_def.girl_txt)):
+    lbl = sub_menu1.add.label(role_def.girl_txt[i][5], "",
+                              font_size=role_def.girl_txt[i][0],
+                              font_color=role_def.girl_txt[i][1])
+    lbl.set_float(True, False, True)
+    lbl.translate(role_def.girl_txt[i][2], role_def.girl_txt[i][3])
+    girl_desc_lbl_lst.append(lbl)
+boy_desc_lbl_lst = []
+for i in range(len(role_def.boy_txt)):
+    lbl = sub_menu1.add.label(role_def.boy_txt[i][5], "",
+                              font_size=role_def.boy_txt[i][0],
+                              font_color=role_def.boy_txt[i][1])
+    lbl.set_float(True, False, True)
+    lbl.translate(role_def.boy_txt[i][2], role_def.boy_txt[i][3])
+    lbl.hide()
+    boy_desc_lbl_lst.append(lbl)
+
 img_idx = 0
 current_img_idx = 0
 
@@ -253,7 +282,6 @@ while True:
                     items.append(['new item', 'new'])
                 else:
                     del items[-1]
-                print(items)
                 selector_epic.update_items(items)
                 selector_epic.render()
 

@@ -15,6 +15,7 @@ import pygame
 import pygame_menu
 import asyncio
 import async_client
+import role_def
 
 # -----------------------------------------------------------------------------
 # Constants and global variables
@@ -37,6 +38,7 @@ LIGHT_GREEN = (100, 250, 122)
 # Load image & set game text
 # -----------------------------------------------------------------------------
 background_image = pygame.image.load("resources\gui\Window_19_1024-768.png")
+
 GIRL_idle_img = []
 for i in range(9):
     GIRL_idle_img.append(pygame_menu.BaseImage(f"resources/gui/girl/Idle__00{i}.png"))
@@ -44,25 +46,6 @@ BOY_idle_img = []
 for i in range(9):
     BOY_idle_img.append(pygame_menu.BaseImage(f"resources/gui/boy/Idle__00{i}.png"))
 
-txt_l1 = [25, LIGHT_BLUE, 100, 450, "strength1", "Strength:", 0, 10]
-txt_l2 = [20, LIGHT_BLUE, 100, 500, "strength2", "Chopper", 0, 10]
-txt_l3 = [20, LIGHT_BLUE, 100, 550, "strength3", "Runner", 0, 10]
-txt_r1 = [25, RED, 670, 450, "weakness1", "Weakness:", 0, 10]
-txt_r2 = [20, RED, 670, 500, "weakness2", "Killed by", 0, 10]
-txt_r3 = [20, RED, 670, 550, "weakness3", "10 bullets", 0, 10]
-txt_b = [30, GREEN, 400, 650, "name", "Chopper", 0, 10]
-
-girl_txt = [txt_l1, txt_l2, txt_l3, txt_r1, txt_r2, txt_r3, txt_b]
-
-# Introduction text for the role Boy, used as DrawText() parameters
-
-txt_l1 = [25, LIGHT_BLUE, 100, 450, "strength1", "Strength:",  0,10]
-txt_l2 = [20, LIGHT_BLUE, 100, 500, "strength2", "shooter", 0, 10]
-txt_l3 = [20, LIGHT_BLUE, 100, 550, "strength3", "Runner", 0, 10]
-txt_r1 = [25, RED, 670, 450, "weakness1", "Weakness:", 0, 10]
-txt_r2 = [20, RED, 670, 500, "weakness2", "Killed by", 0, 10]
-txt_r3 = [20, RED, 670, 550, "weakness3", "3 chops", 0, 10]
-txt_b = [30, GREEN, 400, 650, "name", "Shooter", 0, 10]
 
 # -----------------------------------------------------------------------------
 # Methods
@@ -122,7 +105,6 @@ class EventLoop(Thread):
             done = False
             while not done:
                 done = task.done()
-
 
     def create_task(self, coro):
         self.game_task = asyncio.run_coroutine_threadsafe(coro, self._loop)
@@ -185,8 +167,22 @@ class Menu:
         self.surface: [pygame.Surface] = pygame.image.load("resources/gui/Window_06.png")
         self.sound: [pygame_menu.sound.Sound] = None
 
+        girl_idle = []
 
+        for j in range(9):
+            girl_idle.append(pygame.image.load(f"resources/gui/girl/Idle__00{j}.png"))
 
+        boy_idle = []
+
+        for j in range(9):
+            boy_idle.append(pygame.image.load(f"resources/gui/boy/Idle__00{j}.png"))
+
+        self.img_lst = [girl_idle, boy_idle]
+
+        self.current_img_sel = 0
+        self.current_img_lst = self.img_lst[self.current_img_sel]
+        self.girl_desc_lbl_lst = []
+        self.boy_desc_lbl_lst = []
 
     def conn_conn(self, server_ip, server_port, player_name, **kwargs):
         if not self.connected_flag:
@@ -211,10 +207,18 @@ class Menu:
             self.my_logger.my_logger.info(f"Connected to server: {self.server_ip}:{self.server_port} "
                                           f"with client id - {self.client_id}")
 
-    def conn_create(self, **kwargs):
+    def conn_create(self):
         self.conn_type = "create"
         self.t_loop.create_task(self.connection.create())
         self.t_loop.create_task(self.connection.client())
+        self.demo_game()
+
+    def cb_selection_menu_openned(self, from_menu, to_menu):
+        self.conn_type = "create"
+        self.t_loop.create_task(self.connection.create())
+        self.t_loop.create_task(self.connection.client())
+
+    def cb_play(self):
         self.demo_game()
 
     def conn_join(self):
@@ -227,6 +231,23 @@ class Menu:
             self.selector_game.update_items(self.game_rooms)
         except Exception as e:
             self.my_logger.my_logger.error(f"Connection issue during joining - {e}")
+
+    def cb_player_sel_lft(self):
+        if self.current_img_sel - 1 < 0:
+            self.current_img_sel = len(self.img_lst) - 1
+        else:
+            self.current_img_sel -= 1
+
+        if self.current_img_sel == 0:
+            for j in range(len(self.girl_desc_lbl_lst)):
+                self.girl_desc_lbl_lst[j].show()
+                self.boy_desc_lbl_lst[j].hide()
+        elif self.current_img_sel == 1:
+            for j in range(len(self.girl_desc_lbl_lst)):
+                self.girl_desc_lbl_lst[j].hide()
+                self.boy_desc_lbl_lst[j].show()
+
+        self.current_img_lst = self.img_lst[self.current_img_sel]
 
     def cb_join_game_btn(self):
         self.t_loop.create_task(self.connection.send_room_choice(self.chosen_room))
@@ -367,6 +388,17 @@ class Menu:
         # no_title_theme_join_game.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_SIMPLE
         no_title_theme_join_game.widget_padding = 5
 
+        sub_menu_selection_theme = pygame_menu.themes.THEME_ORANGE.copy()
+        sub_menu_selection_theme.background_color = (0, 0, 0, 0)
+        sub_menu_selection_theme.title_close_button = False
+        sub_menu_selection_theme.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_NONE
+        sub_menu_selection_theme.title_offset = (200, 0)
+        sub_menu_selection_theme.title_font_shadow = True
+        sub_menu_selection_theme.title_font_color = (200, 50, 50)
+        sub_menu_selection_theme.widget_font = "resources/OvOV20.ttf"
+        sub_menu_selection_theme.widget_alignment = pygame_menu.locals.ALIGN_LEFT
+        sub_menu_selection_theme.widget_padding = 5
+
         self.main_menu = pygame_menu.Menu(
             "Platform Game", WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.8,
             center_content=False,
@@ -384,6 +416,15 @@ class Menu:
         )
 
         self.join_game_menu.set_onbeforeopen(self.cb_join_menu_openned)
+
+        self.sub_menu_selection = pygame_menu.Menu(
+            'Choosing Games', 1024, 768,
+            center_content=False,
+            onclose=pygame_menu.events.EXIT,  # User press ESC button
+            theme=sub_menu_selection_theme,
+            position=[40, 20])
+
+        self.sub_menu_selection.set_onbeforeopen(self.cb_selection_menu_openned)
 
         self.main_menu.add.vertical_margin(30)
 
@@ -413,8 +454,8 @@ class Menu:
                                               player_name)
         b_connect.add_self_to_kwargs()
 
-        b_create = self.main_menu.add.button("Create a new game", self.conn_create)
-        b_create.add_self_to_kwargs()
+        b_create = self.main_menu.add.button("Create a new game", self.sub_menu_selection)
+        # b_create.add_self_to_kwargs()
 
         self.main_menu.add.button("Choose an existing game to join", self.join_game_menu)
 
@@ -445,19 +486,13 @@ class Menu:
 
         self.join_game_menu.add.vertical_margin(15)
 
-        self.join_game_menu.add.button("Join", self.cb_join_game_btn,cursor=CURSOR_HAND)
+        self.join_game_menu.add.button("Join", self.cb_join_game_btn, cursor=CURSOR_HAND)
         self.join_game_menu.add.vertical_margin(15)
 
         self.join_game_menu.add.button("Back", pygame_menu.events.BACK)
         self.join_game_menu.add.vertical_margin(15)
 
         self.join_game_menu.add.button("Quit", pygame_menu.events.EXIT)
-
-        # self.main_menu.add.button("Start",
-        #                           self.demo_game,
-        #                           server_ip.get_value(),
-        #                           server_port.get_value(),
-        #                           player_name.get_value())
 
         self.main_menu.add.button('Quit', pygame_menu.events.EXIT)
         self.main_menu.add.vertical_margin(50)
@@ -467,6 +502,89 @@ class Menu:
                                  align=ALIGN_CENTER)
         self.main_menu.set_sound(all_sound, recursive=True)  # Apply on menu and all sub-menus
 
+        lbl_match_type = self.sub_menu_selection.add.label("Match Types")
+        lbl_match_type.set_float(True, False, True)
+        lbl_match_type.translate(100, 60)
+
+        selector_match_type = self.sub_menu_selection.add.dropselect(
+            title='',
+            items=[("Deathmatch", 0),
+                   ("1st23", 1),
+                   ("Best of 3", 2)],
+            font_size=26,
+            selection_box_width=200,
+            selection_box_height=100,
+            selection_option_padding=(0, 5),
+            selection_option_font_size=20
+        )
+        selector_match_type.set_float(True, False, True)
+        selector_match_type.translate(60, 100)
+
+        lbl_map = self.sub_menu_selection.add.label("Map Selection")
+        lbl_map.set_float(True, False, True)
+        lbl_map.translate(680, 60)
+
+        selector_map = self.sub_menu_selection.add.dropselect(
+            title='',
+            items=[("Map0", 0),
+                   ("Map1", 1),
+                   ("Map3", 2)],
+            font_size=26,
+            selection_box_width=200,
+            selection_box_height=100,
+            selection_option_padding=(0, 5),
+            selection_option_font_size=20
+        )
+        selector_map.set_float(True, False, True)
+        selector_map.translate(650, 100)
+
+        btn_img_lft = pygame_menu.BaseImage("resources/gui/left.png")
+
+        # title text can't be empty, otherwise resize doesn't work!
+        sub1_btn_lft = self.sub_menu_selection.add.button(" ", self.cb_player_sel_lft, background_color=btn_img_lft)
+        sub1_btn_lft.resize(100, 100)
+        sub1_btn_lft.set_float(True, False, True)
+        sub1_btn_lft.translate(150, 200)
+
+        btn_img_rgt = pygame_menu.BaseImage("resources/gui/right.png")
+
+        sub1_btn_rgt = self.sub_menu_selection.add.button(" ", None, background_color=btn_img_rgt)
+        sub1_btn_rgt.resize(100, 100)
+        sub1_btn_rgt.set_float(True, False, True)
+        sub1_btn_rgt.translate(750, 200)
+
+        for j in range(len(role_def.girl_txt)):
+            lbl = self.sub_menu_selection.add.label(role_def.girl_txt[j][5],
+                                                    "",
+                                                    font_size=role_def.girl_txt[j][0],
+                                                    font_color=role_def.girl_txt[j][1])
+            lbl.set_float(True, False, True)
+            lbl.translate(role_def.girl_txt[j][2], role_def.girl_txt[j][3])
+            self.girl_desc_lbl_lst.append(lbl)
+
+        for j in range(len(role_def.boy_txt)):
+            lbl = self.sub_menu_selection.add.label(role_def.boy_txt[j][5],
+                                                    "",
+                                                    font_size=role_def.boy_txt[j][0],
+                                                    font_color=role_def.boy_txt[j][1])
+            lbl.set_float(True, False, True)
+            lbl.translate(role_def.boy_txt[j][2], role_def.boy_txt[j][3])
+            lbl.hide()
+            self.boy_desc_lbl_lst.append(lbl)
+
+        btn_img_play = pygame_menu.BaseImage("resources/gui/Button_18_small.png")
+
+        play_btn = self.sub_menu_selection.add.button(" ", self.cb_play, background_color=btn_img_play)
+        play_btn.resize(100, 100)
+        play_btn.set_float(True, False, True)
+        play_btn.translate(890, 570)
+
+        img = self.sub_menu_selection.add.surface(self.current_img_lst[0])
+        img.set_float(True, False, True)
+        img.translate(350, 100)
+
+        img_idx = 0
+        current_img_idx = 0
         # -------------------------------------------------------------------------
         # Main loop
         # -------------------------------------------------------------------------
@@ -489,6 +607,14 @@ class Menu:
             else:
                 break
 
+            if img_idx + 1 == len(self.current_img_lst) * 2:
+                img_idx = 0
+            else:
+                img_idx += 1
+
+            if img_idx // 2 != current_img_idx:
+                img.set_surface(self.current_img_lst[img_idx // 2])
+
             # Main menu
             # self.main_menu.mainloop(surface, main_background, disable_loop=test, fps_limit=FPS)
 
@@ -498,6 +624,7 @@ class Menu:
             # At first loop returns
             if test:
                 break
+
 
 m = Menu()
 if __name__ == '__main__':

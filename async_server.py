@@ -14,6 +14,10 @@ from logging import handlers
 from dataclasses import dataclass
 from typing import Any
 
+from inspect import currentframe, getframeinfo
+
+FRAME_INFO = getframeinfo(currentframe())
+
 FPS = 60
 READ_LEN = 20
 CONNECTED = True
@@ -75,17 +79,16 @@ class Server:
         try:
             received = await reader.read(length)
             string = received.decode()
-            # print(length, received)
         except ConnectionError:
             self.cnt -= 1
-            self.my_logger.warning(f"Connection to player {player_name} is lost")
+            self.my_logger.warning(f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
             writer.close()
             await writer.wait_closed()
             connected = not CONNECTED
         else:  # if the connection is properly connected, there will be no ConnectionError exception raised
             if not received:
                 self.cnt -= 1
-                self.my_logger.warning(f"Connection to player {player_name} is lost")
+                self.my_logger.warning(f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
                 writer.close()
                 await writer.wait_closed()
                 connected = not CONNECTED
@@ -111,7 +114,7 @@ class Server:
             string = received.decode()
         except ConnectionError:
             self.cnt -= 1
-            self.my_logger.warning(f"Connection to player {player_name} is lost")
+            self.my_logger.warning(f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
             writer.close()
             await writer.wait_closed()
             self.game_dict.pop(room.room_id)
@@ -119,7 +122,7 @@ class Server:
         else:  # if the connection is properly connected, there will be no ConnectionError exception raised
             if not received:
                 self.cnt -= 1
-                self.my_logger.warning(f"Connection to player {player_name} is lost")
+                self.my_logger.warning(f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
                 writer.close()
                 await writer.wait_closed()
                 self.game_dict.pop(room.room_id)
@@ -176,8 +179,6 @@ class Server:
 
     async def new_client(self, reader, writer):
         # any new client connection goes here first
-        loop = asyncio.get_running_loop()
-
         player_id = 0  # player_id will be assigned according to conn_type: create - 0, join - 1
         player_info = None
         room = None
@@ -187,14 +188,14 @@ class Server:
             received = await reader.read(READ_LEN)
             player_info = received.decode().split(",")  # "{conn_type},{self.player_name}"
         except ConnectionError:
-            self.my_logger.warning(f"Connection to player {player_name} is lost")
+            self.my_logger.warning(f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
             writer.close()
             await writer.wait_closed()
         # if the connection is properly closed, there will be no ConnectionError exception raised
         # but empty byte will be received
         else:
             if not received:
-                self.my_logger.warning(f"Connection to player {player_name} is lost")
+                self.my_logger.warning(f"Connection to player {player_name} is lost [196]")
                 writer.close()
                 await writer.wait_closed()
 
@@ -209,12 +210,12 @@ class Server:
             try:  # initial read() needs different handling than self.check_read, this is just for r/w cycle
                 received = await reader.read(READ_LEN)
             except ConnectionError:
-                self.my_logger.warning(f"Connection to player {player_name} is lost")
+                self.my_logger.warning(f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
                 writer.close()
                 await writer.wait_closed()
             else:  # if the connection is properly closed, there will be no ConnectionError exception raised
                 if not received:
-                    self.my_logger.warning(f"Connection to player {player_name} is lost")
+                    self.my_logger.warning(f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
                     writer.close()
                     await writer.wait_closed()
 
@@ -290,8 +291,15 @@ class Server:
             room.player_0_writer.write(msg1.encode())
             room.player_1_writer.write(msg0.encode())
 
+    def handle_exception(self, loop, context):
+        # context["message"] will always be there; but context["exception"] may not
+        msg = context.get("exception", context["message"])
+        self.my_logger.error(f"Caught exception: {msg}")
+
     async def main(self, host, port):
         server = await asyncio.start_server(self.new_client, host, port, )
+        self.loop = server.get_loop()
+        self.loop.set_exception_handler(self.handle_exception)
         self.my_logger.info(f"Server started at {host}:{port}")
         await server.serve_forever()
 
