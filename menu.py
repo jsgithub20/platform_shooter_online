@@ -488,9 +488,9 @@ class Menu:
 
         self.join_game_menu.add.button("Join", self.cb_join_game_btn, cursor=CURSOR_HAND)
         self.join_game_menu.add.vertical_margin(15)
-
-        self.join_game_menu.add.button("Back", pygame_menu.events.BACK)
-        self.join_game_menu.add.vertical_margin(15)
+        #
+        # self.join_game_menu.add.button("Back", pygame_menu.events.BACK)
+        # self.join_game_menu.add.vertical_margin(15)
 
         self.join_game_menu.add.button("Quit", pygame_menu.events.EXIT)
 

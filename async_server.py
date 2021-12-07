@@ -295,6 +295,7 @@ class Server:
         # context["message"] will always be there; but context["exception"] may not
         msg = context.get("exception", context["message"])
         self.my_logger.error(f"Caught exception: {msg}")
+        print(context)
 
     async def main(self, host, port):
         server = await asyncio.start_server(self.new_client, host, port, )
