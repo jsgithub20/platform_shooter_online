@@ -113,12 +113,17 @@ class Network:
             reply = self.pos2str(self.pos_send)
             self.writer.write(reply.encode())
             # start = perf_counter()
-            data = await self.reader.read(READ_LEN)
+            # data = await self.reader.read(READ_LEN)
+            r = await self.check_read(READ_LEN)
+            if not r[0]:  # return connected, string
+                print("Connection issue to server during get_games")
+                return
             # print(perf_counter() - start)
-            try:
-                self.pos_recv.put_nowait(self.str2pos(data.decode()))
-            except queue.Full:
-                pass  # TODO: code to handle the exception
+            else:
+                try:
+                    self.pos_recv.put_nowait(self.str2pos(r[1]))
+                except queue.Full:
+                    pass  # TODO: code to handle the exception
 
     async def stop(self):
         self.writer.close()
