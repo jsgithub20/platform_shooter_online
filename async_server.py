@@ -17,7 +17,8 @@ from typing import Any
 from inspect import currentframe, getframeinfo
 
 FRAME_INFO = getframeinfo(currentframe())
-
+WIN_W = 1024
+WIN_H = 768
 FPS = 60
 READ_LEN = 20
 CONNECTED = True
@@ -47,9 +48,22 @@ class RoomState:
     player_1_writer: Any = None
 
 
+@dataclass
+class GameState:
+    room_id: int = 0
+    game_ready: bool = False  # True if second player joins
+    player_0_name: str = ""  # room name will be f"{player_0_name}'s game"
+    player_1_name: str = ""
+    player_0_reader: Any = None
+    player_0_writer: Any = None
+    player_1_reader: Any = None
+    player_1_writer: Any = None
+
+
 class Server:
     def __init__(self):
         pygame.init()
+        self.screen = pygame.display.set_mode((WIN_W, WIN_H), flags=pygame.HIDDEN)
         self.clock = pygame.time.Clock()
         self.cnt = 0  # total number of connections to the server
         self.client_id = 0
