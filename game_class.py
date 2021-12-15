@@ -92,12 +92,9 @@ class Game:
 
         # start a new game
         self.bullets = []
-
-        bullet1 = Bullet(-100, 0, 'l', SCREEN_WIDTH)
-        bullet2 = Bullet(-100, 0, 'l', SCREEN_WIDTH)
-        bullet3 = Bullet(-100, 0, 'l', SCREEN_WIDTH)
-        bullet4 = Bullet(-100, 0, 'l', SCREEN_WIDTH)
-        bullet5 = Bullet(-100, 0, 'l', SCREEN_WIDTH)
+        for i in range(5):
+            bullet = Bullet(-100, 0, 'l', SCREEN_WIDTH)
+            self.bullets.append(bullet)
 
         # Create the self.player
         self.player_shooter = Player()
