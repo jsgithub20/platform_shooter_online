@@ -181,12 +181,12 @@ class DrawText(pg.sprite.Sprite):
 
 
 class Bullet(pg.sprite.Sprite):
-    def __init__(self, pos_x, pos_y, direction, screen_width):
+    def __init__(self, pos, direction, screen_width):
         pg.sprite.Sprite.__init__(self)
         self.image = pg.image.load("resources/shooter/spear_head.png")
         self.rect = self.image.get_rect()
-        self.rect.x = pos_x
-        self.rect.y = pos_y
+        self.rect.x = pos[0]
+        self.rect.y = pos[1]
         self.direction = direction
         self.screen_width = screen_width
         self.live_flag = 1
@@ -194,7 +194,7 @@ class Bullet(pg.sprite.Sprite):
         self.loop_count = 0
         self.level = None
         if self.direction == 'l':
-            self.imag = pg.transform.flip(self.image, True, False)
+            self.image = pg.transform.flip(self.image, True, False)
             self.speed = -self.speed
 
     def update(self):

@@ -31,8 +31,31 @@ class Game:
         self.player0_id = player0_id
         self.player1_id = player1_id
 
+        """
+        0   , 1        , 2         , 3   , 4     , 5             , 6
+        quit, move_left, move_right, jump, attack, move_left_stop, move_right_stop
+        """
+        self.events_str_shooter = "0000000"
+        self.events_str_chopper = "0000000"
+
+        self.current_level = None
+
+        self.bullets_l = []
+        self.live_bullet_l = 0
+        for i in range(TTL_BULLETS):
+            bullet = Bullet(DEAD_SPRITE_POS, 'l', SCREEN_WIDTH)
+            bullet.level = self.current_level
+            self.bullets_l.append(bullet)
+
+        self.bullets_r = []
+        self.live_bullet_r = 0
+        for i in range(TTL_BULLETS):
+            bullet = Bullet(DEAD_SPRITE_POS, 'r', SCREEN_WIDTH)
+            bullet.level = self.current_level
+            self.bullets_r.append(bullet)
+
         # the "R" sign on the shooter's head to indicate it's the reloading time, so it can't shoot
-        self.r_sign = False
+        self.r_sign = DrawText(self.screen, 10, RED, 0, 0, "r_sign", "R", 0, 10)
         self.snd_yeet = False
 
         self.winner = None
@@ -52,9 +75,13 @@ class Game:
         match_type = self.match_score["match_type"]
 
         # start a new game
-        self.bullets = []
+        self.live_bullet_l = 0
+        self.live_bullet_r = 0
+        for i in range(TTL_BULLETS):
+            self.bullets_l[i].rect.x, self.bullets_l[i].rect.y = DEAD_SPRITE_POS
+            self.bullets_r[i].rect.x, self.bullets_r[i].rect.y = DEAD_SPRITE_POS
 
-        # Create the self.player
+            # Create the self.player
         self.player_shooter = Player()
         self.player_shooter.hit_limit = 3
 
@@ -84,6 +111,7 @@ class Game:
         self.player_chopper.rect.y = 200
 
         self.active_sprite_list.add(self.player_shooter, self.player_chopper)
+        self.bullet_sprite_grp.add(*self.bullets_r, *self.bullets_l)
 
         # self.run()
     #
@@ -97,67 +125,56 @@ class Game:
 
     def events(self):
         # Game Loop - events
-        for event in pg.event.get():
-            # check for closing window
-            if event.type == pg.QUIT:
-                if self.playing:
-                    self.playing = False
-                self.running = False
+        if self.events_str_shooter[0] or self.events_str_chopper[0]:
+            if self.playing:
+                self.playing = False
+            self.running = False
+        if self.events_str_shooter[1]:
+            self.player_shooter.go_left()
+        if self.events_str_shooter[2]:
+            self.player_shooter.go_right()
+        if self.events_str_shooter[3]:
+            self.player_shooter.jump()
+        if self.events_str_shooter[4]:
+            if self.player_shooter.loaded > 0:
+                self.player_shooter.image_idx = 0
+                self.player_shooter.loaded -= 1
+                if self.player_shooter.direction == 'l':
+                    self.live_bullet_l += 1
+                    self.bullets_l[self.live_bullet_l].rect.x = self.player_shooter.rect.x
+                    self.bullets_l[self.live_bullet_l].rect.y = self.player_shooter.rect.y
+                    self.player_shooter.attack_flg = 1
+                    # self.snd_yeet.play()
+                else:
+                    self.live_bullet_r += 1
+                    self.bullets_r[self.live_bullet_r].rect.x = self.player_shooter.rect.x
+                    self.bullets_r[self.live_bullet_r].rect.y = self.player_shooter.rect.y
+                    self.player_shooter.attack_flg = 1
+                    # self.snd_yeet.play()
+                # self.bullets.append(bullet)
+                # self.bullet_sprite_grp.add(bullet)
 
-            if event.type == pg.KEYDOWN:
-                if event.key == pg.K_F1:
-                    self.mouse_pos_flag = not self.mouse_pos_flag
-                    if self.mouse_pos_flag:
-                        self.active_sprite_list.add(self.mouse_pos)
-                    else:
-                        self.active_sprite_list.remove(self.mouse_pos)
-                # player_shooter controls
-                if event.key == pg.K_LEFT:
-                    self.player_shooter.go_left()
-                if event.key == pg.K_RIGHT:
-                    self.player_shooter.go_right()
-                if event.key == pg.K_UP:
-                    self.player_shooter.jump()
-                if event.key == pg.K_SPACE:
-                    if self.player_shooter.loaded > 0:
-                        self.player_shooter.image_idx = 0
-                        self.player_shooter.loaded -= 1
-                        if self.player_shooter.direction == 'l':
-                            bullet = Bullet(self.player_shooter.rect.x, self.player_shooter.rect.y, 'l', SCREEN_WIDTH)
-                            bullet.level = self.current_level
-                            self.player_shooter.attack_flg = 1
-                            self.snd_yeet.play()
-                        else:
-                            bullet = Bullet(self.player_shooter.rect.x, self.player_shooter.rect.y, 'r', SCREEN_WIDTH)
-                            bullet.level = self.current_level
-                            self.player_shooter.attack_flg = 1
-                            self.snd_yeet.play()
-                        self.bullets.append(bullet)
-                        self.bullet_sprite_grp.add(bullet)
+        if self.events_str_chopper[1]:
+            self.player_chopper.go_left()
+        if self.events_str_chopper[2]:
+            self.player_chopper.go_right()
+        if self.events_str_chopper[3]:
+            self.player_chopper.jump()
+        if self.events_str_chopper[4]:
+            self.player_chopper.chop()
+            self.player_chopper.image_idx = 0
 
-                # player_chopper controls
-                if event.key == pg.K_a:
-                    self.player_chopper.go_left()
-                elif event.key == pg.K_d:
-                    self.player_chopper.go_right()
-                if event.key == pg.K_w:
-                    self.player_chopper.jump()
-                if event.key == pg.K_c:
-                    self.player_chopper.chop()
-                    self.player_chopper.image_idx = 0
+        # player_shooter controls
+        if self.events_str_shooter[5] and self.player_shooter.change_x < 0:
+            self.player_shooter.stop()
+        if self.events_str_shooter[6] and self.player_shooter.change_x > 0:
+            self.player_shooter.stop()
 
-            if event.type == pg.KEYUP:
-                # player_shooter controls
-                if event.key == pg.K_LEFT and self.player_shooter.change_x < 0:
-                    self.player_shooter.stop()
-                if event.key == pg.K_RIGHT and self.player_shooter.change_x > 0:
-                    self.player_shooter.stop()
-
-                # player_chopper controls
-                if event.key == pg.K_a and self.player_chopper.change_x < 0:
-                    self.player_chopper.stop()
-                if event.key == pg.K_d and self.player_chopper.change_x > 0:
-                    self.player_chopper.stop()
+        # player_chopper controls
+        if self.events_str_chopper[5] and self.player_chopper.change_x < 0:
+            self.player_chopper.stop()
+        if self.events_str_chopper[6] and self.player_chopper.change_x > 0:
+            self.player_chopper.stop()
 
     def update(self):
         # Game Loop - Update
@@ -165,14 +182,12 @@ class Game:
         self.active_sprite_list.update()
         self.bullet_sprite_grp.update()
 
-        if self.mouse_pos in self.active_sprite_list:
-            self.mouse_pos.text = f"({str(pg.mouse.get_pos()[0])},{str(pg.mouse.get_pos()[1])})"
-
         # Update the r_sign to follow the player_shooter
-        self.r_sign.rect.midbottom = self.player_shooter.rect.midtop
         if self.player_shooter.reload_timer > 0 and self.r_sign not in self.active_sprite_list:
+            self.r_sign.rect.midbottom = self.player_shooter.rect.midtop
             self.active_sprite_list.add(self.r_sign)
         elif self.player_shooter.reload_timer == 0 and self.r_sign in self.active_sprite_list:
+            self.r_sign.rect.midbottom = DEAD_SPRITE_POS
             self.active_sprite_list.remove(self.r_sign)
 
         if self.player_chopper in self.active_sprite_list:
