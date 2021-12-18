@@ -49,15 +49,13 @@ class RoomState:
 
 
 @dataclass
-class GameState:
-    room_id: int = 0
-    game_ready: bool = False  # True if second player joins
-    player_0_name: str = ""  # room name will be f"{player_0_name}'s game"
-    player_1_name: str = ""
-    player_0_reader: Any = None
-    player_0_writer: Any = None
-    player_1_reader: Any = None
-    player_1_writer: Any = None
+class PlayerEvents:
+    move_left: int = 0
+    move_left_stop: int = 0
+    move_right: int = 0
+    move_right_stop: int = 0
+    jump: int = 0
+    attack: int = 0
 
 
 class Server:
