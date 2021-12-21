@@ -189,7 +189,7 @@ class Bullet(pg.sprite.Sprite):
         self.rect.y = pos[1]
         self.direction = direction
         self.screen_width = screen_width
-        self.live_flag = 1
+        self.live_flag = 0
         self.speed = 10
         self.loop_count = 0
         self.level = None

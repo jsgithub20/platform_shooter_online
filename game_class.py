@@ -43,14 +43,14 @@ class Game:
         self.bullets_l = []
         self.live_bullet_l = 0
         for i in range(TTL_BULLETS):
-            bullet = Bullet(DEAD_SPRITE_POS, 'l', SCREEN_WIDTH)
+            bullet = Bullet(DEAD_BULLET_POS, 'l', SCREEN_WIDTH)
             bullet.level = self.current_level
             self.bullets_l.append(bullet)
 
         self.bullets_r = []
         self.live_bullet_r = 0
         for i in range(TTL_BULLETS):
-            bullet = Bullet(DEAD_SPRITE_POS, 'r', SCREEN_WIDTH)
+            bullet = Bullet(DEAD_BULLET_POS, 'r', SCREEN_WIDTH)
             bullet.level = self.current_level
             self.bullets_r.append(bullet)
 
@@ -78,8 +78,8 @@ class Game:
         self.live_bullet_l = 0
         self.live_bullet_r = 0
         for i in range(TTL_BULLETS):
-            self.bullets_l[i].rect.x, self.bullets_l[i].rect.y = DEAD_SPRITE_POS
-            self.bullets_r[i].rect.x, self.bullets_r[i].rect.y = DEAD_SPRITE_POS
+            self.bullets_l[i].rect.x, self.bullets_l[i].rect.y = DEAD_BULLET_POS
+            self.bullets_r[i].rect.x, self.bullets_r[i].rect.y = DEAD_BULLET_POS
 
             # Create the self.player
         self.player_shooter = Player()
@@ -187,7 +187,7 @@ class Game:
             self.r_sign.rect.midbottom = self.player_shooter.rect.midtop
             self.active_sprite_list.add(self.r_sign)
         elif self.player_shooter.reload_timer == 0 and self.r_sign in self.active_sprite_list:
-            self.r_sign.rect.midbottom = DEAD_SPRITE_POS
+            self.r_sign.rect.midbottom = DEAD_R_POS
             self.active_sprite_list.remove(self.r_sign)
 
         if self.player_chopper in self.active_sprite_list:
@@ -218,20 +218,14 @@ class Game:
                 elif self.player_shooter.hit_flag == 1 and self.player_chopper.chop_flag == 0:
                     self.player_shooter.hit_flag = 0
 
-        if self.bullets:
-            for bullet in self.bullets:
-                if bullet.live_flag == 0:
-                    self.bullet_sprite_grp.remove(bullet)
-                    self.bullets.remove(bullet)
+        for i in range(len(self.bullets_l)):
+            if self.bullets_l[i].live_flag == 0:
+                self.bullets_l[i].rect.x, self.bullets_l[i].rect.y = DEAD_BULLET_POS
+            if self.bullets_r[i].live_flag == 0:
+                self.bullets_r[i].rect.x, self.bullets_l[i].rect.y = DEAD_BULLET_POS
 
         # Update items in the level
         self.current_level.update()
-
-        self.fps_txt.text = f"fps: {str(int(self.clock.get_fps()))}"
-        self.player_shooter_score.text = "Shooter Hit: {}/{}".format(self.player_shooter.hit_count,
-                                                                     self.player_shooter.hit_limit)
-        self.player_chopper_score.text = "Chopper Hit: {}/{}".format(self.player_chopper.hit_count,
-                                                                     self.player_chopper.hit_limit)
 
     def check_winner(self):
         # return the winner role (if game over) or None, and a bool value for self.playing

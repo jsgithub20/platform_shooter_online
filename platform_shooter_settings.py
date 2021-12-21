@@ -15,7 +15,8 @@ SCREEN_HEIGHT = 768
 TITLE = "Platform Shooter"
 FPS = 60
 TTL_BULLETS = 5
-DEAD_SPRITE_POS = (-99, -99)
+DEAD_BULLET_POS = (-99, -99)
+DEAD_R_POS = (-99, -150)
 
 # HEADER_LEN = 8  # length of the header for socket send/recv
 DATA_LEN = 100
