@@ -16,6 +16,9 @@ from typing import Any
 
 from inspect import currentframe, getframeinfo
 
+import game_class
+from platform_shooter_settings import *
+
 FRAME_INFO = getframeinfo(currentframe())
 WIN_W = 1024
 WIN_H = 768
@@ -49,13 +52,28 @@ class RoomState:
 
 
 @dataclass
-class PlayerEvents:
-    move_left: int = 0
-    move_left_stop: int = 0
-    move_right: int = 0
-    move_right_stop: int = 0
-    jump: int = 0
-    attack: int = 0
+class GameState:
+    shooter_pos: tuple = (0, 0)
+    chopper_pos: tuple = (0, 0)
+    bullet_l0_pos: tuple = DEAD_BULLET_POS  # bullet_l[0]
+    bullet_l1_pos: tuple = DEAD_BULLET_POS  # bullet_l[1]
+    bullet_l2_pos: tuple = DEAD_BULLET_POS  # bullet_l[2]
+    bullet_l3_pos: tuple = DEAD_BULLET_POS  # bullet_l[3]
+    bullet_l4_pos: tuple = DEAD_BULLET_POS  # bullet_l[4]
+    bullet_r0_pos: tuple = DEAD_BULLET_POS  # bullet_r[0]
+    bullet_r1_pos: tuple = DEAD_BULLET_POS  # bullet_r[1]
+    bullet_r2_pos: tuple = DEAD_BULLET_POS  # bullet_r[2]
+    bullet_r3_pos: tuple = DEAD_BULLET_POS  # bullet_r[3]
+    bullet_r4_pos: tuple = DEAD_BULLET_POS  # bullet_r[4]
+    crater_pos: tuple = DEAD_CRATER_POS
+    r_sign_pos: tuple = DEAD_R_POS
+    moving_block_pos: tuple = DEAD_BLOCK_POS
+    map_id: int = 0
+    match_id: int = 0
+    level_id: int = 0
+    round: int = 0
+    shooter_score: int = 0
+    chopper_score: int = 0
 
 
 class Server:
@@ -93,14 +111,16 @@ class Server:
             string = received.decode()
         except ConnectionError:
             self.cnt -= 1
-            self.my_logger.warning(f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
+            self.my_logger.warning(
+                f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
             writer.close()
             await writer.wait_closed()
             connected = not CONNECTED
         else:  # if the connection is properly connected, there will be no ConnectionError exception raised
             if not received:
                 self.cnt -= 1
-                self.my_logger.warning(f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
+                self.my_logger.warning(
+                    f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
                 writer.close()
                 await writer.wait_closed()
                 connected = not CONNECTED
@@ -126,7 +146,8 @@ class Server:
             string = received.decode()
         except ConnectionError:
             self.cnt -= 1
-            self.my_logger.warning(f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
+            self.my_logger.warning(
+                f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
             writer.close()
             await writer.wait_closed()
             self.game_dict.pop(room.room_id)
@@ -134,7 +155,8 @@ class Server:
         else:  # if the connection is properly connected, there will be no ConnectionError exception raised
             if not received:
                 self.cnt -= 1
-                self.my_logger.warning(f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
+                self.my_logger.warning(
+                    f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
                 writer.close()
                 await writer.wait_closed()
                 self.game_dict.pop(room.room_id)
@@ -200,7 +222,8 @@ class Server:
             received = await reader.read(READ_LEN)
             player_info = received.decode().split(",")  # "{conn_type},{self.player_name}"
         except ConnectionError:
-            self.my_logger.warning(f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
+            self.my_logger.warning(
+                f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
             writer.close()
             await writer.wait_closed()
         # if the connection is properly closed, there will be no ConnectionError exception raised
@@ -222,12 +245,14 @@ class Server:
             try:  # initial read() needs different handling than self.check_read, this is just for r/w cycle
                 received = await reader.read(READ_LEN)
             except ConnectionError:
-                self.my_logger.warning(f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
+                self.my_logger.warning(
+                    f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
                 writer.close()
                 await writer.wait_closed()
             else:  # if the connection is properly closed, there will be no ConnectionError exception raised
                 if not received:
-                    self.my_logger.warning(f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
+                    self.my_logger.warning(
+                        f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
                     writer.close()
                     await writer.wait_closed()
 
@@ -282,26 +307,72 @@ class Server:
                 if not r[0]:  # return connected, string
                     return
 
-        while True:  # this is the routine game tick
+        self.game(room)  # this is the routine game tick
+
+        #
+        # while True:  # this is the routine game tick
+        #     self.clock.tick(FPS)
+        #     r = await self.check_read_room(room, True, False, READ_LEN)
+        #     if not r[0]:
+        #         room.player_1_writer.write("Disconnected".encode())
+        #         self.my_logger.warning(f"Connection to player {room.player_1_name} is disconnected")
+        #         break
+        #     else:
+        #         msg0 = r[1]
+        #
+        #     r = await self.check_read_room(room, False, True, READ_LEN)
+        #     if not r[0]:
+        #         room.player_0_writer.write("Disconnected".encode())
+        #         self.my_logger.warning(f"Connection to player {room.player_0_name} is disconnected")
+        #         break
+        #     else:
+        #         msg1 = r[1]
+        #
+        #     room.player_0_writer.write(msg1.encode())
+        #     room.player_1_writer.write(msg0.encode())
+
+    def game(self, room):
+        g = game_class.Game(self.screen, WIN_W, WIN_H, 0, 0, 0)
+        gs = GameState()
+
+        while True:
             self.clock.tick(FPS)
             r = await self.check_read_room(room, True, False, READ_LEN)
             if not r[0]:
                 room.player_1_writer.write("Disconnected".encode())
-                self.my_logger.warning(f"Connection to player {room.player_1_name} is disconnected")
+                self.my_logger.warning(f"Connection to player {room.player_0_name} is disconnected")
                 break
             else:
-                msg0 = r[1]
+                g.events_str_shooter = r[1]
 
             r = await self.check_read_room(room, False, True, READ_LEN)
             if not r[0]:
                 room.player_0_writer.write("Disconnected".encode())
-                self.my_logger.warning(f"Connection to player {room.player_0_name} is disconnected")
+                self.my_logger.warning(f"Connection to player {room.player_1_name} is disconnected")
                 break
             else:
-                msg1 = r[1]
+                g.events_str_chopper = r[1]
 
-            room.player_0_writer.write(msg1.encode())
-            room.player_1_writer.write(msg0.encode())
+            g.events()
+            g.update()
+
+            gs.shooter_pos = (g.player_shooter.rect.x, g.player_shooter.rect.y)
+            gs.chopper_pos = (g.player_chopper.rect.x, g.player_chopper.rect.y)
+            gs.bullet_l0_pos = (g.bullets_l[0].rect.x, g.bullets_l[0].rect.y)
+            gs.bullet_l1_pos = (g.bullets_l[1].rect.x, g.bullets_l[1].rect.y)
+            gs.bullet_l2_pos = (g.bullets_l[2].rect.x, g.bullets_l[2].rect.y)
+            gs.bullet_l3_pos = (g.bullets_l[3].rect.x, g.bullets_l[3].rect.y)
+            gs.bullet_l4_pos = (g.bullets_l[4].rect.x, g.bullets_l[4].rect.y)
+            gs.bullet_r0_pos = (g.bullets_r[0].rect.x, g.bullets_r[0].rect.y)
+            gs.bullet_r1_pos = (g.bullets_r[1].rect.x, g.bullets_r[1].rect.y)
+            gs.bullet_r2_pos = (g.bullets_r[2].rect.x, g.bullets_r[2].rect.y)
+            gs.bullet_r3_pos = (g.bullets_r[3].rect.x, g.bullets_r[3].rect.y)
+            gs.bullet_r4_pos = (g.bullets_r[4].rect.x, g.bullets_r[4].rect.y)
+            if g.current_level_no == 0:
+                gs.crater_pos = (g.level02.moving_block.rect.x, g.level02.moving_block.rect.y)
+            else:
+                gs.crater_pos = DEAD_CRATER_POS
+
 
     def handle_exception(self, loop, context):
         # context["message"] will always be there; but context["exception"] may not

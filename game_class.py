@@ -7,7 +7,7 @@ from role_def import *
 
 
 class Game:
-    def __init__(self, screen, win_w, win_h, map_id, level_id, match_id, player0_id, player1_id):
+    def __init__(self, screen, win_w, win_h, map_id, level_id, match_id):
         pg.init()
         # get settings when called by the server program
         self.screen = screen
@@ -25,11 +25,6 @@ class Game:
         self.match_score = {"match_type": self.match_types[self.match_id],
                             "round": 0, "shooter": 0, "chopper": 0,
                             "map": 0, "game_finished": False}
-
-        # player selection
-        self.player_lst = []  # player sprites
-        self.player0_id = player0_id
-        self.player1_id = player1_id
 
         """
         0   , 1        , 2         , 3   , 4     , 5             , 6
@@ -88,13 +83,12 @@ class Game:
         self.player_chopper = sprite_player_correction.Player()
         self.player_chopper.hit_limit = 3
 
-        self.player_lst.append(self.player_shooter)
-        self.player_lst.append(self.player_chopper)
-
         # Create all the levels
         self.level_list = []
-        self.level_list.append(Level_01(self.player_shooter, self.player_chopper))
-        self.level_list.append(Level_02(self.player_shooter, self.player_chopper))
+        self.level01 = Level_01(self.player_shooter, self.player_chopper)
+        self.level02 = Level_02(self.player_shooter, self.player_chopper)
+        self.level_list.append(self.level01)
+        self.level_list.append(self.level02)
 
         # Set the current level
         self.current_level = self.level_list[self.current_level_no]

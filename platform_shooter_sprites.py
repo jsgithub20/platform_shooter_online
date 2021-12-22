@@ -588,7 +588,7 @@ class Level_02(Level):
         # Call the parent constructor
         Level.__init__(self, background)
         self.player_list.add(player1, player2)
-
+        self.moving_block = None
 
         # Array with x, and y of platform
         level = [[600, 500],
@@ -615,5 +615,5 @@ class Level_02(Level):
         # the error "cannot convert without pygame.display initialized" will occur when this module is imported
         # to "main.py". The reason being the method in a class is only executed when the instance of a class is
         # created, but the lines out of the methods of a class will be executed when this module is imported
-        moving_block = MovingPlatform(crate, 470, 300, self.player_list)
-        self.platform_list.add(moving_block)
+        self.moving_block = MovingPlatform(crate, 470, 300, self.player_list)
+        self.platform_list.add(self.moving_block)
