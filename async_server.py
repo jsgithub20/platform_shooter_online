@@ -162,7 +162,7 @@ class Server:
                 connected = not CONNECTED
         return connected, string
 
-    def create(self, player_name, reader, writer):
+    def create_room(self, player_name, reader, writer):
         self.room_cnt += 1
         self.room_id += 1
         room = RoomState()
@@ -267,7 +267,7 @@ class Server:
             conn_type = player_info[0]  # client reply: f"{conn_type},{player_name}"
             if conn_type == "create":
                 player_id = 0
-                room = self.create(player_name, reader, writer)
+                room = self.create_room(player_name, reader, writer)
             elif conn_type == "join":
                 player_id = 1
                 try:
