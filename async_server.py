@@ -11,7 +11,7 @@ import pygame
 import coloredlogs
 import logging
 from logging import handlers
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import Any
 
 from inspect import currentframe, getframeinfo
@@ -65,9 +65,8 @@ class GameState:
     bullet_r2_pos: tuple = DEAD_BULLET_POS  # bullet_r[2]
     bullet_r3_pos: tuple = DEAD_BULLET_POS  # bullet_r[3]
     bullet_r4_pos: tuple = DEAD_BULLET_POS  # bullet_r[4]
-    crater_pos: tuple = DEAD_CRATER_POS
-    r_sign_pos: tuple = DEAD_R_POS
     moving_block_pos: tuple = DEAD_BLOCK_POS
+    r_sign_pos: tuple = DEAD_R_POS
     map_id: int = 0
     match_id: int = 0
     level_id: int = 0
@@ -307,7 +306,7 @@ class Server:
                 if not r[0]:  # return connected, string
                     return
 
-        self.game(room)  # this is the routine game tick
+        await self.game(room)  # this is the routine game tick
 
         #
         # while True:  # this is the routine game tick
@@ -331,7 +330,7 @@ class Server:
         #     room.player_0_writer.write(msg1.encode())
         #     room.player_1_writer.write(msg0.encode())
 
-    def game(self, room):
+    async def game(self, room):
         g = game_class.Game(self.screen, WIN_W, WIN_H, 0, 0, 0)
         gs = GameState()
 
@@ -369,10 +368,21 @@ class Server:
             gs.bullet_r3_pos = (g.bullets_r[3].rect.x, g.bullets_r[3].rect.y)
             gs.bullet_r4_pos = (g.bullets_r[4].rect.x, g.bullets_r[4].rect.y)
             if g.current_level_no == 0:
-                gs.crater_pos = (g.level02.moving_block.rect.x, g.level02.moving_block.rect.y)
+                gs.moving_block_pos = (g.level02.moving_block.rect.x, g.level02.moving_block.rect.y)
             else:
-                gs.crater_pos = DEAD_CRATER_POS
+                gs.moving_block_pos = DEAD_CRATER_POS
+            gs.r_sign_pos = (g.r_sign.rect.x, g.r_sign.rect.y)
+            gs.map_id = g.map_id
+            gs.match_id = g.match_id
+            gs.level_id = g.current_level_no
+            gs.round = g.match_score["round"]
+            gs.shooter_score = g.match_score["shooter"]
+            gs.chopper_score = g.match_score["chopper"]
 
+            send_byte = json.dumps([*asdict(gs).values()]).encode()
+
+            room.player_0_writer.write(send_byte)
+            room.player_1_writer.write(send_byte)
 
     def handle_exception(self, loop, context):
         # context["message"] will always be there; but context["exception"] may not

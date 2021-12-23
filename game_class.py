@@ -20,11 +20,12 @@ class Game:
 
         # match types
         self.match_types = ["Deathmatch", "1st23", "Best of 3"]
+        self.map_lst = []
 
         # match score
         self.match_score = {"match_type": self.match_types[self.match_id],
                             "round": 0, "shooter": 0, "chopper": 0,
-                            "map": 0, "game_finished": False}
+                            "map": self.map_lst[self.map_id], "game_finished": False}
 
         """
         0   , 1        , 2         , 3   , 4     , 5             , 6

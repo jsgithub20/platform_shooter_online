@@ -1,5 +1,5 @@
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import Any
 
 match_score = {"match_type": "test",
@@ -8,12 +8,12 @@ match_score = {"match_type": "test",
 
 lst = [*match_score.values()]
 
-print([*match_score.values()])
-print(json.dumps(lst).encode())
+# print([*match_score.values()])
+# print(json.dumps(lst).encode())
 
 @dataclass
 class RoomState:
-    room_id: 0
+    room_id: int = 0
     game_ready: bool = False  # True if second player joins
     player_0_name: str = ""  # room name will be f"{player_0_name}'s game"
     player_1_name: str = ""
@@ -24,4 +24,13 @@ class RoomState:
 
 r = RoomState()
 
-print(r.room_id)
+dr = asdict(r)
+v = [*dr.values()]
+ev = json.dumps(v).encode()
+dv = ev.decode()
+dvl = json.loads(dv)
+print(asdict(r))
+print(v)
+print(ev)
+print(dv)
+print(json.dumps([*asdict(r).values()]).encode())
