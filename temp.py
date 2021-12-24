@@ -15,7 +15,7 @@ lst = [*match_score.values()]
 class RoomState:
     room_id: int = 0
     game_ready: bool = False  # True if second player joins
-    player_0_name: str = ""  # room name will be f"{player_0_name}'s game"
+    player_0_name: str = "player0"  # room name will be f"{player_0_name}'s game"
     player_1_name: str = ""
     player_0_reader: Any = None
     player_0_writer: Any = None
@@ -34,3 +34,5 @@ print(v)
 print(ev)
 print(dv)
 print(json.dumps([*asdict(r).values()]).encode())
+
+print(f"{r.room_id},{r.player_0_name}".encode())

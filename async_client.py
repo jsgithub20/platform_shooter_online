@@ -25,6 +25,7 @@ class Network:
         self.opponent_name = ""
         self.reader = None
         self.writer = None
+        self.game_setting = [0, 0, 0]  # [ready, map_id, match_id]
         self.game_rooms = []
         self.chosen_room = "no chosen"
         self.q_game_rooms = Queue()
@@ -107,7 +108,8 @@ class Network:
                 self.opponent_name = self.server_msg[1]
                 break
             else:
-                self.writer.write("Waiting".encode())
+                send_str = f"{self.game_setting[0]},{self.game_setting[1]},{self.game_setting[2]}"
+                self.writer.write(send_str.encode())
 
         while True:  # this is the routine game tick
             reply = self.pos2str(self.pos_send)

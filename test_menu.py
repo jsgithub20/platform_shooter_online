@@ -144,6 +144,7 @@ menu.add.button("test", sub_menu)
 selector_epic = menu.add.dropselect(
     title='Is pygame-menu epic?',
     items=items,
+    default=0,
     font_size=16,
     selection_option_font_size=20,
 )

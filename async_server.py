@@ -49,6 +49,9 @@ class RoomState:
     player_0_writer: Any = None
     player_1_reader: Any = None
     player_1_writer: Any = None
+    game_set: bool = False
+    map_id: int = 0
+    match_id: int = 0
 
 
 @dataclass
@@ -305,6 +308,13 @@ class Server:
                 r = await self.check_read_room(room, True, False, READ_LEN)  # r/w cycle and check the connection
                 if not r[0]:  # return connected, string
                     return
+                else:
+                    info = r[1].split(",")
+                    if info[0] == "1":  # ready, map_id, match_id
+                        room.map_id = info[1]
+                        room.match_id = info[2]
+                        room.game_set = True
+                        # print(f"game set: {room.map_id}, {room.match_id}")
 
         await self.game(room)  # this is the routine game tick
 

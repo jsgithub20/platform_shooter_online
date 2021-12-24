@@ -161,6 +161,9 @@ class Menu:
         self.room_frame = None
         self.conn_type = "handshake"  # "create" or "join"
         self.client_id = "0"
+        self.map_id = 0
+        self.match_id = 0
+        self.level_id = 0
         self.main_menu: [pygame_menu.menu] = None
         self.b_connect: [pygame_menu.widgets.widget.button] = None
         self.selector_game: [pygame_menu.widgets.widget.selector] = None
@@ -179,8 +182,8 @@ class Menu:
 
         self.img_lst = [girl_idle, boy_idle]
 
-        self.current_img_sel = 0
-        self.current_img_lst = self.img_lst[self.current_img_sel]
+        self.current_player_sel = 0
+        self.current_img_lst = self.img_lst[self.current_player_sel]
         self.girl_desc_lbl_lst = []
         self.boy_desc_lbl_lst = []
 
@@ -213,7 +216,7 @@ class Menu:
         self.t_loop.create_task(self.connection.client())
         self.demo_game()
 
-    def cb_selection_menu_openned(self, from_menu, to_menu):
+    def cb_selection_menu_opened(self, from_menu, to_menu):
         self.conn_type = "create"
         self.t_loop.create_task(self.connection.create())
         self.t_loop.create_task(self.connection.client())
@@ -233,28 +236,28 @@ class Menu:
             self.my_logger.my_logger.error(f"Connection issue during joining - {e}")
 
     def cb_player_sel_lft(self):
-        if self.current_img_sel - 1 < 0:
-            self.current_img_sel = len(self.img_lst) - 1
+        if self.current_player_sel - 1 < 0:
+            self.current_player_sel = len(self.img_lst) - 1
         else:
-            self.current_img_sel -= 1
+            self.current_player_sel -= 1
 
-        if self.current_img_sel == 0:
+        if self.current_player_sel == 0:
             for j in range(len(self.girl_desc_lbl_lst)):
                 self.girl_desc_lbl_lst[j].show()
                 self.boy_desc_lbl_lst[j].hide()
-        elif self.current_img_sel == 1:
+        elif self.current_player_sel == 1:
             for j in range(len(self.girl_desc_lbl_lst)):
                 self.girl_desc_lbl_lst[j].hide()
                 self.boy_desc_lbl_lst[j].show()
 
-        self.current_img_lst = self.img_lst[self.current_img_sel]
+        self.current_img_lst = self.img_lst[self.current_player_sel]
 
     def cb_join_game_btn(self):
         self.t_loop.create_task(self.connection.send_room_choice(self.chosen_room))
         self.t_loop.create_task(self.connection.client())
         self.demo_game()
 
-    def cb_dropselecton_onchange(self, item_index: tuple, game_ready, room_id):
+    def cb_dropselector_game_onchange(self, item_index: tuple, game_ready, room_id):
         # [[player0_name, game_ready, room_id],]
         self.chosen_room = item_index[0]
 
@@ -273,6 +276,15 @@ class Menu:
             # self.selector_game.render()
         except asyncio.TimeoutError:
             self.my_logger.my_logger.error(f"Connection issue to server during refreshing")
+
+    def cb_selector_map_onchange(self, item_tuple, *args, **kwargs):
+        self.map_id = item_tuple[1]
+
+    def cb_selector_match_type_onchange(self, item_tuple, *args, **kwargs):
+        self.match_id = item_tuple[1]
+
+    def cb_wait_menu_opened(self, from_menu, to_menu):
+        self.connection.game_setting = [1, self.map_id, self.match_id]
 
     def demo_game(self):
         self.main_menu.disable()
@@ -424,7 +436,16 @@ class Menu:
             theme=sub_menu_selection_theme,
             position=[40, 20])
 
-        self.sub_menu_selection.set_onbeforeopen(self.cb_selection_menu_openned)
+        self.sub_menu_selection.set_onbeforeopen(self.cb_selection_menu_opened)
+
+        self.sub_menu_wait = pygame_menu.Menu(
+            'Waiting for player', 1024, 768,
+            center_content=False,
+            onclose=pygame_menu.events.EXIT,  # User press ESC button
+            theme=sub_menu_selection_theme,
+            position=[40, 20])
+
+        self.sub_menu_wait.set_onbeforeopen(self.cb_wait_menu_opened)
 
         self.main_menu.add.vertical_margin(30)
 
@@ -479,7 +500,7 @@ class Menu:
         self.selector_game = self.join_game_menu.add.dropselect(
             title='Choose a game to join:',
             items=self.game_rooms,
-            onchange=self.cb_dropselecton_onchange,
+            onchange=self.cb_dropselector_game_onchange,
             selection_box_bgcolor=(200, 200, 50),
             selection_box_height=10
         )
@@ -515,7 +536,8 @@ class Menu:
             selection_box_width=200,
             selection_box_height=100,
             selection_option_padding=(0, 5),
-            selection_option_font_size=20
+            selection_option_font_size=20,
+            onchange=self.cb_selector_match_type_onchange
         )
         selector_match_type.set_float(True, False, True)
         selector_match_type.translate(60, 100)
@@ -533,7 +555,8 @@ class Menu:
             selection_box_width=200,
             selection_box_height=100,
             selection_option_padding=(0, 5),
-            selection_option_font_size=20
+            selection_option_font_size=20,
+            onchange=self.cb_selector_map_onchange
         )
         selector_map.set_float(True, False, True)
         selector_map.translate(650, 100)
@@ -572,12 +595,12 @@ class Menu:
             lbl.hide()
             self.boy_desc_lbl_lst.append(lbl)
 
-        btn_img_play = pygame_menu.BaseImage("resources/gui/Button_18_small.png")
+        btn_img_ok = pygame_menu.BaseImage("resources/gui/Button_18_small.png")
 
-        play_btn = self.sub_menu_selection.add.button(" ", self.cb_play, background_color=btn_img_play)
-        play_btn.resize(100, 100)
-        play_btn.set_float(True, False, True)
-        play_btn.translate(890, 570)
+        ok_btn = self.sub_menu_selection.add.button(" ", self.sub_menu_wait, background_color=btn_img_ok)
+        ok_btn.resize(100, 100)
+        ok_btn.set_float(True, False, True)
+        ok_btn.translate(890, 570)
 
         img = self.sub_menu_selection.add.surface(self.current_img_lst[0])
         img.set_float(True, False, True)
