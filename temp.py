@@ -14,7 +14,8 @@ lst = [*match_score.values()]
 @dataclass
 class RoomState:
     room_id: int = 0
-    game_ready: bool = False  # True if second player joins
+    player_joined = False
+    game_set = False
     player_0_name: str = "player0"  # room name will be f"{player_0_name}'s game"
     player_1_name: str = ""
     player_0_reader: Any = None
@@ -22,17 +23,18 @@ class RoomState:
     player_1_reader: Any = None
     player_1_writer: Any = None
 
+    def check_ready(self):
+        return self.player_joined and self.game_set
+
 r = RoomState()
 
-dr = asdict(r)
-v = [*dr.values()]
-ev = json.dumps(v).encode()
-dv = ev.decode()
-dvl = json.loads(dv)
-print(asdict(r))
-print(v)
-print(ev)
-print(dv)
-print(json.dumps([*asdict(r).values()]).encode())
+print(r.check_ready(), r.player_joined, r.game_set)
 
-print(f"{r.room_id},{r.player_0_name}".encode())
+r.game_set = True
+
+print(r.check_ready(), r.player_joined, r.game_set)
+
+r.player_joined = True
+
+print(r.check_ready(), r.player_joined, r.game_set)
+

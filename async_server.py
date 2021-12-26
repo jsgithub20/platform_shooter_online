@@ -42,17 +42,19 @@ LEVEL_STYLES = {'critical': {'bold': True, 'color': 'red'},
 @dataclass
 class RoomState:
     room_id: int = 0
-    game_ready: bool = False  # True if second player joins
+    player_joined: bool = False  # True if the chosen game room is received from 2nd player
+    game_set: bool = False  # True if player0 finished setting map, match, role
     player_0_name: str = ""  # room name will be f"{player_0_name}'s game"
     player_1_name: str = ""
     player_0_reader: Any = None
     player_0_writer: Any = None
     player_1_reader: Any = None
     player_1_writer: Any = None
-    game_set: bool = False
     map_id: int = 0
     match_id: int = 0
 
+    def check_ready(self):
+        return self.player_joined and self.game_set
 
 @dataclass
 class GameState:
@@ -183,14 +185,14 @@ class Server:
             self.clock.tick(FPS)
             # sending room list to the client, no matter full or not [[player0_name, game_ready, room_id],]
             # if game_dict is empty, an empty list will be assigned to "rooms_lst" and no exception will be raised
-            rooms_lst = [[self.game_dict[room_id].player_0_name, self.game_dict[room_id].game_ready, room_id]
+            rooms_lst = [[self.game_dict[room_id].player_0_name, self.game_dict[room_id].check_ready(), room_id]
                          for room_id in [*self.game_dict]]
             if not rooms_lst:
                 rooms_lst = [["no game", False, 0]]
             rooms_lst_enc = json.dumps(rooms_lst).encode()
             length = len(rooms_lst_enc)
             writer.write(str(length).encode())  # send the receiving length first
-            # this will be "ok" returned from client, just to complete a write/read cycle
+            # this will be "ok" returned from client, just to complete a r/w cycle
             r = await self.check_read(player_name, reader, READ_LEN, writer)  # return connected, string
             if not r[0]:
                 return not CONNECTED, chosen_room_id
@@ -200,11 +202,20 @@ class Server:
                 return not CONNECTED, chosen_room_id
             elif int(r[1]) in [*self.game_dict]:
                 chosen_room_id = int(r[1])
-                self.game_dict[chosen_room_id].game_ready = True
+                self.game_dict[chosen_room_id].player_joined = True
                 self.game_dict[chosen_room_id].player_1_name = player_name
                 self.game_dict[chosen_room_id].player_1_reader = reader
                 self.game_dict[chosen_room_id].player_1_writer = writer
                 chosen_room = self.game_dict[chosen_room_id]
+                while not self.game_dict[chosen_room_id].game_set:  # meaning player0 has not finished setting game yet
+                    writer.write(f"{self.game_dict[chosen_room_id].player_0_name} is not ready yet, please wait...".encode())
+                    r = await self.check_read(player_name, reader, READ_LEN, writer)  # return connected, string
+                    if not r[0]:
+                        return not CONNECTED, chosen_room_id
+                writer.write("Game is ready to play".encode())
+                r = await self.check_read(player_name, reader, READ_LEN, writer)  # return connected, string
+                if not r[0]:
+                    return not CONNECTED, chosen_room_id
                 return CONNECTED, chosen_room
 
     def new_connection(self, player_name):
@@ -292,7 +303,7 @@ class Server:
             will be returned so that the server game tick info to both player_0 and player_1 
             can be handled by the task created for player_0 
             """
-            if room.game_ready:
+            if room.check_ready():
                 if player_id == 1:  # player_id = 1 means this is the task for player_1
                     self.my_logger.warning(f"Player '{room.player_1_name}' joined player '{room.player_0_name}''s game")
                     # logging.warning(f"Task for connection {cnt} in game_id {room.room_id} is being returned")
@@ -304,17 +315,15 @@ class Server:
             else:  # if game_ready is False, it means there is only player_0 in the game room
                 data = f"New game is created, waiting for the second player to join...".encode()
                 room.player_0_writer.write(data)
-                # print("writing to player_0 completed")
                 r = await self.check_read_room(room, True, False, READ_LEN)  # r/w cycle and check the connection
                 if not r[0]:  # return connected, string
                     return
                 else:
                     info = r[1].split(",")
-                    if info[0] == "1":  # ready, map_id, match_id
+                    if info[0] == "1":  # ready, map_id, match_id, role_id
                         room.map_id = info[1]
                         room.match_id = info[2]
                         room.game_set = True
-                        # print(f"game set: {room.map_id}, {room.match_id}")
 
         await self.game(room)  # this is the routine game tick
 

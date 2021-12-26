@@ -182,12 +182,16 @@ class Menu:
 
         self.img_lst = [girl_idle, boy_idle]
 
-        self.current_player_sel = 0
-        self.current_img_lst = self.img_lst[self.current_player_sel]
+        self.current_role_id = 0
+        self.previous_role_id = 1
+        self.current_img_lst = self.img_lst[self.current_role_id]
+
         self.girl_desc_lbl_lst = []
         self.boy_desc_lbl_lst = []
 
-    def conn_conn(self, server_ip, server_port, player_name, **kwargs):
+        self.lbl_lst = [self.girl_desc_lbl_lst, self.boy_desc_lbl_lst]
+
+    def cb_conn_conn(self, server_ip, server_port, player_name, **kwargs):
         if not self.connected_flag:
             self.connected_flag = True
         else:
@@ -210,7 +214,7 @@ class Menu:
             self.my_logger.my_logger.info(f"Connected to server: {self.server_ip}:{self.server_port} "
                                           f"with client id - {self.client_id}")
 
-    def conn_create(self):
+    def cb_conn_create(self):
         self.conn_type = "create"
         self.t_loop.create_task(self.connection.create())
         self.t_loop.create_task(self.connection.client())
@@ -232,33 +236,34 @@ class Menu:
             self.game_rooms = self.connection.game_rooms
             self.game_rooms = [tuple(lst) for lst in self.game_rooms]
             self.selector_game.update_items(self.game_rooms)
+            self.chosen_room = self.selector_game.get_items()
         except Exception as e:
             self.my_logger.my_logger.error(f"Connection issue during joining - {e}")
 
-    def cb_player_sel_lft(self):
-        if self.current_player_sel - 1 < 0:
-            self.current_player_sel = len(self.img_lst) - 1
+    def cb_role_sel_lft(self):
+        if self.current_role_id - 1 < 0:
+            self.current_role_id = len(self.img_lst) - 1
         else:
-            self.current_player_sel -= 1
+            self.current_role_id -= 1
 
-        if self.current_player_sel == 0:
-            for j in range(len(self.girl_desc_lbl_lst)):
-                self.girl_desc_lbl_lst[j].show()
-                self.boy_desc_lbl_lst[j].hide()
-        elif self.current_player_sel == 1:
-            for j in range(len(self.girl_desc_lbl_lst)):
-                self.girl_desc_lbl_lst[j].hide()
-                self.boy_desc_lbl_lst[j].show()
+        current_lbl_lst = self.lbl_lst[self.current_role_id]
+        previous_lbl_lst = self.lbl_lst[self.previous_role_id]
 
-        self.current_img_lst = self.img_lst[self.current_player_sel]
+        for j in range(len(current_lbl_lst)):
+            current_lbl_lst[j].show()
+            previous_lbl_lst[j].hide()
+
+        self.previous_role_id = self.current_role_id
+
+        self.current_img_lst = self.img_lst[self.current_role_id]
 
     def cb_join_game_btn(self):
         self.t_loop.create_task(self.connection.send_room_choice(self.chosen_room))
         self.t_loop.create_task(self.connection.client())
-        self.demo_game()
+        # self.demo_game()
 
     def cb_dropselector_game_onchange(self, item_index: tuple, game_ready, room_id):
-        # [[player0_name, game_ready, room_id],]
+        # [(player0_name, game_ready, room_id),]
         self.chosen_room = item_index[0]
 
     def cb_join_menu_openned(self, from_menu, to_menu):
@@ -284,7 +289,7 @@ class Menu:
         self.match_id = item_tuple[1]
 
     def cb_wait_menu_opened(self, from_menu, to_menu):
-        self.connection.game_setting = [1, self.map_id, self.match_id]
+        self.connection.game_setting = [1, self.map_id, self.match_id, self.current_role_id]
 
     def demo_game(self):
         self.main_menu.disable()
@@ -447,6 +452,10 @@ class Menu:
 
         self.sub_menu_wait.set_onbeforeopen(self.cb_wait_menu_opened)
 
+        wait_lbl = self.sub_menu_wait.add.label("Wait for the 2nd player to join...")
+        wait_lbl.set_float(True, False, True)
+        wait_lbl.translate(100, 300)
+
         self.main_menu.add.vertical_margin(30)
 
         server_ip = self.main_menu.add.text_input(
@@ -469,7 +478,7 @@ class Menu:
         )
 
         b_connect = self.main_menu.add.button("Connection status: <click to connect>",
-                                              self.conn_conn,
+                                              self.cb_conn_conn,
                                               server_ip,
                                               server_port,
                                               player_name)
@@ -500,6 +509,7 @@ class Menu:
         self.selector_game = self.join_game_menu.add.dropselect(
             title='Choose a game to join:',
             items=self.game_rooms,
+            default=0,
             onchange=self.cb_dropselector_game_onchange,
             selection_box_bgcolor=(200, 200, 50),
             selection_box_height=10
@@ -532,6 +542,7 @@ class Menu:
             items=[("Deathmatch", 0),
                    ("1st23", 1),
                    ("Best of 3", 2)],
+            default=0,
             font_size=26,
             selection_box_width=200,
             selection_box_height=100,
@@ -551,6 +562,7 @@ class Menu:
             items=[("Map0", 0),
                    ("Map1", 1),
                    ("Map3", 2)],
+            default=0,
             font_size=26,
             selection_box_width=200,
             selection_box_height=100,
@@ -564,7 +576,7 @@ class Menu:
         btn_img_lft = pygame_menu.BaseImage("resources/gui/left.png")
 
         # title text can't be empty, otherwise resize doesn't work!
-        sub1_btn_lft = self.sub_menu_selection.add.button(" ", self.cb_player_sel_lft, background_color=btn_img_lft)
+        sub1_btn_lft = self.sub_menu_selection.add.button(" ", self.cb_role_sel_lft, background_color=btn_img_lft)
         sub1_btn_lft.resize(100, 100)
         sub1_btn_lft.set_float(True, False, True)
         sub1_btn_lft.translate(150, 200)

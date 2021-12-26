@@ -25,7 +25,7 @@ class Network:
         self.opponent_name = ""
         self.reader = None
         self.writer = None
-        self.game_setting = [0, 0, 0]  # [ready, map_id, match_id]
+        self.game_setting = [0, 0, 0, 0]  # [ready, map_id, match_id, role_id]
         self.game_rooms = []
         self.chosen_room = "no chosen"
         self.q_game_rooms = Queue()
@@ -98,17 +98,18 @@ class Network:
         await self.get_games()
 
     async def client(self):
-        while True:  # this is the loop waiting for the 2nd player to join
+        while True:  # this is the loop waiting for the 2nd player to join or player0 to set the game
             r = await self.check_read(READ_LEN)
             if not r[0]:
                 return
             else:
                 self.server_msg = tuple(r[1].split(","))  # f"Game Ready,{room.player_0_name}"
+                # print(self.server_msg)
             if self.server_msg[0] == "Game Ready":
                 self.opponent_name = self.server_msg[1]
                 break
             else:
-                send_str = f"{self.game_setting[0]},{self.game_setting[1]},{self.game_setting[2]}"
+                send_str = f"{self.game_setting[0]},{self.game_setting[1]},{self.game_setting[2]},{self.game_setting[3]}"
                 self.writer.write(send_str.encode())
 
         while True:  # this is the routine game tick

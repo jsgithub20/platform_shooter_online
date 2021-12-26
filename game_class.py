@@ -20,7 +20,7 @@ class Game:
 
         # match types
         self.match_types = ["Deathmatch", "1st23", "Best of 3"]
-        self.map_lst = []
+        self.map_lst = ["map0", "map1"]
 
         # match score
         self.match_score = {"match_type": self.match_types[self.match_id],
