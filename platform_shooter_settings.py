@@ -11,6 +11,10 @@ LIGHT_GREEN = (100, 250, 122)
 SCREEN_WIDTH = 1024
 SCREEN_HEIGHT = 768
 
+# Game setting
+MATCH_TYPE_LST = ["Deathmatch", "1st23", "Best of 3"]
+MAP_LST = ["map0", "map1"]
+
 # others
 TITLE = "Platform Shooter"
 FPS = 60
@@ -20,5 +24,7 @@ DEAD_R_POS = (-99, -200)
 DEAD_CRATER_POS = (-99, -300)
 DEAD_BLOCK_POS = (-99, -400)
 
-# HEADER_LEN = 8  # length of the header for socket send/recv
-DATA_LEN = 100
+CONNECTED = True
+
+READ_LEN = 20
+GS_READ_LEN = 100  # this is the length to read GameState, to be confirmed

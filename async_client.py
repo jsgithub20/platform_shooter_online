@@ -94,7 +94,7 @@ class Network:
         self.game_rooms = list(json.loads(rooms_data.decode()))  # [[player0_name, game_ready, room_id],]
 
     async def refresh(self):
-        self.writer.write("refreshing".encode())
+        self.writer.write("-99".encode())  # "-99" to represent a null message to allow server to still use int[] method
         await self.get_games()
 
     async def client(self):

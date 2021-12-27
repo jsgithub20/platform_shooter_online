@@ -1,3 +1,7 @@
+"""
+game class file for server
+"""
+
 import pygame as pg
 from sys import exit
 from platform_shooter_settings import *
@@ -18,14 +22,10 @@ class Game:
         self.current_level_no = level_id
         self.match_id = match_id
 
-        # match types
-        self.match_types = ["Deathmatch", "1st23", "Best of 3"]
-        self.map_lst = ["map0", "map1"]
-
         # match score
-        self.match_score = {"match_type": self.match_types[self.match_id],
+        self.match_score = {"match_type": MATCH_TYPE_LST[self.match_id],
                             "round": 0, "shooter": 0, "chopper": 0,
-                            "map": self.map_lst[self.map_id], "game_finished": False}
+                            "map": MAP_LST[self.map_id], "game_finished": False}
 
         """
         0   , 1        , 2         , 3   , 4     , 5             , 6
@@ -224,13 +224,13 @@ class Game:
 
     def check_winner(self):
         # return the winner role (if game over) or None, and a bool value for self.playing
-        if self.match_score["match_type"] == self.match_types[0]:
+        if self.match_score["match_type"] == MATCH_TYPE_LST[0]:
             # death match
             if self.match_score["shooter"] == 1:
                 return "shooter", False
             elif self.match_score["chopper"] == 1:
                 return "chopper", False
-        elif self.match_score["match_type"] == self.match_types[1]:
+        elif self.match_score["match_type"] == MATCH_TYPE_LST[1]:
             # 1st23
             if self.match_score["shooter"] == 3:
                 return "shooter", False
@@ -238,7 +238,7 @@ class Game:
                 return "chopper", False
             else:
                 return None, True
-        elif self.match_score["match_type"] == self.match_types[2]:
+        elif self.match_score["match_type"] == MATCH_TYPE_LST[2]:
             # best of 3
             if self.match_score["shooter"] == 2 and self.match_score["chopper"] == 0:
                 return "shooter", False

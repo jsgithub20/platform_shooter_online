@@ -16,15 +16,10 @@ from typing import Any
 
 from inspect import currentframe, getframeinfo
 
-import game_class
+import game_class_s
 from platform_shooter_settings import *
 
 FRAME_INFO = getframeinfo(currentframe())
-WIN_W = 1024
-WIN_H = 768
-FPS = 60
-READ_LEN = 20
-CONNECTED = True
 
 FIELD_STYLES = {'asctime': {'color': 'green'},
                 'levelname': {'bold': False, 'color': (200, 200, 200)},
@@ -83,7 +78,7 @@ class GameState:
 class Server:
     def __init__(self):
         pygame.init()
-        self.screen = pygame.display.set_mode((WIN_W, WIN_H), flags=pygame.HIDDEN)
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), flags=pygame.HIDDEN)
         self.clock = pygame.time.Clock()
         self.cnt = 0  # total number of connections to the server
         self.client_id = 0
@@ -305,8 +300,8 @@ class Server:
             """
             if room.check_ready():
                 if player_id == 1:  # player_id = 1 means this is the task for player_1
+                    # print("player1 returned")
                     self.my_logger.warning(f"Player '{room.player_1_name}' joined player '{room.player_0_name}''s game")
-                    # logging.warning(f"Task for connection {cnt} in game_id {room.room_id} is being returned")
                     return  # the task (for player_1) is returned (completed) once player_1 is in the room
                 # data = "Game Ready".encode()
                 room.player_0_writer.write(f"Game Ready,{room.player_1_name}".encode())
@@ -324,6 +319,7 @@ class Server:
                         room.map_id = info[1]
                         room.match_id = info[2]
                         room.game_set = True
+                        # print("room.game_set = True")
 
         await self.game(room)  # this is the routine game tick
 
@@ -350,9 +346,10 @@ class Server:
         #     room.player_1_writer.write(msg0.encode())
 
     async def game(self, room):
-        g = game_class.Game(self.screen, WIN_W, WIN_H, 0, 0, 0)
+        g = game_class_s.Game(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+        g.new()
         gs = GameState()
-
+        self.my_logger.info(f"{room.player_0_name} is gaming with {room.player_1_name}!")
         while True:
             self.clock.tick(FPS)
             r = await self.check_read_room(room, True, False, READ_LEN)
@@ -387,9 +384,9 @@ class Server:
             gs.bullet_r3_pos = (g.bullets_r[3].rect.x, g.bullets_r[3].rect.y)
             gs.bullet_r4_pos = (g.bullets_r[4].rect.x, g.bullets_r[4].rect.y)
             if g.current_level_no == 0:
-                gs.moving_block_pos = (g.level02.moving_block.rect.x, g.level02.moving_block.rect.y)
-            else:
                 gs.moving_block_pos = DEAD_CRATER_POS
+            else:
+                gs.moving_block_pos = (g.level02.moving_block.rect.x, g.level02.moving_block.rect.y)
             gs.r_sign_pos = (g.r_sign.rect.x, g.r_sign.rect.y)
             gs.map_id = g.map_id
             gs.match_id = g.match_id

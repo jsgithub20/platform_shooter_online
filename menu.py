@@ -236,7 +236,7 @@ class Menu:
             self.game_rooms = self.connection.game_rooms
             self.game_rooms = [tuple(lst) for lst in self.game_rooms]
             self.selector_game.update_items(self.game_rooms)
-            self.chosen_room = self.selector_game.get_items()
+            self.chosen_room = self.selector_game.get_items()[0]  # Default choice is the first game room
         except Exception as e:
             self.my_logger.my_logger.error(f"Connection issue during joining - {e}")
 
