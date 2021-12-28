@@ -40,7 +40,9 @@ class RoomState:
     player_joined: bool = False  # True if the chosen game room is received from 2nd player
     game_set: bool = False  # True if player0 finished setting map, match, role
     player_0_name: str = ""  # room name will be f"{player_0_name}'s game"
+    player_0_role_id: int = 0
     player_1_name: str = ""
+    player_1_role_id: int = 0
     player_0_reader: Any = None
     player_0_writer: Any = None
     player_1_reader: Any = None

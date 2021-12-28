@@ -84,6 +84,8 @@ class Game:
         self.player_chopper = sprite_player_correction.Player()
         self.player_chopper.hit_limit = 3
 
+        self.role_lst = [self.player_shooter, self.player_chopper]
+
         # Create all the levels
         self.level_list = []
         self.level01 = Level_01(self.player_shooter, self.player_chopper)
