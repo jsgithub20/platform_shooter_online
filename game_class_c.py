@@ -23,7 +23,13 @@ class Game:
         self.match_id = match_id
         self.role_id = role_id
 
+        """
+        0   , 1        , 2         , 3   , 4     , 5             , 6
+        quit, move_left, move_right, jump, attack, move_left_stop, move_right_stop
+        """
+
         self.events_str = "0000000"
+        self.events_lst = ["0", "0", "0", "0", "0", "0", "0"]
 
         self.current_level = None
 
@@ -92,7 +98,7 @@ class Game:
         # Set the current level
         self.current_level = self.level_list[self.current_level_no]
 
-        self.active_sprite_list = pg.sprite.Group()
+        self.active_sprite_grp = pg.sprite.Group()
         self.bullet_sprite_grp = pg.sprite.Group()
 
         self.player_shooter.level = self.current_level
@@ -103,5 +109,61 @@ class Game:
         self.player_chopper.rect.x = 600
         self.player_chopper.rect.y = 200
 
-        self.active_sprite_list.add(self.player_shooter, self.player_chopper)
+        self.active_sprite_grp.add(self.player_shooter, self.player_chopper)
         self.bullet_sprite_grp.add(*self.bullets_r, *self.bullets_l)
+
+    def events(self):
+        # Game Loop - events
+        for event in pg.event.get():
+            # check for closing window
+            if event.type == pg.QUIT:
+                self.events_lst[0] = "1"
+
+            if event.type == pg.KEYDOWN:
+                # player_shooter controls
+                if event.key == pg.K_LEFT:
+                    self.events_lst[1] = "1"
+                if event.key == pg.K_RIGHT:
+                    self.events_lst[2] = "1"
+                if event.key == pg.K_UP:
+                    self.events_lst[3] = "1"
+                if event.key == pg.K_SPACE:
+                    if self.player_shooter.loaded > 0:
+                        self.player_shooter.image_idx = 0
+                        self.player_shooter.loaded -= 1
+                        if self.player_shooter.direction == 'l':
+                            bullet = Bullet(self.player_shooter.rect.x, self.player_shooter.rect.y, 'l', SCREEN_WIDTH)
+                            bullet.level = self.current_level
+                            self.player_shooter.attack_flg = 1
+                            self.snd_yeet.play()
+                        else:
+                            bullet = Bullet(self.player_shooter.rect.x, self.player_shooter.rect.y, 'r', SCREEN_WIDTH)
+                            bullet.level = self.current_level
+                            self.player_shooter.attack_flg = 1
+                            self.snd_yeet.play()
+                        self.bullets.append(bullet)
+                        self.bullet_sprite_grp.add(bullet)
+
+                # player_chopper controls
+                if event.key == pg.K_a:
+                    self.player_chopper.go_left()
+                elif event.key == pg.K_d:
+                    self.player_chopper.go_right()
+                if event.key == pg.K_w:
+                    self.player_chopper.jump()
+                if event.key == pg.K_c:
+                    self.player_chopper.chop()
+                    self.player_chopper.image_idx = 0
+
+            if event.type == pg.KEYUP:
+                # player_shooter controls
+                if event.key == pg.K_LEFT and self.player_shooter.change_x < 0:
+                    self.player_shooter.stop()
+                if event.key == pg.K_RIGHT and self.player_shooter.change_x > 0:
+                    self.player_shooter.stop()
+
+                # player_chopper controls
+                if event.key == pg.K_a and self.player_chopper.change_x < 0:
+                    self.player_chopper.stop()
+                if event.key == pg.K_d and self.player_chopper.change_x > 0:
+                    self.player_chopper.stop()

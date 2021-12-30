@@ -96,7 +96,7 @@ class Game:
         # Set the current level
         self.current_level = self.level_list[self.current_level_no]
 
-        self.active_sprite_list = pg.sprite.Group()
+        self.active_sprite_grp = pg.sprite.Group()
         self.bullet_sprite_grp = pg.sprite.Group()
 
         self.player_shooter.level = self.current_level
@@ -107,7 +107,7 @@ class Game:
         self.player_chopper.rect.x = 600
         self.player_chopper.rect.y = 200
 
-        self.active_sprite_list.add(self.player_shooter, self.player_chopper)
+        self.active_sprite_grp.add(self.player_shooter, self.player_chopper)
         self.bullet_sprite_grp.add(*self.bullets_r, *self.bullets_l)
 
         # self.run()
@@ -176,18 +176,18 @@ class Game:
     def update(self):
         # Game Loop - Update
         # Update the player.
-        self.active_sprite_list.update()
+        self.active_sprite_grp.update()
         self.bullet_sprite_grp.update()
 
         # Update the r_sign to follow the player_shooter
-        if self.player_shooter.reload_timer > 0 and self.r_sign not in self.active_sprite_list:
+        if self.player_shooter.reload_timer > 0 and self.r_sign not in self.active_sprite_grp:
             self.r_sign.rect.midbottom = self.player_shooter.rect.midtop
-            self.active_sprite_list.add(self.r_sign)
-        elif self.player_shooter.reload_timer == 0 and self.r_sign in self.active_sprite_list:
+            self.active_sprite_grp.add(self.r_sign)
+        elif self.player_shooter.reload_timer == 0 and self.r_sign in self.active_sprite_grp:
             self.r_sign.rect.midbottom = DEAD_R_POS
-            self.active_sprite_list.remove(self.r_sign)
+            self.active_sprite_grp.remove(self.r_sign)
 
-        if self.player_chopper in self.active_sprite_list:
+        if self.player_chopper in self.active_sprite_grp:
             bullet_hit_chopper = pg.sprite.spritecollideany(self.player_chopper, self.bullet_sprite_grp)
             if bullet_hit_chopper:
                 bullet_hit_chopper.live_flag = 0
@@ -195,7 +195,7 @@ class Game:
                 self.player_chopper.hit_count += 1
 
                 if self.player_chopper.hit_count == self.player_chopper.hit_limit:
-                    # self.active_sprite_list.remove(self.player_chopper)
+                    # self.active_sprite_grp.remove(self.player_chopper)
                     self.match_score["shooter"] += 1
                     self.winner, self.playing = self.check_winner()
                     if self.winner is None:
@@ -206,7 +206,7 @@ class Game:
                     self.player_shooter.hit_flag = 1
                     self.player_shooter.hit_count += 1
                     if self.player_shooter.hit_count >= self.player_shooter.hit_limit:
-                        # self.active_sprite_list.remove(self.player_shooter)
+                        # self.active_sprite_grp.remove(self.player_shooter)
                         self.match_score["chopper"] += 1
                         self.winner, self.playing = self.check_winner()
                         if self.winner is None:
