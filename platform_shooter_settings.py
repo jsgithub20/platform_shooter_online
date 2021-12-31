@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 # Colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -28,3 +30,31 @@ CONNECTED = True
 
 READ_LEN = 20
 GS_READ_LEN = 100  # this is the length to read GameState, to be confirmed
+
+
+@dataclass
+class GameState:
+    shooter_img_dict_key: str = "run_R"  # 0
+    shooter_img_idx: int = 0  # 1
+    shooter_pos: tuple = (0, 0)  # 2
+    chopper_img_dict_key: str = "run_R"  # 3
+    chopper_img_idx: int = 0  # 4
+    chopper_pos: tuple = (0, 0)  # 5
+    bullet_l0_pos: tuple = DEAD_BULLET_POS  # bullet_l[0] 6
+    bullet_l1_pos: tuple = DEAD_BULLET_POS  # bullet_l[1] 7
+    bullet_l2_pos: tuple = DEAD_BULLET_POS  # bullet_l[2] 8
+    bullet_l3_pos: tuple = DEAD_BULLET_POS  # bullet_l[3] 9
+    bullet_l4_pos: tuple = DEAD_BULLET_POS  # bullet_l[4] 10
+    bullet_r0_pos: tuple = DEAD_BULLET_POS  # bullet_r[0] 11
+    bullet_r1_pos: tuple = DEAD_BULLET_POS  # bullet_r[1] 12
+    bullet_r2_pos: tuple = DEAD_BULLET_POS  # bullet_r[2] 13
+    bullet_r3_pos: tuple = DEAD_BULLET_POS  # bullet_r[3] 14
+    bullet_r4_pos: tuple = DEAD_BULLET_POS  # bullet_r[4] 15
+    moving_block_pos: tuple = DEAD_BLOCK_POS  # 16
+    r_sign_pos: tuple = DEAD_R_POS  # 17
+    map_id: int = 0  # 18
+    match_id: int = 0  # 19
+    level_id: int = 0  # 20
+    round: int = 0  # 21
+    shooter_score: int = 0  # 22
+    chopper_score: int = 0  # 23

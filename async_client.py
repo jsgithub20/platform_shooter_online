@@ -6,13 +6,13 @@ This is the alpha client code for the "shooter" game
 
 import asyncio
 import json
+from zlib import compress, decompress
+
 import logging
 import queue
 from queue import Queue
 from time import perf_counter
-
-READ_LEN = 100
-CONNECTED = True
+from platform_shooter_settings import *
 
 
 class Network:
@@ -20,15 +20,18 @@ class Network:
         self.server_ip = server_ip
         self.server_port = server_port
         self.client_id = 0
+        self.game_ready = False
         self.server_msg = "Waiting for 2nd player"
         self.player_name = ""
         self.opponent_name = ""
+        self.events_str = "0000000"
         self.reader = None
         self.writer = None
         self.game_setting = [0, 0, 0, 0]  # [ready, map_id, match_id, role_id]
         self.game_rooms = []
         self.chosen_room = "no chosen"
         self.q_game_rooms = Queue()
+        self.game_state = Queue(maxsize=3)
         self.speed = 2
         self.pos_send = [0, 0]
         self.pos_recv = Queue(maxsize=3)  # (x, Y) coordinates as tuple for each item in the Queue
@@ -127,6 +130,37 @@ class Network:
                     self.pos_recv.put_nowait(self.str2pos(r[1]))
                 except queue.Full:
                     pass  # TODO: code to handle the exception
+
+    async def client_game(self):
+        while True:  # this is the loop waiting for the 2nd player to join or player0 to set the game
+            r = await self.check_read(READ_LEN)
+            if not r[0]:
+                return
+            else:
+                self.server_msg = tuple(r[1].split(","))  # f"Game Ready,{room.player_0_name}"
+                # print(self.server_msg)
+            if self.server_msg[0] == "Game Ready":
+                self.game_ready = True
+                break
+            else:
+                send_str = f"{self.game_setting[0]},{self.game_setting[1]},{self.game_setting[2]},{self.game_setting[3]}"
+                self.writer.write(send_str.encode())
+
+        while True:  # this is the routine game tick
+            self.writer.write(self.events_str.encode())
+            # start = perf_counter()
+            r = await self.check_read(GS_READ_LEN)
+            if not r[0]:  # return connected, string
+                print("Connection issue to server during get_games")
+                return
+            # print(perf_counter() - start)
+            else:
+                try:
+                    decompressed_received = decompress(r[1])
+                    game_state_lst = list(decompressed_received.decode())
+                    self.game_state.put(game_state_lst, block=False)
+                except queue.Full as e:
+                    print(e)
 
     async def stop(self):
         self.writer.close()

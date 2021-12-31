@@ -6,7 +6,7 @@ This is the alpha server code for the "shooter" game
 
 import asyncio
 import json
-
+from zlib import compress, decompress
 import pygame
 import coloredlogs
 import logging
@@ -53,28 +53,6 @@ class RoomState:
     def check_ready(self):
         return self.player_joined and self.game_set
 
-@dataclass
-class GameState:
-    shooter_pos: tuple = (0, 0)
-    chopper_pos: tuple = (0, 0)
-    bullet_l0_pos: tuple = DEAD_BULLET_POS  # bullet_l[0]
-    bullet_l1_pos: tuple = DEAD_BULLET_POS  # bullet_l[1]
-    bullet_l2_pos: tuple = DEAD_BULLET_POS  # bullet_l[2]
-    bullet_l3_pos: tuple = DEAD_BULLET_POS  # bullet_l[3]
-    bullet_l4_pos: tuple = DEAD_BULLET_POS  # bullet_l[4]
-    bullet_r0_pos: tuple = DEAD_BULLET_POS  # bullet_r[0]
-    bullet_r1_pos: tuple = DEAD_BULLET_POS  # bullet_r[1]
-    bullet_r2_pos: tuple = DEAD_BULLET_POS  # bullet_r[2]
-    bullet_r3_pos: tuple = DEAD_BULLET_POS  # bullet_r[3]
-    bullet_r4_pos: tuple = DEAD_BULLET_POS  # bullet_r[4]
-    moving_block_pos: tuple = DEAD_BLOCK_POS
-    r_sign_pos: tuple = DEAD_R_POS
-    map_id: int = 0
-    match_id: int = 0
-    level_id: int = 0
-    round: int = 0
-    shooter_score: int = 0
-    chopper_score: int = 0
 
 
 class Server:
@@ -306,8 +284,10 @@ class Server:
                     self.my_logger.warning(f"Player '{room.player_1_name}' joined player '{room.player_0_name}''s game")
                     return  # the task (for player_1) is returned (completed) once player_1 is in the room
                 # data = "Game Ready".encode()
-                room.player_0_writer.write(f"Game Ready,{room.player_1_name}".encode())
-                room.player_1_writer.write(f"Game Ready,{room.player_0_name}".encode())
+                room.player_0_writer.write(f"Game Ready,{room.player_1_name},{room.map_id},"
+                                           f"{room.match_id},{room.player_0_role_id}".encode())
+                room.player_1_writer.write(f"Game Ready,{room.player_0_name},{room.map_id},"
+                                           f"{room.match_id},{room.player_1_role_id}".encode())
                 break  # break current while loop to start the routine game tick
             else:  # if game_ready is False, it means there is only player_0 in the game room
                 data = f"New game is created, waiting for the second player to join...".encode()
@@ -320,32 +300,11 @@ class Server:
                     if info[0] == "1":  # ready, map_id, match_id, role_id
                         room.map_id = info[1]
                         room.match_id = info[2]
+                        room.room_id = info[3]
                         room.game_set = True
                         # print("room.game_set = True")
 
         await self.game(room)  # this is the routine game tick
-
-        #
-        # while True:  # this is the routine game tick
-        #     self.clock.tick(FPS)
-        #     r = await self.check_read_room(room, True, False, READ_LEN)
-        #     if not r[0]:
-        #         room.player_1_writer.write("Disconnected".encode())
-        #         self.my_logger.warning(f"Connection to player {room.player_1_name} is disconnected")
-        #         break
-        #     else:
-        #         msg0 = r[1]
-        #
-        #     r = await self.check_read_room(room, False, True, READ_LEN)
-        #     if not r[0]:
-        #         room.player_0_writer.write("Disconnected".encode())
-        #         self.my_logger.warning(f"Connection to player {room.player_0_name} is disconnected")
-        #         break
-        #     else:
-        #         msg1 = r[1]
-        #
-        #     room.player_0_writer.write(msg1.encode())
-        #     room.player_1_writer.write(msg0.encode())
 
     async def game(self, room):
         g = game_class_s.Game(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
@@ -373,7 +332,11 @@ class Server:
             g.events()
             g.update()
 
+            gs.shooter_img_dict_key = g.player_shooter.img_dict_key
+            gs.shooter_img_idx = g.player_shooter.image_idx
             gs.shooter_pos = (g.player_shooter.rect.x, g.player_shooter.rect.y)
+            gs.chopper_img_dict_key = g.player_chopper.img_dict_key
+            gs.chopper_img_idx = g.player_chopper.image_idx
             gs.chopper_pos = (g.player_chopper.rect.x, g.player_chopper.rect.y)
             gs.bullet_l0_pos = (g.bullets_l[0].rect.x, g.bullets_l[0].rect.y)
             gs.bullet_l1_pos = (g.bullets_l[1].rect.x, g.bullets_l[1].rect.y)
@@ -398,9 +361,10 @@ class Server:
             gs.chopper_score = g.match_score["chopper"]
 
             send_byte = json.dumps([*asdict(gs).values()]).encode()
+            compressed_send_byte = compress(send_byte)
 
-            room.player_0_writer.write(send_byte)
-            room.player_1_writer.write(send_byte)
+            room.player_0_writer.write(compressed_send_byte)
+            room.player_1_writer.write(compressed_send_byte)
 
     def handle_exception(self, loop, context):
         # context["message"] will always be there; but context["exception"] may not

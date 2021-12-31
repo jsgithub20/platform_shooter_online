@@ -12,14 +12,14 @@ from role_def import *
 
 
 class Game:
-    def __init__(self, screen, win_w, win_h, map_id, level_id, match_id, role_id):
+    def __init__(self, screen, win_w, win_h, map_id, match_id, role_id):
         pg.init()
         self.screen = screen
         self.win_w = win_w
         self.win_h = win_h
 
         self.map_id = map_id
-        self.current_level_no = level_id
+        self.current_level_no = 0
         self.match_id = match_id
         self.role_id = role_id
 
@@ -114,6 +114,8 @@ class Game:
 
     def events(self):
         # Game Loop - events
+        for i in range(len(self.events_lst)):
+            self.events_lst[i] = "0"
         for event in pg.event.get():
             # check for closing window
             if event.type == pg.QUIT:
@@ -128,42 +130,51 @@ class Game:
                 if event.key == pg.K_UP:
                     self.events_lst[3] = "1"
                 if event.key == pg.K_SPACE:
-                    if self.player_shooter.loaded > 0:
-                        self.player_shooter.image_idx = 0
-                        self.player_shooter.loaded -= 1
-                        if self.player_shooter.direction == 'l':
-                            bullet = Bullet(self.player_shooter.rect.x, self.player_shooter.rect.y, 'l', SCREEN_WIDTH)
-                            bullet.level = self.current_level
-                            self.player_shooter.attack_flg = 1
-                            self.snd_yeet.play()
-                        else:
-                            bullet = Bullet(self.player_shooter.rect.x, self.player_shooter.rect.y, 'r', SCREEN_WIDTH)
-                            bullet.level = self.current_level
-                            self.player_shooter.attack_flg = 1
-                            self.snd_yeet.play()
-                        self.bullets.append(bullet)
-                        self.bullet_sprite_grp.add(bullet)
+                    self.events_lst[4] = "1"
+                    # self.snd_yeet.play()
 
                 # player_chopper controls
                 if event.key == pg.K_a:
-                    self.player_chopper.go_left()
+                    self.events_lst[1] = "1"
                 elif event.key == pg.K_d:
-                    self.player_chopper.go_right()
+                    self.events_lst[2] = "1"
                 if event.key == pg.K_w:
-                    self.player_chopper.jump()
+                    self.events_lst[3] = "1"
                 if event.key == pg.K_c:
-                    self.player_chopper.chop()
-                    self.player_chopper.image_idx = 0
+                    self.events_lst[4] = "1"
+
+                self.events_str = "".join(self.events_lst)
 
             if event.type == pg.KEYUP:
                 # player_shooter controls
-                if event.key == pg.K_LEFT and self.player_shooter.change_x < 0:
-                    self.player_shooter.stop()
-                if event.key == pg.K_RIGHT and self.player_shooter.change_x > 0:
-                    self.player_shooter.stop()
+                if event.key == pg.K_LEFT:
+                    self.events_lst[5] = "1"
+                if event.key == pg.K_RIGHT:
+                    self.events_lst[6] = "1"
 
                 # player_chopper controls
-                if event.key == pg.K_a and self.player_chopper.change_x < 0:
-                    self.player_chopper.stop()
-                if event.key == pg.K_d and self.player_chopper.change_x > 0:
-                    self.player_chopper.stop()
+                if event.key == pg.K_a:
+                    self.events_lst[5] = "1"
+                if event.key == pg.K_d:
+                    self.events_lst[6] = "1"
+
+    def update_game_state(self, gs_lst):
+        self.player_shooter.update_img(gs_lst[0], gs_lst[1])
+        self.player_shooter.rect.x, self.player_shooter.rect.y = gs_lst[2]
+        self.player_chopper.update_img(gs_lst[3], gs_lst[4])
+        self.player_chopper.rect.x, self.player_chopper.rect.y = gs_lst[5]
+        for i in range(TTL_BULLETS):
+            self.bullets_l[i].rect.x, self.bullets_l[i].rect.y = gs_lst[i+6]
+            self.bullets_r[i].rect.x, self.bullets_r[i].rect.y = gs_lst[i+11]
+        if self.current_level_no == 1:
+            self.current_level.moving_block.rect.x, self.current_level.moving_block.rect.y = gs_lst[16]
+        self.r_sign.rect.x, self.r_sign.rect.y = gs_lst[17]
+        self.shooter_score = gs_lst[22]
+        self.chopper_score = gs_lst[23]
+
+    def draw(self):
+        self.current_level.draw(self.screen)
+        self.active_sprite_grp.draw(self.screen)
+        self.bullet_sprite_grp.draw(self.screen)
+
+        pg.display.update()

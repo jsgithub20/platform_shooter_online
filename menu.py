@@ -16,6 +16,8 @@ import pygame_menu
 import asyncio
 import async_client
 import role_def
+import game_class_c
+from platform_shooter_settings import *
 
 # -----------------------------------------------------------------------------
 # Constants and global variables
@@ -161,9 +163,12 @@ class Menu:
         self.room_frame = None
         self.conn_type = "handshake"  # "create" or "join"
         self.client_id = "0"
+        self.opponent_name = ""
         self.map_id = 0
         self.match_id = 0
         self.level_id = 0
+        self.role_id = 0
+        self.gs_lst = []  # Game state received as a list
         self.main_menu: [pygame_menu.menu] = None
         self.b_connect: [pygame_menu.widgets.widget.button] = None
         self.selector_game: [pygame_menu.widgets.widget.selector] = None
@@ -223,7 +228,7 @@ class Menu:
     def cb_selection_menu_opened(self, from_menu, to_menu):
         self.conn_type = "create"
         self.t_loop.create_task(self.connection.create())
-        self.t_loop.create_task(self.connection.client())
+        self.t_loop.create_task(self.connection.client_game())
 
     def cb_play(self):
         self.demo_game()
@@ -257,9 +262,9 @@ class Menu:
 
         self.current_img_lst = self.img_lst[self.current_role_id]
 
-    def cb_join_game_btn(self):
-        self.t_loop.create_task(self.connection.send_room_choice(self.chosen_room))
-        self.t_loop.create_task(self.connection.client())
+    # def cb_join_game_btn(self):
+    #     self.t_loop.create_task(self.connection.send_room_choice(self.chosen_room))
+    #     self.t_loop.create_task(self.connection.client_game())
         # self.demo_game()
 
     def cb_dropselector_game_onchange(self, item_index: tuple, game_ready, room_id):
@@ -288,8 +293,38 @@ class Menu:
     def cb_selector_match_type_onchange(self, item_tuple, *args, **kwargs):
         self.match_id = item_tuple[1]
 
-    def cb_wait_menu_opened(self, from_menu, to_menu):
+    def cb_player0_wait_menu_opened(self, from_menu, to_menu):
         self.connection.game_setting = [1, self.map_id, self.match_id, self.current_role_id]
+        while not self.connection.game_ready:
+            self.clock.tick(FPS)
+        self.game()
+
+    def cb_player1_wait_menu_opened(self, from_menu, to_menu):
+        self.t_loop.create_task(self.connection.send_room_choice(self.chosen_room))
+        self.t_loop.create_task(self.connection.client_game())
+        while not self.connection.game_ready:
+            self.clock.tick(FPS)
+        self.game()
+
+    def game(self):
+        self.opponent_name = self.connection.server_msg[1]
+        self.map_id = self.connection.server_msg[2]
+        self.match_id = self.connection.server_msg[3]
+        self.role_id = self.connection.server_msg[4]
+        g = game_class_c.Game(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, self.map_id, self.match_id, self.role_id)
+        g.new()
+
+        while self.playing:
+            g.events()
+
+            self.connection.events_str = g.events_str
+            try:
+                self.gs_lst = self.connection.game_state.get(timeout=1)
+            except queue.Empty as e:
+                print(e)
+
+            g.update_game_state(self.gs_lst)
+            g.draw()
 
     def demo_game(self):
         self.main_menu.disable()
@@ -443,16 +478,29 @@ class Menu:
 
         self.sub_menu_selection.set_onbeforeopen(self.cb_selection_menu_opened)
 
-        self.sub_menu_wait = pygame_menu.Menu(
+        self.sub_menu_player0_wait = pygame_menu.Menu(
             'Waiting for player', 1024, 768,
             center_content=False,
             onclose=pygame_menu.events.EXIT,  # User press ESC button
             theme=sub_menu_selection_theme,
             position=[40, 20])
 
-        self.sub_menu_wait.set_onbeforeopen(self.cb_wait_menu_opened)
+        self.sub_menu_player0_wait.set_onbeforeopen(self.cb_player0_wait_menu_opened)
 
-        wait_lbl = self.sub_menu_wait.add.label("Wait for the 2nd player to join...")
+        wait_lbl = self.sub_menu_player0_wait.add.label("Wait for the 2nd player to join...")
+        wait_lbl.set_float(True, False, True)
+        wait_lbl.translate(100, 300)
+
+        self.sub_menu_player1_wait = pygame_menu.Menu(
+            'Waiting for player', 1024, 768,
+            center_content=False,
+            onclose=pygame_menu.events.EXIT,  # User press ESC button
+            theme=sub_menu_selection_theme,
+            position=[40, 20])
+
+        self.sub_menu_player1_wait.set_onbeforeopen(self.cb_player1_wait_menu_opened)
+
+        wait_lbl = self.sub_menu_player1_wait.add.label("Wait for the 1st player to set the game...")
         wait_lbl.set_float(True, False, True)
         wait_lbl.translate(100, 300)
 
@@ -517,7 +565,7 @@ class Menu:
 
         self.join_game_menu.add.vertical_margin(15)
 
-        self.join_game_menu.add.button("Join", self.cb_join_game_btn, cursor=CURSOR_HAND)
+        self.join_game_menu.add.button("Join", self.sub_menu_player1_wait, cursor=CURSOR_HAND)
         self.join_game_menu.add.vertical_margin(15)
         #
         # self.join_game_menu.add.button("Back", pygame_menu.events.BACK)
@@ -609,7 +657,7 @@ class Menu:
 
         btn_img_ok = pygame_menu.BaseImage("resources/gui/Button_18_small.png")
 
-        ok_btn = self.sub_menu_selection.add.button(" ", self.sub_menu_wait, background_color=btn_img_ok)
+        ok_btn = self.sub_menu_selection.add.button(" ", self.sub_menu_player0_wait, background_color=btn_img_ok)
         ok_btn.resize(100, 100)
         ok_btn.set_float(True, False, True)
         ok_btn.translate(890, 570)
