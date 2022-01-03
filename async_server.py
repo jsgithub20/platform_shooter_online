@@ -45,8 +45,10 @@ class RoomState:
     player_1_role_id: int = 0
     player_0_reader: Any = None
     player_0_writer: Any = None
+    player_0_task_name: str = ""
     player_1_reader: Any = None
     player_1_writer: Any = None
+    player_1_task_name: str = ""
     map_id: int = 0
     match_id: int = 0
 
@@ -92,16 +94,15 @@ class Server:
             self.cnt -= 1
             self.my_logger.warning(
                 f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
-            writer.close()
-            await writer.wait_closed()
             connected = not CONNECTED
         else:  # if the connection is properly connected, there will be no ConnectionError exception raised
             if not received:
                 self.cnt -= 1
                 self.my_logger.warning(
                     f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
-                writer.close()
-                await writer.wait_closed()
+                if not writer.is_closing():
+                    writer.close()
+                    await writer.wait_closed()
                 connected = not CONNECTED
         return connected, string
 
@@ -127,18 +128,22 @@ class Server:
             self.cnt -= 1
             self.my_logger.warning(
                 f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
-            writer.close()
-            await writer.wait_closed()
-            self.game_dict.pop(room.room_id)
+            # print(f"writer is closed: {writer.is_closing()}")
+            # writer.close() is not needed because the writer is already closed
+            # await writer.wait_closed(): this line could never be returned when the writer is already closed
+            if self.room_id in self.game_dict:
+                self.game_dict.pop(self.room_id)
             connected = not CONNECTED
         else:  # if the connection is properly connected, there will be no ConnectionError exception raised
             if not received:
                 self.cnt -= 1
                 self.my_logger.warning(
                     f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
-                writer.close()
-                await writer.wait_closed()
-                self.game_dict.pop(room.room_id)
+                if not writer.is_closing():
+                    writer.close()
+                    await writer.wait_closed()
+                if self.room_id in self.game_dict:
+                    self.game_dict.pop(self.room_id)
                 connected = not CONNECTED
         return connected, string
 
@@ -201,6 +206,8 @@ class Server:
 
     async def new_client(self, reader, writer):
         # any new client connection goes here first
+        client_task = asyncio.current_task()
+        client_name = ""
         player_id = 0  # player_id will be assigned according to conn_type: create - 0, join - 1
         player_info = None
         room = None
@@ -212,19 +219,19 @@ class Server:
         except ConnectionError:
             self.my_logger.warning(
                 f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
-            writer.close()
-            await writer.wait_closed()
         # if the connection is properly closed, there will be no ConnectionError exception raised
         # but empty byte will be received
         else:
             if not received:
-                self.my_logger.warning(f"Connection to player {player_name} is lost [196]")
-                writer.close()
-                await writer.wait_closed()
+                self.my_logger.warning(f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
+                if not writer.is_closing():
+                    writer.close()
+                    await writer.wait_closed()
 
         if player_info[0] != "handshake":  # if not "handshake", it's an invalid connection request
-            writer.close()
-            await writer.wait_closed()
+            if not writer.is_closing():
+                writer.close()
+                await writer.wait_closed()
             return
         elif player_info[0] == "handshake":  # handshake connection, waiting for conn_type
             player_name = player_info[1]
@@ -235,16 +242,17 @@ class Server:
             except ConnectionError:
                 self.my_logger.warning(
                     f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
-                writer.close()
-                await writer.wait_closed()
             else:  # if the connection is properly closed, there will be no ConnectionError exception raised
                 if not received:
                     self.my_logger.warning(
                         f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
-                    writer.close()
-                    await writer.wait_closed()
+                    if not writer.is_closing():
+                        writer.close()
+                        await writer.wait_closed()
 
             self.new_connection(player_name)
+            client_name = f"{player_name}-{self.client_id}"
+            client_task.set_name(client_name)
             writer.write(str(self.client_id).encode())
 
             r = await self.check_read(player_name, reader, READ_LEN, writer)  # waiting for "create" or "join"
@@ -257,6 +265,7 @@ class Server:
             if conn_type == "create":
                 player_id = 0
                 room = self.create_room(player_name, reader, writer)
+                room.player_0_task_name = client_name
             elif conn_type == "join":
                 player_id = 1
                 try:
@@ -269,6 +278,7 @@ class Server:
                     return
                 else:
                     room = join_room[1]
+                    room.player_1_task_name = client_name
 
         while True:  # wait for the 2nd player to join the room
             self.clock.tick(FPS)
@@ -278,6 +288,7 @@ class Server:
             will be returned so that the server game tick info to both player_0 and player_1 
             can be handled by the task created for player_0 
             """
+            # print(room.game_set, room.player_joined)
             if room.check_ready():
                 if player_id == 1:  # player_id = 1 means this is the task for player_1
                     # print("player1 returned")
@@ -298,9 +309,10 @@ class Server:
                 else:
                     info = r[1].split(",")
                     if info[0] == "1":  # ready, map_id, match_id, role_id
+                        # print(info)
                         room.map_id = info[1]
                         room.match_id = info[2]
-                        room.room_id = info[3]
+                        room.player_0_role_id = info[3]
                         room.game_set = True
                         # print("room.game_set = True")
 
@@ -310,22 +322,34 @@ class Server:
         g = game_class_s.Game(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
         g.new()
         gs = GameState()
-        self.my_logger.info(f"{room.player_0_name} is gaming with {room.player_1_name}!")
+        self.my_logger.warning(f"{room.player_0_name} is gaming with {room.player_1_name}!")
         while True:
             self.clock.tick(FPS)
             r = await self.check_read_room(room, True, False, READ_LEN)
             if not r[0]:
-                room.player_1_writer.write("Disconnected".encode())
-                self.my_logger.warning(f"Connection to player {room.player_0_name} is disconnected")
-                break
+                r = await self.check_read_room(room, False, True, READ_LEN)
+                if not r[0]:
+                    return
+                else:
+                    room.player_1_writer.write("Disconnected".encode())
+                    room.player_1_writer.close()
+                    await room.player_1_writer.wait_closed()
+                    return
             else:
                 g.events_str_shooter = r[1]
 
             r = await self.check_read_room(room, False, True, READ_LEN)
             if not r[0]:
                 room.player_0_writer.write("Disconnected".encode())
-                self.my_logger.warning(f"Connection to player {room.player_1_name} is disconnected")
-                break
+                r = await self.check_read_room(room, True, False, READ_LEN)
+                if not r[0]:
+                    return
+                else:
+                    self.my_logger.warning(f"Disconnecting player {room.player_0_name}")
+                    if not room.player_0_writer.is_closing():
+                        room.player_0_writer.close()
+                        await room.player_0_writer.wait_closed()
+                    return
             else:
                 g.events_str_chopper = r[1]
 
@@ -368,9 +392,9 @@ class Server:
 
     def handle_exception(self, loop, context):
         # context["message"] will always be there; but context["exception"] may not
-        msg = context.get("exception", context["message"])
-        self.my_logger.error(f"Caught exception: {msg}")
-        print(context)
+        # msg = context.get("exception", context["message"])
+        self.my_logger.error(f"Caught exception: {context}")
+        # print(context)
 
     async def main(self, host, port):
         server = await asyncio.start_server(self.new_client, host, port, )

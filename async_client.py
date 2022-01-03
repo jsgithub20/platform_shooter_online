@@ -44,14 +44,13 @@ class Network:
             string = received.decode()
         except ConnectionError:
             print(f"Connection to server is lost")
-            self.writer.close()
-            await self.writer.wait_closed()
             connected = not CONNECTED
         else:  # if the connection is properly connected, there will be no ConnectionError exception raised
             if not received:
                 print(f"Connection to server is lost")
-                self.writer.close()
-                await self.writer.wait_closed()
+                if not self.writer.is_closing():
+                    self.writer.close()
+                    await self.writer.wait_closed()
                 connected = not CONNECTED
         return connected, string
 
@@ -134,6 +133,7 @@ class Network:
     async def client_game(self):
         while True:  # this is the loop waiting for the 2nd player to join or player0 to set the game
             r = await self.check_read(READ_LEN)
+            # print(r)
             if not r[0]:
                 return
             else:
@@ -147,6 +147,7 @@ class Network:
                 self.writer.write(send_str.encode())
 
         while True:  # this is the routine game tick
+            print(self.game_ready)
             self.writer.write(self.events_str.encode())
             # start = perf_counter()
             r = await self.check_read(GS_READ_LEN)
@@ -158,13 +159,18 @@ class Network:
                 try:
                     decompressed_received = decompress(r[1])
                     game_state_lst = list(decompressed_received.decode())
+                    if game_state_lst[0] == "Disconnected":
+                        if not self.writer.is_closing():
+                            self.writer.close()
+                            await self.writer.wait_closed()
                     self.game_state.put(game_state_lst, block=False)
                 except queue.Full as e:
                     print(e)
 
     async def stop(self):
-        self.writer.close()
-        await self.writer.wait_closed()
+        if not self.writer.is_closing():
+            self.writer.close()
+            await self.writer.wait_closed()
         print('Closing the connection')
 
     def pos2str(self, pos: list):

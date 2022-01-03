@@ -55,7 +55,7 @@ class Game:
 
         self.shooter_score = "0"
         self.chopper_score = "0"
-        match_score = f"{self.shooter_score} - {MATCH_TYPE_LST(self.match_id)} - {self.chopper_score}"
+        match_score = f"{self.shooter_score} - {MATCH_TYPE_LST[int(self.match_id)]} - {self.chopper_score}"
         self.match_type_txt = DrawText(self.screen, 20, WHITE, 25, 720, "match_score", match_score, centered=True)
         self.snd_yeet = pg.mixer.Sound("resources/sound/yeet.ogg")
         self.snd_yeet.set_volume(0.2)

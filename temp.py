@@ -4,8 +4,12 @@ from typing import Any
 from zlib import compress, decompress
 
 match_score = {"match_type": "test",
-               "round": 0, "shooter": 0, "chopper": 0,
+               2: "round", "shooter": 0, "chopper": 0,
                "map": 0, "game_finished": False}
+
+print(match_score)
+match_score.pop(1)
+print(match_score)
 
 lst = [*match_score.values()]
 
@@ -60,3 +64,7 @@ send_byte = json.dumps([*asdict(gs).values()]).encode()
 c_send_byte = compress(send_byte)
 print(len(send_byte), len(c_send_byte))
 print(decompress(c_send_byte)==send_byte)
+
+data = f"New game is created, waiting for the second player to join...".encode()
+
+print(len(data))

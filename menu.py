@@ -15,6 +15,7 @@ import pygame
 import pygame_menu
 import asyncio
 import async_client
+import pygame.freetype as ft
 import role_def
 import game_class_c
 from platform_shooter_settings import *
@@ -168,7 +169,9 @@ class Menu:
         self.match_id = 0
         self.level_id = 0
         self.role_id = 0
+        self.player_id = 0
         self.gs_lst = []  # Game state received as a list
+        self.splat_font = ft.Font("resources/fonts/earwig factory rg.ttf", 60)
         self.main_menu: [pygame_menu.menu] = None
         self.b_connect: [pygame_menu.widgets.widget.button] = None
         self.selector_game: [pygame_menu.widgets.widget.selector] = None
@@ -294,19 +297,38 @@ class Menu:
         self.match_id = item_tuple[1]
 
     def cb_player0_wait_menu_opened(self, from_menu, to_menu):
+        self.player_id = 0
         self.connection.game_setting = [1, self.map_id, self.match_id, self.current_role_id]
-        while not self.connection.game_ready:
-            self.clock.tick(FPS)
+        # self.t_loop.create_task(self.connection.client_game())
+
         self.game()
 
     def cb_player1_wait_menu_opened(self, from_menu, to_menu):
+        self.player_id = 1
         self.t_loop.create_task(self.connection.send_room_choice(self.chosen_room))
         self.t_loop.create_task(self.connection.client_game())
-        while not self.connection.game_ready:
-            self.clock.tick(FPS)
+
         self.game()
 
     def game(self):
+        self.main_menu.disable()
+
+        while not self.connection.game_ready:
+            self.clock.tick(FPS)
+            self.screen.fill((0, 200, 0))
+            if self.player_id == 0:
+                self.splat_font.render_to(self.screen, (100, 200), "Waiting for 2nd player")
+            else:
+                self.splat_font.render_to(self.screen, (100, 200), "Waiting for 1st player to set the game")
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.t_loop.stop_tasks()
+                    self.t_loop.stop()
+                    pygame.quit()
+                    exit()
+            pygame.display.flip()
+
         self.opponent_name = self.connection.server_msg[1]
         self.map_id = self.connection.server_msg[2]
         self.match_id = self.connection.server_msg[3]
@@ -316,7 +338,6 @@ class Menu:
 
         while self.playing:
             g.events()
-
             self.connection.events_str = g.events_str
             try:
                 self.gs_lst = self.connection.game_state.get(timeout=1)
