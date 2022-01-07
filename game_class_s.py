@@ -40,14 +40,12 @@ class Game:
         self.live_bullet_l = 0
         for i in range(TTL_BULLETS):
             bullet = Bullet(DEAD_BULLET_POS, 'l', SCREEN_WIDTH)
-            bullet.level = self.current_level
             self.bullets_l.append(bullet)
 
         self.bullets_r = []
         self.live_bullet_r = 0
         for i in range(TTL_BULLETS):
             bullet = Bullet(DEAD_BULLET_POS, 'r', SCREEN_WIDTH)
-            bullet.level = self.current_level
             self.bullets_r.append(bullet)
 
         # the "R" sign on the shooter's head to indicate it's the reloading time, so it can't shoot
@@ -71,11 +69,7 @@ class Game:
         match_type = self.match_score["match_type"]
 
         # start a new game
-        self.live_bullet_l = 0
-        self.live_bullet_r = 0
-        for i in range(TTL_BULLETS):
-            self.bullets_l[i].rect.x, self.bullets_l[i].rect.y = DEAD_BULLET_POS
-            self.bullets_r[i].rect.x, self.bullets_r[i].rect.y = DEAD_BULLET_POS
+
 
             # Create the self.player
         self.player_shooter = Player()
@@ -95,6 +89,7 @@ class Game:
 
         # Set the current level
         self.current_level = self.level_list[self.current_level_no]
+        print(self.current_level_no, self.current_level)
 
         self.active_sprite_grp = pg.sprite.Group()
         self.bullet_sprite_grp = pg.sprite.Group()
@@ -106,6 +101,14 @@ class Game:
         self.player_chopper.level = self.current_level
         self.player_chopper.rect.x = 600
         self.player_chopper.rect.y = 200
+
+        self.live_bullet_l = 0
+        self.live_bullet_r = 0
+        for i in range(TTL_BULLETS):
+            self.bullets_l[i].rect.x, self.bullets_l[i].rect.y = DEAD_BULLET_POS
+            self.bullets_l[i].level = self.current_level
+            self.bullets_r[i].rect.x, self.bullets_r[i].rect.y = DEAD_BULLET_POS
+            self.bullets_r[i].level = self.current_level
 
         self.active_sprite_grp.add(self.player_shooter, self.player_chopper)
         self.bullet_sprite_grp.add(*self.bullets_r, *self.bullets_l)
@@ -222,6 +225,7 @@ class Game:
                 self.bullets_r[i].rect.x, self.bullets_l[i].rect.y = DEAD_BULLET_POS
 
         # Update items in the level
+        print("self.current_level.update()")
         self.current_level.update()
 
     def check_winner(self):

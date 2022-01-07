@@ -40,7 +40,12 @@ class Network:
         string = None
         connected = CONNECTED
         try:
+            if self.game_ready: print("start self.game_ready reading")
+            if self.game_ready: print(f"self.game_ready reader: {self.reader}")
+
             received = await self.reader.read(length)
+            if self.game_ready: print("end self.game_ready reading")
+            if self.game_ready: print(f"self.game_ready result: {received.decode()}")
             string = received.decode()
         except ConnectionError:
             print(f"Connection to server is lost")
@@ -147,15 +152,22 @@ class Network:
                 self.writer.write(send_str.encode())
 
         while True:  # this is the routine game tick
-            print(self.game_ready)
+            print(f"write {self.events_str.encode()} to {self.writer}")
             self.writer.write(self.events_str.encode())
+            print(f"eof {self.writer.can_write_eof()}")
+            self.writer.write_eof()
+            print(f"end writing")
             # start = perf_counter()
             r = await self.check_read(GS_READ_LEN)
+            print(f"r = await self.check_read(GS_READ_LEN): {r}")
             if not r[0]:  # return connected, string
                 print("Connection issue to server during get_games")
                 return
             # print(perf_counter() - start)
             else:
+                if not r[1]:
+                    print("empty message received from server")
+                    continue
                 try:
                     decompressed_received = decompress(r[1])
                     game_state_lst = list(decompressed_received.decode())

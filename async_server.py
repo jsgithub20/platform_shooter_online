@@ -121,8 +121,13 @@ class Server:
             player_name = room.player_1_name
             reader = room.player_1_reader
             writer = room.player_1_writer
+            print(f"player1's reader: {reader}")
+
         try:
+            print(f"start reading length: {length}, player: {player0}, {player1}")
             received = await reader.read(length)
+            print(received)
+            print(f"end reading")
             string = received.decode()
         except ConnectionError:
             self.cnt -= 1
@@ -268,6 +273,7 @@ class Server:
                 room.player_0_task_name = client_name
             elif conn_type == "join":
                 player_id = 1
+                print(f"joiner's reader: {reader}")
                 try:
                     join_room = await self.join(player_info[1], reader, writer)  # return CONNECTED, choice
                 except ConnectionError:
@@ -339,6 +345,7 @@ class Server:
                 g.events_str_shooter = r[1]
 
             r = await self.check_read_room(room, False, True, READ_LEN)
+            print(r)
             if not r[0]:
                 room.player_0_writer.write("Disconnected".encode())
                 r = await self.check_read_room(room, True, False, READ_LEN)
@@ -352,10 +359,13 @@ class Server:
                     return
             else:
                 g.events_str_chopper = r[1]
+                print("g.events_str_chopper = r[1]")
 
             g.events()
+            print("g.events()")
             g.update()
 
+            print("g.update()")
             gs.shooter_img_dict_key = g.player_shooter.img_dict_key
             gs.shooter_img_idx = g.player_shooter.image_idx
             gs.shooter_pos = (g.player_shooter.rect.x, g.player_shooter.rect.y)
@@ -384,11 +394,13 @@ class Server:
             gs.shooter_score = g.match_score["shooter"]
             gs.chopper_score = g.match_score["chopper"]
 
+            print(f"gs={gs}")
             send_byte = json.dumps([*asdict(gs).values()]).encode()
             compressed_send_byte = compress(send_byte)
-
+            print("start writing game state")
             room.player_0_writer.write(compressed_send_byte)
             room.player_1_writer.write(compressed_send_byte)
+            print("end writing game state")
 
     def handle_exception(self, loop, context):
         # context["message"] will always be there; but context["exception"] may not
