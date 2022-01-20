@@ -143,8 +143,6 @@ class Game:
                 if event.key == pg.K_c:
                     self.events_lst[4] = "1"
 
-                self.events_str = "".join(self.events_lst)
-
             if event.type == pg.KEYUP:
                 # player_shooter controls
                 if event.key == pg.K_LEFT:
@@ -157,6 +155,8 @@ class Game:
                     self.events_lst[5] = "1"
                 if event.key == pg.K_d:
                     self.events_lst[6] = "1"
+
+        self.events_str = "".join(self.events_lst)
 
     def update_game_state(self, gs_lst):
         self.player_shooter.update_img(gs_lst[0], gs_lst[1])

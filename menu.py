@@ -340,10 +340,9 @@ class Menu:
             g.events()
             self.connection.events_str = g.events_str
             try:
-                print("self.gs_lst =")
                 self.gs_lst = self.connection.game_state.get(timeout=1)
-            except queue.Empty as e:
-                print(f"game_state empty: {e}")
+            except queue.Empty:
+                pass
                 # TODO: code to acknowledge the player and ask for input
 
             g.update_game_state(self.gs_lst)

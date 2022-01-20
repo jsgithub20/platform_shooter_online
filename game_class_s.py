@@ -89,7 +89,6 @@ class Game:
 
         # Set the current level
         self.current_level = self.level_list[self.current_level_no]
-        print(self.current_level_no, self.current_level)
 
         self.active_sprite_grp = pg.sprite.Group()
         self.bullet_sprite_grp = pg.sprite.Group()
@@ -125,17 +124,23 @@ class Game:
 
     def events(self):
         # Game Loop - events
-        if self.events_str_shooter[0] or self.events_str_chopper[0]:
+        lst_s = list(self.events_str_shooter)
+        lst_c = list(self.events_str_chopper)
+
+        events_lst_shooter = [int(item) for item in lst_s]
+        events_lst_chopper = [int(item) for item in lst_c]
+
+        if events_lst_shooter[0] or events_lst_chopper[0]:
             if self.playing:
                 self.playing = False
             self.running = False
-        if self.events_str_shooter[1]:
+        if events_lst_shooter[1]:
             self.player_shooter.go_left()
-        if self.events_str_shooter[2]:
+        if events_lst_shooter[2]:
             self.player_shooter.go_right()
-        if self.events_str_shooter[3]:
+        if events_lst_shooter[3]:
             self.player_shooter.jump()
-        if self.events_str_shooter[4]:
+        if events_lst_shooter[4]:
             if self.player_shooter.loaded > 0:
                 self.player_shooter.image_idx = 0
                 self.player_shooter.loaded -= 1
@@ -154,26 +159,26 @@ class Game:
                 # self.bullets.append(bullet)
                 # self.bullet_sprite_grp.add(bullet)
 
-        if self.events_str_chopper[1]:
+        if events_lst_chopper[1]:
             self.player_chopper.go_left()
-        if self.events_str_chopper[2]:
+        if events_lst_chopper[2]:
             self.player_chopper.go_right()
-        if self.events_str_chopper[3]:
+        if events_lst_chopper[3]:
             self.player_chopper.jump()
-        if self.events_str_chopper[4]:
+        if events_lst_chopper[4]:
             self.player_chopper.chop()
             self.player_chopper.image_idx = 0
 
         # player_shooter controls
-        if self.events_str_shooter[5] and self.player_shooter.change_x < 0:
+        if events_lst_shooter[5] and self.player_shooter.change_x < 0:
             self.player_shooter.stop()
-        if self.events_str_shooter[6] and self.player_shooter.change_x > 0:
+        if events_lst_shooter[6] and self.player_shooter.change_x > 0:
             self.player_shooter.stop()
 
         # player_chopper controls
-        if self.events_str_chopper[5] and self.player_chopper.change_x < 0:
+        if events_lst_chopper[5] and self.player_chopper.change_x < 0:
             self.player_chopper.stop()
-        if self.events_str_chopper[6] and self.player_chopper.change_x > 0:
+        if events_lst_chopper[6] and self.player_chopper.change_x > 0:
             self.player_chopper.stop()
 
     def update(self):
@@ -225,7 +230,6 @@ class Game:
                 self.bullets_r[i].rect.x, self.bullets_l[i].rect.y = DEAD_BULLET_POS
 
         # Update items in the level
-        print("self.current_level.update()")
         self.current_level.update()
 
     def check_winner(self):

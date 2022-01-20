@@ -56,7 +56,6 @@ class RoomState:
         return self.player_joined and self.game_set
 
 
-
 class Server:
     def __init__(self):
         pygame.init()
@@ -106,7 +105,7 @@ class Server:
                 connected = not CONNECTED
         return connected, string
 
-    async def check_read_room(self, room: RoomState, player0: bool, player1: bool, length):
+    async def check_read_room(self, room: RoomState, player0: bool, player1: bool, length: int):
         # used for read() after the connected player is in a game room
         string = None
         reader = None
@@ -121,19 +120,14 @@ class Server:
             player_name = room.player_1_name
             reader = room.player_1_reader
             writer = room.player_1_writer
-            print(f"player1's reader: {reader}")
 
         try:
-            print(f"start reading length: {length}, player: {player0}, {player1}")
             received = await reader.read(length)
-            print(received)
-            print(f"end reading")
             string = received.decode()
         except ConnectionError:
             self.cnt -= 1
             self.my_logger.warning(
                 f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
-            # print(f"writer is closed: {writer.is_closing()}")
             # writer.close() is not needed because the writer is already closed
             # await writer.wait_closed(): this line could never be returned when the writer is already closed
             if self.room_id in self.game_dict:
@@ -187,12 +181,12 @@ class Server:
                 return not CONNECTED, chosen_room_id
             elif int(r[1]) in [*self.game_dict]:
                 chosen_room_id = int(r[1])
-                self.game_dict[chosen_room_id].player_joined = True
+                # self.game_dict[chosen_room_id].player_joined = True
                 self.game_dict[chosen_room_id].player_1_name = player_name
                 self.game_dict[chosen_room_id].player_1_reader = reader
                 self.game_dict[chosen_room_id].player_1_writer = writer
                 chosen_room = self.game_dict[chosen_room_id]
-                while not self.game_dict[chosen_room_id].game_set:  # meaning player0 has not finished setting game yet
+                while not chosen_room.game_set:  # meaning player0 has not finished setting game yet
                     writer.write(f"{self.game_dict[chosen_room_id].player_0_name} is not ready yet, please wait...".encode())
                     r = await self.check_read(player_name, reader, READ_LEN, writer)  # return connected, string
                     if not r[0]:
@@ -273,7 +267,6 @@ class Server:
                 room.player_0_task_name = client_name
             elif conn_type == "join":
                 player_id = 1
-                print(f"joiner's reader: {reader}")
                 try:
                     join_room = await self.join(player_info[1], reader, writer)  # return CONNECTED, choice
                 except ConnectionError:
@@ -285,6 +278,7 @@ class Server:
                 else:
                     room = join_room[1]
                     room.player_1_task_name = client_name
+                    room.player_joined = True
 
         while True:  # wait for the 2nd player to join the room
             self.clock.tick(FPS)
@@ -294,17 +288,15 @@ class Server:
             will be returned so that the server game tick info to both player_0 and player_1 
             can be handled by the task created for player_0 
             """
-            # print(room.game_set, room.player_joined)
             if room.check_ready():
                 if player_id == 1:  # player_id = 1 means this is the task for player_1
-                    # print("player1 returned")
                     self.my_logger.warning(f"Player '{room.player_1_name}' joined player '{room.player_0_name}''s game")
                     return  # the task (for player_1) is returned (completed) once player_1 is in the room
                 # data = "Game Ready".encode()
-                room.player_0_writer.write(f"Game Ready,{room.player_1_name},{room.map_id},"
-                                           f"{room.match_id},{room.player_0_role_id}".encode())
-                room.player_1_writer.write(f"Game Ready,{room.player_0_name},{room.map_id},"
-                                           f"{room.match_id},{room.player_1_role_id}".encode())
+                room.player_0_writer.write(
+                    f"Game Ready,{room.player_1_name},{room.map_id},{room.match_id},{room.player_0_role_id}".encode())
+                room.player_1_writer.write(
+                    f"Game Ready,{room.player_0_name},{room.map_id},{room.match_id},{room.player_1_role_id}".encode())
                 break  # break current while loop to start the routine game tick
             else:  # if game_ready is False, it means there is only player_0 in the game room
                 data = f"New game is created, waiting for the second player to join...".encode()
@@ -315,12 +307,10 @@ class Server:
                 else:
                     info = r[1].split(",")
                     if info[0] == "1":  # ready, map_id, match_id, role_id
-                        # print(info)
                         room.map_id = info[1]
                         room.match_id = info[2]
                         room.player_0_role_id = info[3]
                         room.game_set = True
-                        # print("room.game_set = True")
 
         await self.game(room)  # this is the routine game tick
 
@@ -329,9 +319,12 @@ class Server:
         g.new()
         gs = GameState()
         self.my_logger.warning(f"{room.player_0_name} is gaming with {room.player_1_name}!")
+        round_no = 0
         while True:
+            round_no += 1
             self.clock.tick(FPS)
             r = await self.check_read_room(room, True, False, READ_LEN)
+
             if not r[0]:
                 r = await self.check_read_room(room, False, True, READ_LEN)
                 if not r[0]:
@@ -345,7 +338,6 @@ class Server:
                 g.events_str_shooter = r[1]
 
             r = await self.check_read_room(room, False, True, READ_LEN)
-            print(r)
             if not r[0]:
                 room.player_0_writer.write("Disconnected".encode())
                 r = await self.check_read_room(room, True, False, READ_LEN)
@@ -359,13 +351,10 @@ class Server:
                     return
             else:
                 g.events_str_chopper = r[1]
-                print("g.events_str_chopper = r[1]")
 
             g.events()
-            print("g.events()")
             g.update()
 
-            print("g.update()")
             gs.shooter_img_dict_key = g.player_shooter.img_dict_key
             gs.shooter_img_idx = g.player_shooter.image_idx
             gs.shooter_pos = (g.player_shooter.rect.x, g.player_shooter.rect.y)
@@ -394,19 +383,18 @@ class Server:
             gs.shooter_score = g.match_score["shooter"]
             gs.chopper_score = g.match_score["chopper"]
 
-            print(f"gs={gs}")
             send_byte = json.dumps([*asdict(gs).values()]).encode()
-            compressed_send_byte = compress(send_byte)
-            print("start writing game state")
-            room.player_0_writer.write(compressed_send_byte)
-            room.player_1_writer.write(compressed_send_byte)
-            print("end writing game state")
+            # compressed_send_byte = compress(send_byte)
+            # TODO: it seems zlib compressed data can't be directly sent over a StreamsWriter
+            room.player_0_writer.write(send_byte)
+            # room.player_0_writer.write(compressed_send_byte)
+            room.player_1_writer.write(send_byte)
+            # room.player_1_writer.write(compressed_send_byte)
 
     def handle_exception(self, loop, context):
         # context["message"] will always be there; but context["exception"] may not
         # msg = context.get("exception", context["message"])
         self.my_logger.error(f"Caught exception: {context}")
-        # print(context)
 
     async def main(self, host, port):
         server = await asyncio.start_server(self.new_client, host, port, )

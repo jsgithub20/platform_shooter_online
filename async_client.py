@@ -6,6 +6,7 @@ This is the alpha client code for the "shooter" game
 
 import asyncio
 import json
+import time
 from zlib import compress, decompress
 
 import logging
@@ -40,12 +41,7 @@ class Network:
         string = None
         connected = CONNECTED
         try:
-            if self.game_ready: print("start self.game_ready reading")
-            if self.game_ready: print(f"self.game_ready reader: {self.reader}")
-
             received = await self.reader.read(length)
-            if self.game_ready: print("end self.game_ready reading")
-            if self.game_ready: print(f"self.game_ready result: {received.decode()}")
             string = received.decode()
         except ConnectionError:
             print(f"Connection to server is lost")
@@ -97,8 +93,14 @@ class Network:
         else:
             length = r[1]
         self.writer.write("ok".encode())  # just to complete a r/w cycle before receiving the next data
-        rooms_data = await self.reader.read(int(length))
-        self.game_rooms = list(json.loads(rooms_data.decode()))  # [[player0_name, game_ready, room_id],]
+        r = await self.check_read(int(length))
+        if not r[0]:  # return connected, string
+            print("Connection issue to server during get_games")
+            return
+        else:
+            rooms_string = r[1]
+        # rooms_data = await self.reader.read(int(length))
+        self.game_rooms = list(json.loads(rooms_string))  # [[player0_name, game_ready, room_id],]
 
     async def refresh(self):
         self.writer.write("-99".encode())  # "-99" to represent a null message to allow server to still use int[] method
@@ -111,7 +113,6 @@ class Network:
                 return
             else:
                 self.server_msg = tuple(r[1].split(","))  # f"Game Ready,{room.player_0_name}"
-                # print(self.server_msg)
             if self.server_msg[0] == "Game Ready":
                 self.opponent_name = self.server_msg[1]
                 break
@@ -138,12 +139,10 @@ class Network:
     async def client_game(self):
         while True:  # this is the loop waiting for the 2nd player to join or player0 to set the game
             r = await self.check_read(READ_LEN)
-            # print(r)
             if not r[0]:
                 return
             else:
                 self.server_msg = tuple(r[1].split(","))  # f"Game Ready,{room.player_0_name}"
-                # print(self.server_msg)
             if self.server_msg[0] == "Game Ready":
                 self.game_ready = True
                 break
@@ -151,15 +150,14 @@ class Network:
                 send_str = f"{self.game_setting[0]},{self.game_setting[1]},{self.game_setting[2]},{self.game_setting[3]}"
                 self.writer.write(send_str.encode())
 
+        round_no = 0
+
         while True:  # this is the routine game tick
-            print(f"write {self.events_str.encode()} to {self.writer}")
+            round_no += 1
             self.writer.write(self.events_str.encode())
-            print(f"eof {self.writer.can_write_eof()}")
-            self.writer.write_eof()
-            print(f"end writing")
+            # await self.writer.drain()  # .drain() doesn't help when written content is short
             # start = perf_counter()
-            r = await self.check_read(GS_READ_LEN)
-            print(f"r = await self.check_read(GS_READ_LEN): {r}")
+            r = await self.check_read(GS_READ_LEN)  # why can't read?
             if not r[0]:  # return connected, string
                 print("Connection issue to server during get_games")
                 return
@@ -169,8 +167,9 @@ class Network:
                     print("empty message received from server")
                     continue
                 try:
-                    decompressed_received = decompress(r[1])
-                    game_state_lst = list(decompressed_received.decode())
+                    # decompressed_received = decompress(r[1])
+                    # game_state_lst = list(decompressed_received.decode())
+                    game_state_lst = list(json.loads(r[1]))
                     if game_state_lst[0] == "Disconnected":
                         if not self.writer.is_closing():
                             self.writer.close()
@@ -183,7 +182,6 @@ class Network:
         if not self.writer.is_closing():
             self.writer.close()
             await self.writer.wait_closed()
-        print('Closing the connection')
 
     def pos2str(self, pos: list):
         # the returned string is like "100,100" from tuple (100, 100)

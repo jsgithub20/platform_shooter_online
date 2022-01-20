@@ -29,7 +29,7 @@ DEAD_BLOCK_POS = (-99, -400)
 CONNECTED = True
 
 READ_LEN = 100
-GS_READ_LEN = 100  # this is the length to read GameState, to be confirmed
+GS_READ_LEN = 300  # this is the length to read GameState, to be confirmed
 
 
 @dataclass
