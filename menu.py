@@ -208,6 +208,7 @@ class Menu:
         self.server_ip = server_ip.get_value()
         self.server_port = server_port.get_value()
         self.my_name = player_name.get_value()
+        pygame.display.set_caption(f"{self.my_name}'s Game Window")
         self.connection = async_client.Network(self.server_ip, self.server_port)
         conn_result = self.t_loop.create_task(self.connection.conn(self.my_name))
         try:
@@ -336,7 +337,7 @@ class Menu:
         g = game_class_c.Game(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, self.map_id, self.match_id, self.role_id)
         g.new()
 
-        while self.playing:
+        while g.playing:
             g.events()
             self.connection.events_str = g.events_str
             try:
@@ -347,6 +348,9 @@ class Menu:
 
             g.update_game_state(self.gs_lst)
             g.draw()
+
+        pygame.quit()
+        exit()
 
     def demo_game(self):
         self.main_menu.disable()

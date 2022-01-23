@@ -110,6 +110,7 @@ class Game:
         self.player_chopper.rect.y = 200
 
         self.active_sprite_grp.add(self.player_shooter, self.player_chopper)
+        self.active_sprite_grp.add(self.fps_txt, self.match_type_txt)
         self.bullet_sprite_grp.add(*self.bullets_r, *self.bullets_l)
 
     def events(self):
@@ -120,6 +121,7 @@ class Game:
             # check for closing window
             if event.type == pg.QUIT:
                 self.events_lst[0] = "1"
+                self.playing = False
 
             if event.type == pg.KEYDOWN:
                 # player_shooter controls

@@ -319,9 +319,7 @@ class Server:
         g.new()
         gs = GameState()
         self.my_logger.warning(f"{room.player_0_name} is gaming with {room.player_1_name}!")
-        round_no = 0
         while True:
-            round_no += 1
             self.clock.tick(FPS)
             r = await self.check_read_room(room, True, False, READ_LEN)
 

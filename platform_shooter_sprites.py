@@ -199,7 +199,7 @@ class Bullet(pg.sprite.Sprite):
 
     def update(self):
         self.rect.x += self.speed
-        if self.rect.x < 0:
+        if -50 < self.rect.x < 0:  # to avoid counting the bullets at (-99, -99)
             self.rect.x = self.screen_width
             self.loop_count += 1
         if self.rect.x > self.screen_width:

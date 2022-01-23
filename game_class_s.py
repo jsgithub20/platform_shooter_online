@@ -145,16 +145,18 @@ class Game:
                 self.player_shooter.image_idx = 0
                 self.player_shooter.loaded -= 1
                 if self.player_shooter.direction == 'l':
-                    self.live_bullet_l += 1
                     self.bullets_l[self.live_bullet_l].rect.x = self.player_shooter.rect.x
                     self.bullets_l[self.live_bullet_l].rect.y = self.player_shooter.rect.y
+                    self.bullets_l[self.live_bullet_l].live_flag = 1
                     self.player_shooter.attack_flg = 1
+                    self.live_bullet_l += 1
                     # self.snd_yeet.play()
                 else:
-                    self.live_bullet_r += 1
                     self.bullets_r[self.live_bullet_r].rect.x = self.player_shooter.rect.x
                     self.bullets_r[self.live_bullet_r].rect.y = self.player_shooter.rect.y
+                    self.bullets_r[self.live_bullet_r].live_flag = 1
                     self.player_shooter.attack_flg = 1
+                    self.live_bullet_r += 1
                     # self.snd_yeet.play()
                 # self.bullets.append(bullet)
                 # self.bullet_sprite_grp.add(bullet)
@@ -227,7 +229,7 @@ class Game:
             if self.bullets_l[i].live_flag == 0:
                 self.bullets_l[i].rect.x, self.bullets_l[i].rect.y = DEAD_BULLET_POS
             if self.bullets_r[i].live_flag == 0:
-                self.bullets_r[i].rect.x, self.bullets_l[i].rect.y = DEAD_BULLET_POS
+                self.bullets_r[i].rect.x, self.bullets_r[i].rect.y = DEAD_BULLET_POS
 
         # Update items in the level
         self.current_level.update()
