@@ -1,8 +1,8 @@
-# import json
-# from dataclasses import dataclass, asdict
-# from typing import Any
-# from zlib import compress, decompress
-# import asyncio
+import json
+from dataclasses import dataclass, asdict
+from typing import Any
+from zlib import compress, decompress
+import asyncio
 #
 # match_score = {"match_type": "test",
 #                2: "round", "shooter": 0, "chopper": 0,
@@ -32,6 +32,7 @@
 #     def check_ready(self):
 #         return self.player_joined and self.game_set
 #
+
 # @dataclass
 # class GameState:
 #     shooter_img_dict_key: str = "run_R"
@@ -61,22 +62,23 @@
 #
 # gs = GameState()
 #
-# send_byte = json.dumps([*asdict(gs).values()]).encode()
-# c_send_byte = compress(send_byte)
+# send_byte = (json.dumps([*asdict(gs).values()])+";").encode()
+# # c_send_byte = compress(send_byte)
 # # print(len(send_byte), len(c_send_byte))
 # # print(decompress(c_send_byte)==send_byte)
-# print(send_byte)
+# data = send_byte.decode()
+# print(data)
+# print(data.split(";")[0])
+# print(";", ";".encode())
 # print(c_send_byte)
 #
 # #
 # # data = f"New game is created, waiting for the second player to join...".encode()
 # #
 # # print(len(data))
+#
+string = "Disconnected"
+string_enc = string.encode()
 
-string = "0000000"
-lst = list(string)
-
-lst_int = [int(x) for x in lst]
-print(lst)
-print(lst_int)
-print(type(lst_int[0]))
+d_s = list(json.loads(string_enc.decode()))
+print(d_s)

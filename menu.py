@@ -337,12 +337,14 @@ class Menu:
         g = game_class_c.Game(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, self.map_id, self.match_id, self.role_id)
         g.new()
 
-        while g.playing:
+        while g.playing:  # routine game tick
             g.events()
             self.connection.events_str = g.events_str
             try:
                 self.gs_lst = self.connection.game_state.get(timeout=1)
             except queue.Empty:
+                print("Connection issue")
+                g.playing = False
                 pass
                 # TODO: code to acknowledge the player and ask for input
 

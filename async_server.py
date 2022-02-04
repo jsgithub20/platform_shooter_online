@@ -130,8 +130,8 @@ class Server:
                 f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
             # writer.close() is not needed because the writer is already closed
             # await writer.wait_closed(): this line could never be returned when the writer is already closed
-            if self.room_id in self.game_dict:
-                self.game_dict.pop(self.room_id)
+            if room.room_id in self.game_dict:
+                self.game_dict.pop(room.room_id)
             connected = not CONNECTED
         else:  # if the connection is properly connected, there will be no ConnectionError exception raised
             if not received:
@@ -141,10 +141,26 @@ class Server:
                 if not writer.is_closing():
                     writer.close()
                     await writer.wait_closed()
-                if self.room_id in self.game_dict:
-                    self.game_dict.pop(self.room_id)
+                if room.room_id in self.game_dict:
+                    self.game_dict.pop(room.room_id)
                 connected = not CONNECTED
         return connected, string
+
+    async def disconnect_2nd_player(self, room, player_bool):  # player_bool: 0 - player0, 1-player1
+        writer = None
+        player_name = ""
+        if player_bool:  # if player1 to be disconnected
+            writer = room.player_1_writer
+            player_name = room.player_1_name
+        else:
+            writer = room.player_0_writer
+            player_name = room.player_0_name
+        writer.write("Disconnected;".encode())
+        writer.close()
+        await writer.wait_closed()
+        self.my_logger.warning(f"Game room [{room.room_id}]: {player_name} is disconnected")
+        self.cnt -= 1
+        print(f"total connection: {self.cnt}")
 
     def create_room(self, player_name, reader, writer):
         self.room_cnt += 1
@@ -168,9 +184,9 @@ class Server:
                          for room_id in [*self.game_dict]]
             if not rooms_lst:
                 rooms_lst = [["no game", False, 0]]
-            rooms_lst_enc = json.dumps(rooms_lst).encode()
+            rooms_lst_enc = (json.dumps(rooms_lst)+";").encode()
             length = len(rooms_lst_enc)
-            writer.write(str(length).encode())  # send the receiving length first
+            writer.write((str(length)+";").encode())  # send the receiving length first
             # this will be "ok" returned from client, just to complete a r/w cycle
             r = await self.check_read(player_name, reader, READ_LEN, writer)  # return connected, string
             if not r[0]:
@@ -181,18 +197,24 @@ class Server:
                 return not CONNECTED, chosen_room_id
             elif int(r[1]) in [*self.game_dict]:
                 chosen_room_id = int(r[1])
+                """
                 # self.game_dict[chosen_room_id].player_joined = True
+                player_joined can't be set true here, otherwise player0 will start to write to player1's writer too
+                soon to cause the "mark 1" read() below read more bytes in the buffer from player1' reader because the
+                player1 client writes the "events" info. Best way could be using reader.readuntil() with a seperator
+                letter (e.g. ";"), to be tested.
+                """
                 self.game_dict[chosen_room_id].player_1_name = player_name
                 self.game_dict[chosen_room_id].player_1_reader = reader
                 self.game_dict[chosen_room_id].player_1_writer = writer
                 chosen_room = self.game_dict[chosen_room_id]
                 while not chosen_room.game_set:  # meaning player0 has not finished setting game yet
-                    writer.write(f"{self.game_dict[chosen_room_id].player_0_name} is not ready yet, please wait...".encode())
+                    writer.write(f"{self.game_dict[chosen_room_id].player_0_name} is not ready yet, please wait...;".encode())
                     r = await self.check_read(player_name, reader, READ_LEN, writer)  # return connected, string
                     if not r[0]:
                         return not CONNECTED, chosen_room_id
-                writer.write("Game is ready to play".encode())
-                r = await self.check_read(player_name, reader, READ_LEN, writer)  # return connected, string
+                writer.write("Game is ready to play;".encode())
+                r = await self.check_read(player_name, reader, READ_LEN, writer)  # (mark 1) return connected, string
                 if not r[0]:
                     return not CONNECTED, chosen_room_id
                 return CONNECTED, chosen_room
@@ -234,7 +256,7 @@ class Server:
             return
         elif player_info[0] == "handshake":  # handshake connection, waiting for conn_type
             player_name = player_info[1]
-            writer.write("ok".encode())  # for client to confirm successful handshake
+            writer.write("ok;".encode())  # for client to confirm successful handshake
 
             try:  # initial read() needs different handling than self.check_read, this is just for r/w cycle
                 received = await reader.read(READ_LEN)
@@ -252,7 +274,7 @@ class Server:
             self.new_connection(player_name)
             client_name = f"{player_name}-{self.client_id}"
             client_task.set_name(client_name)
-            writer.write(str(self.client_id).encode())
+            writer.write((str(self.client_id)+";").encode())
 
             r = await self.check_read(player_name, reader, READ_LEN, writer)  # waiting for "create" or "join"
             if not r[0]:  # return connected, string
@@ -279,6 +301,10 @@ class Server:
                     room = join_room[1]
                     room.player_1_task_name = client_name
                     room.player_joined = True
+                    """
+                    player_joined can't be set to True in self.join(), otherwise player0 will enter the 
+                    routine game loop too soon, refer to comments in self.join() for details
+                    """
 
         while True:  # wait for the 2nd player to join the room
             self.clock.tick(FPS)
@@ -294,12 +320,12 @@ class Server:
                     return  # the task (for player_1) is returned (completed) once player_1 is in the room
                 # data = "Game Ready".encode()
                 room.player_0_writer.write(
-                    f"Game Ready,{room.player_1_name},{room.map_id},{room.match_id},{room.player_0_role_id}".encode())
+                    f"Game Ready,{room.player_1_name},{room.map_id},{room.match_id},{room.player_0_role_id};".encode())
                 room.player_1_writer.write(
-                    f"Game Ready,{room.player_0_name},{room.map_id},{room.match_id},{room.player_1_role_id}".encode())
+                    f"Game Ready,{room.player_0_name},{room.map_id},{room.match_id},{room.player_1_role_id};".encode())
                 break  # break current while loop to start the routine game tick
             else:  # if game_ready is False, it means there is only player_0 in the game room
-                data = f"New game is created, waiting for the second player to join...".encode()
+                data = f"New game is created, waiting for the second player to join...;".encode()
                 room.player_0_writer.write(data)
                 r = await self.check_read_room(room, True, False, READ_LEN)  # r/w cycle and check the connection
                 if not r[0]:  # return connected, string
@@ -319,7 +345,7 @@ class Server:
         g.new()
         gs = GameState()
         self.my_logger.warning(f"{room.player_0_name} is gaming with {room.player_1_name}!")
-        while True:
+        while True:  # This is the routine game tick
             self.clock.tick(FPS)
             r = await self.check_read_room(room, True, False, READ_LEN)
 
@@ -328,24 +354,29 @@ class Server:
                 if not r[0]:
                     return
                 else:
-                    room.player_1_writer.write("Disconnected".encode())
+                    room.player_1_writer.write("Disconnected;".encode())
                     room.player_1_writer.close()
                     await room.player_1_writer.wait_closed()
+                    self.my_logger.warning(f"Game room [{room.room_id}]: {room.player_1_name} is disconnected")
+                    self.cnt -= 1
+                    # await self.disconnect_2nd_player(room, 1)
                     return
             else:
                 g.events_str_shooter = r[1]
 
             r = await self.check_read_room(room, False, True, READ_LEN)
             if not r[0]:
-                room.player_0_writer.write("Disconnected".encode())
                 r = await self.check_read_room(room, True, False, READ_LEN)
                 if not r[0]:
                     return
                 else:
-                    self.my_logger.warning(f"Disconnecting player {room.player_0_name}")
-                    if not room.player_0_writer.is_closing():
-                        room.player_0_writer.close()
-                        await room.player_0_writer.wait_closed()
+                    room.player_0_writer.write("Disconnected;".encode())
+                    room.player_0_writer.close()
+                    await room.player_0_writer.wait_closed()
+                    self.my_logger.warning(f"Game room [{room.room_id}]: {room.player_0_name} is disconnected")
+                    self.cnt -= 1
+                    print(f"total connection: {self.cnt}")
+                    # await self.disconnect_2nd_player(room, 0)
                     return
             else:
                 g.events_str_chopper = r[1]
@@ -374,6 +405,7 @@ class Server:
             else:
                 gs.moving_block_pos = (g.level02.moving_block.rect.x, g.level02.moving_block.rect.y)
             gs.r_sign_pos = (g.r_sign.rect.x, g.r_sign.rect.y)
+            print(gs.r_sign_pos)
             gs.map_id = g.map_id
             gs.match_id = g.match_id
             gs.level_id = g.current_level_no
@@ -381,7 +413,7 @@ class Server:
             gs.shooter_score = g.match_score["shooter"]
             gs.chopper_score = g.match_score["chopper"]
 
-            send_byte = json.dumps([*asdict(gs).values()]).encode()
+            send_byte = (json.dumps([*asdict(gs).values()])+";").encode()
             # compressed_send_byte = compress(send_byte)
             # TODO: it seems zlib compressed data can't be directly sent over a StreamsWriter
             room.player_0_writer.write(send_byte)

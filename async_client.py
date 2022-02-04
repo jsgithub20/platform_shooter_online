@@ -41,9 +41,9 @@ class Network:
         string = None
         connected = CONNECTED
         try:
-            received = await self.reader.read(length)
-            string = received.decode()
-        except ConnectionError:
+            received = await self.reader.readuntil(separator=b";")
+            string = received.decode().split(";")[0]
+        except (ConnectionError, asyncio.IncompleteReadError):
             print(f"Connection to server is lost")
             connected = not CONNECTED
         else:  # if the connection is properly connected, there will be no ConnectionError exception raised
@@ -53,6 +53,7 @@ class Network:
                     self.writer.close()
                     await self.writer.wait_closed()
                 connected = not CONNECTED
+
         return connected, string
 
     async def conn(self, player_name):
@@ -127,7 +128,6 @@ class Network:
             # data = await self.reader.read(READ_LEN)
             r = await self.check_read(READ_LEN)
             if not r[0]:  # return connected, string
-                print("Connection issue to server during get_games")
                 return
             # print(perf_counter() - start)
             else:
@@ -150,33 +150,30 @@ class Network:
                 send_str = f"{self.game_setting[0]},{self.game_setting[1]},{self.game_setting[2]},{self.game_setting[3]}"
                 self.writer.write(send_str.encode())
 
-        round_no = 0
-
         while True:  # this is the routine game tick
-            round_no += 1
             self.writer.write(self.events_str.encode())
             # await self.writer.drain()  # .drain() doesn't help when written content is short
             # start = perf_counter()
             r = await self.check_read(GS_READ_LEN)  # why can't read?
             if not r[0]:  # return connected, string
-                print("Connection issue to server during get_games")
                 return
             # print(perf_counter() - start)
             else:
-                if not r[1]:
-                    print("empty message received from server")
-                    continue
                 try:
-                    # decompressed_received = decompress(r[1])
-                    # game_state_lst = list(decompressed_received.decode())
-                    game_state_lst = list(json.loads(r[1]))
-                    if game_state_lst[0] == "Disconnected":
+                    if r[1] == "Disconnected":
                         if not self.writer.is_closing():
                             self.writer.close()
                             await self.writer.wait_closed()
+                        print("Disconnected by server")
+                        return
+                    # decompressed_received = decompress(r[1])
+                    # game_state_lst = list(decompressed_received.decode())
+                    game_state_lst = list(json.loads(r[1]))
                     self.game_state.put(game_state_lst, block=False)
                 except queue.Full as e:
                     print(e)
+                except Exception:
+                    print("Unknown Error")
 
     async def stop(self):
         if not self.writer.is_closing():

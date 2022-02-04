@@ -14,6 +14,7 @@ from role_def import *
 class Game:
     def __init__(self, screen, win_w, win_h, map_id, match_id, role_id):
         pg.init()
+        self.clock = pg.time.Clock()
         self.screen = screen
         self.win_w = win_w
         self.win_h = win_h
@@ -110,7 +111,7 @@ class Game:
         self.player_chopper.rect.y = 200
 
         self.active_sprite_grp.add(self.player_shooter, self.player_chopper)
-        self.active_sprite_grp.add(self.fps_txt, self.match_type_txt)
+        self.active_sprite_grp.add(self.fps_txt, self.match_type_txt, self.r_sign)
         self.bullet_sprite_grp.add(*self.bullets_r, *self.bullets_l)
 
     def events(self):
@@ -173,6 +174,11 @@ class Game:
         self.r_sign.rect.x, self.r_sign.rect.y = gs_lst[17]
         self.shooter_score = gs_lst[22]
         self.chopper_score = gs_lst[23]
+
+        self.clock.tick()
+        self.fps_txt.text = str(int(self.clock.get_fps()))
+        self.fps_txt.update()
+        self.r_sign.update()
 
     def draw(self):
         self.current_level.draw(self.screen)
