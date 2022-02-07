@@ -31,6 +31,8 @@ CONNECTED = True
 READ_LEN = 100
 GS_READ_LEN = 300  # this is the length to read GameState, to be confirmed
 
+CHOPPER_SCORE_HIT = 3
+SHOOTER_SCORE_HIT = 3
 
 @dataclass
 class GameState:
@@ -51,7 +53,8 @@ class GameState:
     bullet_r3_pos: tuple = DEAD_BULLET_POS  # bullet_r[3] 14
     bullet_r4_pos: tuple = DEAD_BULLET_POS  # bullet_r[4] 15
     moving_block_pos: tuple = DEAD_BLOCK_POS  # 16
-    r_sign_pos: tuple = DEAD_R_POS  # 17
+    r_sign_flg: int = 0  # 17
+    # r_sign_pos: tuple = DEAD_R_POS  # 17
     map_id: int = 0  # 18
     match_id: int = 0  # 19
     level_id: int = 0  # 20

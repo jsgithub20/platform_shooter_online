@@ -81,6 +81,7 @@ class Server:
         fh = handlers.RotatingFileHandler("server_log.txt", "a", 100000, 3)
         fh.setFormatter(format_str)
         self.my_logger.addHandler(fh)
+        self.timer = 0
 
     async def check_read(self, player_name, reader, length, writer):
         # used for read() before the connected player is in a game room
@@ -306,7 +307,7 @@ class Server:
                     routine game loop too soon, refer to comments in self.join() for details
                     """
 
-        while True:  # wait for the 2nd player to join the room
+        while True:  # wait for the 2nd player to join the room and the 1st player to set the game mode
             self.clock.tick(FPS)
             """
             once there are two players in one game room, game_ready for that room is set to 
@@ -347,8 +348,13 @@ class Server:
         self.my_logger.warning(f"{room.player_0_name} is gaming with {room.player_1_name}!")
         while True:  # This is the routine game tick
             self.clock.tick(FPS)
-            r = await self.check_read_room(room, True, False, READ_LEN)
+            actual_fps = int(self.clock.get_fps())
+            actual_tick = int(pygame.time.get_ticks())
+            if actual_fps <= 40 and (actual_tick-self.timer) > 5000:
+                self.timer = actual_tick
+                self.my_logger.warning(f"Slow fps: {actual_fps}")
 
+            r = await self.check_read_room(room, True, False, READ_LEN)
             if not r[0]:
                 r = await self.check_read_room(room, False, True, READ_LEN)
                 if not r[0]:
@@ -357,11 +363,12 @@ class Server:
                     room.player_1_writer.write("Disconnected;".encode())
                     room.player_1_writer.close()
                     await room.player_1_writer.wait_closed()
-                    self.my_logger.warning(f"Game room [{room.room_id}]: {room.player_1_name} is disconnected")
+                    self.my_logger.warning(f"Game room <{room.room_id}>: {room.player_1_name} is disconnected")
                     self.cnt -= 1
                     # await self.disconnect_2nd_player(room, 1)
                     return
             else:
+                # print(f"player0 event: {r[1]}")
                 g.events_str_shooter = r[1]
 
             r = await self.check_read_room(room, False, True, READ_LEN)
@@ -379,6 +386,7 @@ class Server:
                     # await self.disconnect_2nd_player(room, 0)
                     return
             else:
+                # print(f"player1 event: {r[1]}")
                 g.events_str_chopper = r[1]
 
             g.events()
@@ -404,8 +412,7 @@ class Server:
                 gs.moving_block_pos = DEAD_CRATER_POS
             else:
                 gs.moving_block_pos = (g.level02.moving_block.rect.x, g.level02.moving_block.rect.y)
-            gs.r_sign_pos = (g.r_sign.rect.x, g.r_sign.rect.y)
-            print(gs.r_sign_pos)
+            gs.r_sign_flg = g.r_sign_flg
             gs.map_id = g.map_id
             gs.match_id = g.match_id
             gs.level_id = g.current_level_no

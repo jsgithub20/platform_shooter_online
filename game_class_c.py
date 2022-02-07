@@ -171,14 +171,18 @@ class Game:
             self.bullets_r[i].rect.x, self.bullets_r[i].rect.y = gs_lst[i+11]
         if self.current_level_no == 1:
             self.current_level.moving_block.rect.x, self.current_level.moving_block.rect.y = gs_lst[16]
-        self.r_sign.rect.x, self.r_sign.rect.y = gs_lst[17]
-        self.shooter_score = gs_lst[22]
-        self.chopper_score = gs_lst[23]
+        if gs_lst[17]:  # r_sign_flg = 1
+            self.r_sign.rect.midbottom = self.player_shooter.rect.midtop
+        else:  # r_sign_flg = 0
+            self.r_sign.rect.midbottom = (-99, -99)
+
+        # {self.shooter_score} - {MATCH_TYPE_LST[int(self.match_id)]} - {self.chopper_score}
+        self.match_type_txt.text = f"{gs_lst[22]} - {MATCH_TYPE_LST[int(gs_lst[19])]} - {gs_lst[23]}"
+        self.match_type_txt.update()
 
         self.clock.tick()
         self.fps_txt.text = str(int(self.clock.get_fps()))
         self.fps_txt.update()
-        self.r_sign.update()
 
     def draw(self):
         self.current_level.draw(self.screen)

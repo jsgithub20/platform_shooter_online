@@ -49,7 +49,8 @@ class Game:
             self.bullets_r.append(bullet)
 
         # the "R" sign on the shooter's head to indicate it's the reloading time, so it can't shoot
-        self.r_sign = DrawText(self.screen, 10, RED, 0, 0, "r_sign", "R", 0, 10)
+        # self.r_sign = DrawText(self.screen, 10, RED, 0, 0, "r_sign", "R", 0, 10)
+        self.r_sign_flg = 0
         self.snd_yeet = False
 
         self.winner = None
@@ -70,13 +71,12 @@ class Game:
 
         # start a new game
 
-
-            # Create the self.player
+        # Create the self.player
         self.player_shooter = Player()
-        self.player_shooter.hit_limit = 3
+        self.player_shooter.hit_limit = SHOOTER_SCORE_HIT
 
         self.player_chopper = sprite_player_correction.Player()
-        self.player_chopper.hit_limit = 3
+        self.player_chopper.hit_limit = CHOPPER_SCORE_HIT
 
         self.role_lst = [self.player_shooter, self.player_chopper]
 
@@ -109,10 +109,13 @@ class Game:
             self.bullets_r[i].rect.x, self.bullets_r[i].rect.y = DEAD_BULLET_POS
             self.bullets_r[i].level = self.current_level
 
+        self.r_sign_flg = 0
+
         self.active_sprite_grp.add(self.player_shooter, self.player_chopper)
         self.bullet_sprite_grp.add(*self.bullets_r, *self.bullets_l)
 
         # self.run()
+
     #
     # def run(self):
     #     # Game Loop
@@ -145,18 +148,22 @@ class Game:
                 self.player_shooter.image_idx = 0
                 self.player_shooter.loaded -= 1
                 if self.player_shooter.direction == 'l':
-                    self.bullets_l[self.live_bullet_l].rect.x = self.player_shooter.rect.x
-                    self.bullets_l[self.live_bullet_l].rect.y = self.player_shooter.rect.y
-                    self.bullets_l[self.live_bullet_l].live_flag = 1
+                    for bullet in iter(self.bullets_l):
+                        if not bullet.live_flag:
+                            bullet.rect.x = self.player_shooter.rect.x
+                            bullet.rect.y = self.player_shooter.rect.y
+                            bullet.live_flag = 1
+                            break
                     self.player_shooter.attack_flg = 1
-                    self.live_bullet_l += 1
                     # self.snd_yeet.play()
                 else:
-                    self.bullets_r[self.live_bullet_r].rect.x = self.player_shooter.rect.x
-                    self.bullets_r[self.live_bullet_r].rect.y = self.player_shooter.rect.y
-                    self.bullets_r[self.live_bullet_r].live_flag = 1
+                    for bullet in iter(self.bullets_r):
+                        if not bullet.live_flag:
+                            bullet.rect.x = self.player_shooter.rect.x
+                            bullet.rect.y = self.player_shooter.rect.y
+                            bullet.live_flag = 1
+                            break
                     self.player_shooter.attack_flg = 1
-                    self.live_bullet_r += 1
                     # self.snd_yeet.play()
                 # self.bullets.append(bullet)
                 # self.bullet_sprite_grp.add(bullet)
@@ -189,13 +196,10 @@ class Game:
         self.active_sprite_grp.update()
         self.bullet_sprite_grp.update()
 
-        # Update the r_sign to follow the player_shooter
-        if self.player_shooter.reload_timer > 0 and self.r_sign not in self.active_sprite_grp:
-            self.r_sign.rect.midbottom = self.player_shooter.rect.midtop
-            self.active_sprite_grp.add(self.r_sign)
-        elif self.player_shooter.reload_timer == 0 and self.r_sign in self.active_sprite_grp:
-            self.r_sign.rect.midbottom = DEAD_R_POS
-            self.active_sprite_grp.remove(self.r_sign)
+        if self.player_shooter.reload_timer > 0 and not self.r_sign_flg:
+            self.r_sign_flg = 1
+        elif self.player_shooter.reload_timer == 0 and self.r_sign_flg:
+            self.r_sign_flg = 0
 
         if self.player_chopper in self.active_sprite_grp:
             bullet_hit_chopper = pg.sprite.spritecollideany(self.player_chopper, self.bullet_sprite_grp)

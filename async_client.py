@@ -154,7 +154,8 @@ class Network:
             self.writer.write(self.events_str.encode())
             # await self.writer.drain()  # .drain() doesn't help when written content is short
             # start = perf_counter()
-            r = await self.check_read(GS_READ_LEN)  # why can't read?
+            r = await self.check_read(GS_READ_LEN)
+            # print(r)
             if not r[0]:  # return connected, string
                 return
             # print(perf_counter() - start)
