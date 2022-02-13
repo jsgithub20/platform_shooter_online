@@ -51,6 +51,7 @@ class RoomState:
     player_1_task_name: str = ""
     map_id: int = 0
     match_id: int = 0
+    running = False
 
     def check_ready(self):
         return self.player_joined and self.game_set
@@ -320,6 +321,7 @@ class Server:
                     self.my_logger.warning(f"Player '{room.player_1_name}' joined player '{room.player_0_name}''s game")
                     return  # the task (for player_1) is returned (completed) once player_1 is in the room
                 # data = "Game Ready".encode()
+                room.running = True
                 room.player_0_writer.write(
                     f"Game Ready,{room.player_1_name},{room.map_id},{room.match_id},{room.player_0_role_id};".encode())
                 room.player_1_writer.write(
@@ -339,14 +341,15 @@ class Server:
                         room.player_0_role_id = info[3]
                         room.game_set = True
 
-        await self.game(room)  # this is the routine game tick
+        if room.running:
+            await self.game(room)  # this is the routine game tick
 
     async def game(self, room):
         g = game_class_s.Game(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
         g.new()
         gs = GameState()
         self.my_logger.warning(f"{room.player_0_name} is gaming with {room.player_1_name}!")
-        while True:  # This is the routine game tick
+        while g.playing:  # This is the routine game tick
             self.clock.tick(FPS)
             actual_fps = int(self.clock.get_fps())
             actual_tick = int(pygame.time.get_ticks())
