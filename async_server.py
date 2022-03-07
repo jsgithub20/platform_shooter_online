@@ -52,6 +52,7 @@ class RoomState:
     map_id: int = 0
     match_id: int = 0
     running = False
+    winner = None  # the winner name of the round
 
     def check_ready(self):
         return self.player_joined and self.game_set
@@ -343,6 +344,7 @@ class Server:
 
         if room.running:
             await self.game(room)  # this is the routine game tick
+            print(f"{room.winner} wins!")
 
     async def game(self, room):
         g = game_class_s.Game(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
@@ -355,7 +357,7 @@ class Server:
             actual_tick = int(pygame.time.get_ticks())
             if actual_fps <= 40 and (actual_tick-self.timer) > 5000:
                 self.timer = actual_tick
-                self.my_logger.warning(f"Slow fps: {actual_fps}")
+                self.my_logger.warning(f"Low fps: {actual_fps}")
 
             r = await self.check_read_room(room, True, False, READ_LEN)
             if not r[0]:
@@ -430,6 +432,8 @@ class Server:
             # room.player_0_writer.write(compressed_send_byte)
             room.player_1_writer.write(send_byte)
             # room.player_1_writer.write(compressed_send_byte)
+
+        room.winner = g.winner
 
     def handle_exception(self, loop, context):
         # context["message"] will always be there; but context["exception"] may not

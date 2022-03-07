@@ -343,10 +343,10 @@ class Menu:
             try:
                 self.gs_lst = self.connection.game_state.get(timeout=1)
             except queue.Empty:
+                # TODO: code to acknowledge the player and ask for input
                 print("Connection issue")
                 g.playing = False
                 pass
-                # TODO: code to acknowledge the player and ask for input
 
             g.update_game_state(self.gs_lst)
             g.draw()
