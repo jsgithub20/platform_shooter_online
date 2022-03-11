@@ -211,20 +211,22 @@ class Game:
                 if self.player_chopper.hit_count == self.player_chopper.hit_limit:
                     # self.active_sprite_grp.remove(self.player_chopper)
                     self.match_score["shooter"] += 1
+                    self.player_chopper.hit_count = 0
                     self.winner, self.playing = self.check_winner()
-                    if self.winner is None:
-                        self.restart()
+                    # if self.winner is None:
+                    #     self.restart()
 
             if pg.sprite.collide_rect(self.player_shooter, self.player_chopper):
                 if self.player_shooter.hit_flag == 0 and self.player_chopper.chop_flag == 1:
                     self.player_shooter.hit_flag = 1
                     self.player_shooter.hit_count += 1
-                    if self.player_shooter.hit_count >= self.player_shooter.hit_limit:
+                    if self.player_shooter.hit_count == self.player_shooter.hit_limit:
                         # self.active_sprite_grp.remove(self.player_shooter)
                         self.match_score["chopper"] += 1
+                        self.player_shooter.hit_count = 0
                         self.winner, self.playing = self.check_winner()
-                        if self.winner is None:
-                            self.restart()
+                        # if self.winner is None:
+                        #     self.restart()
 
                 elif self.player_shooter.hit_flag == 1 and self.player_chopper.chop_flag == 0:
                     self.player_shooter.hit_flag = 0
@@ -240,6 +242,7 @@ class Game:
 
     def check_winner(self):
         # return the winner role (if game over) or None, and a bool value for self.playing
+        self.match_score["match_type"] = MATCH_TYPE_LST[self.match_id]
         if self.match_score["match_type"] == MATCH_TYPE_LST[0]:
             # death match
             if self.match_score["shooter"] == 1:

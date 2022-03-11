@@ -78,7 +78,8 @@ import asyncio
 # # print(len(data))
 #
 string = "Disconnected"
-string_enc = string.encode()
-
-d_s = list(json.loads(string_enc.decode()))
-print(d_s)
+# string_enc = string.encode()
+#
+# d_s = list(json.loads(string_enc.decode()))
+# print(d_s)
+print(string+";")

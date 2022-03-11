@@ -62,29 +62,29 @@ class Network:
         self.reader, self.writer = await asyncio.open_connection(self.server_ip, self.server_port)
         # id_data = await self.reader.read(100)
         # self.client_id = id_data.decode()
-        self.writer.write(f"{conn_type},{self.player_name}".encode())
+        self.writer.write(f"{conn_type},{self.player_name};".encode())
         r = await self.check_read(READ_LEN)
         if r[0]:  # return connected, string
             if r[1] != "ok":  # if server doesn't send back "ok", there should be some connection issue
                 print("Server error")
-        self.writer.write(f"{conn_type},{self.player_name}".encode())  # just to complete the r/w cycle
+        self.writer.write(f"{conn_type},{self.player_name};".encode())  # just to complete the r/w cycle
         r = await self.check_read(READ_LEN)
         if r[0]:  # return connected, string
             self.client_id = r[1]
 
     async def create(self):  # create a new game room
         conn_type = "create"
-        self.writer.write(f"{conn_type},{self.player_name}".encode())
+        self.writer.write(f"{conn_type},{self.player_name};".encode())
 
     async def join(self):
         conn_type = "join"
-        self.writer.write(f"{conn_type},{self.player_name}".encode())
+        self.writer.write(f"{conn_type},{self.player_name};".encode())
         # await self.client()
         print(f"This is 'join' client# {self.client_id}")
         await self.get_games()
 
     async def send_room_choice(self, room):  # room = [player0_name, game_ready, room_id]
-        self.writer.write(f"{room[2]}".encode())
+        self.writer.write(f"{room[2]};".encode())
 
     async def get_games(self):
         r = await self.check_read(READ_LEN)
@@ -93,7 +93,7 @@ class Network:
             return
         else:
             length = r[1]
-        self.writer.write("ok".encode())  # just to complete a r/w cycle before receiving the next data
+        self.writer.write("ok;".encode())  # just to complete a r/w cycle before receiving the next data
         r = await self.check_read(int(length))
         if not r[0]:  # return connected, string
             print("Connection issue to server during get_games")
@@ -104,7 +104,7 @@ class Network:
         self.game_rooms = list(json.loads(rooms_string))  # [[player0_name, game_ready, room_id],]
 
     async def refresh(self):
-        self.writer.write("-99".encode())  # "-99" to represent a null message to allow server to still use int[] method
+        self.writer.write("-99;".encode())  # "-99" to represent a null message to allow server to still use int[] method
         await self.get_games()
 
     async def client(self):
@@ -118,7 +118,7 @@ class Network:
                 self.opponent_name = self.server_msg[1]
                 break
             else:
-                send_str = f"{self.game_setting[0]},{self.game_setting[1]},{self.game_setting[2]},{self.game_setting[3]}"
+                send_str = f"{self.game_setting[0]},{self.game_setting[1]},{self.game_setting[2]},{self.game_setting[3]};"
                 self.writer.write(send_str.encode())
 
         while True:  # this is the routine game tick
@@ -147,11 +147,11 @@ class Network:
                 self.game_ready = True
                 break
             else:
-                send_str = f"{self.game_setting[0]},{self.game_setting[1]},{self.game_setting[2]},{self.game_setting[3]}"
+                send_str = f"{self.game_setting[0]},{self.game_setting[1]},{self.game_setting[2]},{self.game_setting[3]};"
                 self.writer.write(send_str.encode())
 
         while True:  # this is the routine game tick
-            self.writer.write(self.events_str.encode())
+            self.writer.write((self.events_str+";").encode())
             # await self.writer.drain()  # .drain() doesn't help when written content is short
             # start = perf_counter()
             r = await self.check_read(GS_READ_LEN)
@@ -183,7 +183,8 @@ class Network:
 
     def pos2str(self, pos: list):
         # the returned string is like "100,100" from tuple (100, 100)
-        return ','.join(map(str, pos))
+        result = ','.join(map(str, pos))
+        return result + ";"
 
     def str2pos(self, string: str):
         # string must be "100,100" or "100, 100" which will be converted to (100, 100)

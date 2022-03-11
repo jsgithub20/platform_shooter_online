@@ -90,8 +90,9 @@ class Server:
         string = None
         connected = CONNECTED
         try:
-            received = await reader.read(length)
-            string = received.decode()
+            # received = await reader.read(length)
+            received = await reader.readuntil(separator=b";")
+            string = received.decode().split(";")[0]
         except ConnectionError:
             self.cnt -= 1
             self.my_logger.warning(
@@ -125,8 +126,9 @@ class Server:
             writer = room.player_1_writer
 
         try:
-            received = await reader.read(length)
-            string = received.decode()
+            # received = await reader.read(length)
+            received = await reader.readuntil(separator=b";")
+            string = received.decode().split(";")[0]
         except ConnectionError:
             self.cnt -= 1
             self.my_logger.warning(
@@ -205,7 +207,7 @@ class Server:
                 player_joined can't be set true here, otherwise player0 will start to write to player1's writer too
                 soon to cause the "mark 1" read() below read more bytes in the buffer from player1' reader because the
                 player1 client writes the "events" info. Best way could be using reader.readuntil() with a seperator
-                letter (e.g. ";"), to be tested.
+                letter (e.g. ";"), tested working without turn on/off confirmation.
                 """
                 self.game_dict[chosen_room_id].player_1_name = player_name
                 self.game_dict[chosen_room_id].player_1_reader = reader
@@ -238,8 +240,10 @@ class Server:
         player_name = None
 
         try:  # initial read() needs different handling than self.check_read
-            received = await reader.read(READ_LEN)
-            player_info = received.decode().split(",")  # "{conn_type},{self.player_name}"
+            # received = await reader.read(READ_LEN)
+            received = await reader.readuntil(separator=b";")
+            temp = received.decode().split(";")[0]
+            player_info = temp.split(",")  # "{conn_type},{self.player_name}"
         except ConnectionError:
             self.my_logger.warning(
                 f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
@@ -262,7 +266,8 @@ class Server:
             writer.write("ok;".encode())  # for client to confirm successful handshake
 
             try:  # initial read() needs different handling than self.check_read, this is just for r/w cycle
-                received = await reader.read(READ_LEN)
+                # received = await reader.read(READ_LEN)
+                received = await reader.readuntil(separator=b";")
             except ConnectionError:
                 self.my_logger.warning(
                     f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
@@ -349,6 +354,8 @@ class Server:
     async def game(self, room):
         g = game_class_s.Game(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
         g.new()
+        g.map_id = int(room.map_id)
+        g.match_id = int(room.match_id)
         gs = GameState()
         self.my_logger.warning(f"{room.player_0_name} is gaming with {room.player_1_name}!")
         while g.playing:  # This is the routine game tick
@@ -373,7 +380,6 @@ class Server:
                     # await self.disconnect_2nd_player(room, 1)
                     return
             else:
-                # print(f"player0 event: {r[1]}")
                 g.events_str_shooter = r[1]
 
             r = await self.check_read_room(room, False, True, READ_LEN)
