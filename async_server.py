@@ -351,6 +351,10 @@ class Server:
             await self.game(room)  # this is the routine game tick
             print(f"{room.winner} wins!")
 
+    async def new_selection(self, room):
+        while
+
+
     async def game(self, room):
         g = game_class_s.Game(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
         g.new()
