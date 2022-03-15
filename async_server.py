@@ -149,7 +149,56 @@ class Server:
                 if room.room_id in self.game_dict:
                     self.game_dict.pop(room.room_id)
                 connected = not CONNECTED
-        return connected, string
+        return connected, list(string)
+
+    # async def check_read_room1(self, room: RoomState):
+    #     # used for read() after the connected player is in a game room
+    #     string = None
+    #     reader = None
+    #     writer = None
+    #     player_name = ""
+    #     connected = CONNECTED
+    #
+    #     async def room_reader(i):
+    #         try:
+    #             # received = await reader.read(length)
+    #             received = await reader.readuntil(separator=b";")
+    #             string = received.decode().split(";")[0]
+    #         except ConnectionError:
+    #             self.cnt -= 1
+    #             self.my_logger.warning(
+    #                 f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
+    #             # writer.close() is not needed because the writer is already closed
+    #             # await writer.wait_closed(): this line could never be returned when the writer is already closed
+    #             if room.room_id in self.game_dict:
+    #                 self.game_dict.pop(room.room_id)
+    #             connected = not CONNECTED
+    #         else:  # if the connection is properly connected, there will be no ConnectionError exception raised
+    #             if not received:
+    #                 self.cnt -= 1
+    #                 self.my_logger.warning(
+    #                     f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
+    #                 if not writer.is_closing():
+    #                     writer.close()
+    #                     await writer.wait_closed()
+    #                 if room.room_id in self.game_dict:
+    #                     self.game_dict.pop(room.room_id)
+    #                 connected = not CONNECTED
+    #
+    #     for i in range(2):
+    #
+    #
+    #     if player0:
+    #         player_name = room.player_0_name
+    #         reader = room.player_0_reader
+    #         writer = room.player_0_writer
+    #     elif player1:
+    #         player_name = room.player_1_name
+    #         reader = room.player_1_reader
+    #         writer = room.player_1_writer
+    #
+    #
+    #     return connected, list(string)
 
     async def disconnect_2nd_player(self, room, player_bool):  # player_bool: 0 - player0, 1-player1
         writer = None
@@ -340,7 +389,7 @@ class Server:
                 if not r[0]:  # return connected, string
                     return
                 else:
-                    info = r[1].split(",")
+                    info = list(r[1])
                     if info[0] == "1":  # ready, map_id, match_id, role_id
                         room.map_id = info[1]
                         room.match_id = info[2]
@@ -351,8 +400,8 @@ class Server:
             await self.game(room)  # this is the routine game tick
             print(f"{room.winner} wins!")
 
-    async def new_selection(self, room):
-        while
+    # async def new_selection(self, room):
+    #     while not room.check_ready():
 
 
     async def game(self, room):
@@ -384,7 +433,7 @@ class Server:
                     # await self.disconnect_2nd_player(room, 1)
                     return
             else:
-                g.events_str_shooter = r[1]
+                g.events_lst_shooter = r[1]
 
             r = await self.check_read_room(room, False, True, READ_LEN)
             if not r[0]:
@@ -402,7 +451,7 @@ class Server:
                     return
             else:
                 # print(f"player1 event: {r[1]}")
-                g.events_str_chopper = r[1]
+                g.events_lst_chopper = r[1]
 
             g.events()
             g.update()

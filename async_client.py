@@ -118,7 +118,7 @@ class Network:
                 self.opponent_name = self.server_msg[1]
                 break
             else:
-                send_str = f"{self.game_setting[0]},{self.game_setting[1]},{self.game_setting[2]},{self.game_setting[3]};"
+                send_str = f"{self.game_setting[0]}{self.game_setting[1]}{self.game_setting[2]}{self.game_setting[3]};"
                 self.writer.write(send_str.encode())
 
         while True:  # this is the routine game tick
@@ -147,7 +147,7 @@ class Network:
                 self.game_ready = True
                 break
             else:
-                send_str = f"{self.game_setting[0]},{self.game_setting[1]},{self.game_setting[2]},{self.game_setting[3]};"
+                send_str = f"{self.game_setting[0]}{self.game_setting[1]}{self.game_setting[2]}{self.game_setting[3]};"
                 self.writer.write(send_str.encode())
 
         while True:  # this is the routine game tick

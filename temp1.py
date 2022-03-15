@@ -36,23 +36,25 @@
 # "TCAGCACCATGACCGCCTGGCCACCAATCGCCCGTAACAAGCGGGACGTCCGCGACGACGCGTGCGCTAGCGCCGTGGCGGTGACAACGACCAGATATGGTCCGAGCACGCGGGCGAACCTCGTGTTCTGGCCTCGGCCAGTTGTGTAGAGCTCATCGCTGTCATCGAGCGATATCCGACCACTGATCCAAGTCGGGGGCTCTGGGGACCGAAGTCCCCGGGCTCGGAGCTATCGGACCTCACGATCACC"]
 # print(len(dna))
 
-p = {'A': 0.1, 'C': 0.1, 'G': 0.1, 'T': 0.1}
+# p = {'A': 0.1, 'C': 0.1, 'G': 0.1, 'T': 0.1}
+#
+# keys = [k for k in p]
+# print(keys)
+#
+# values = [v for v in p.values()]
+# # print(values)
+#
+# sum = 0
+# for v in p.values():
+#     sum += v
+#
+# # print(sum)
+#
+# kv = [(k, v) for k, v in p.items()]
+# # for k, v in p.items():
+# #     kv =
+#
+# print(kv)
 
-keys = [k for k in p]
-print(keys)
-
-values = [v for v in p.values()]
-# print(values)
-
-sum = 0
-for v in p.values():
-    sum += v
-
-# print(sum)
-
-kv = [(k, v) for k, v in p.items()]
-# for k, v in p.items():
-#     kv =
-
-print(kv)
-
+for i in range(2):
+    print(i)

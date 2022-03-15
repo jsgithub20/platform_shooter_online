@@ -33,6 +33,8 @@ class Game:
         """
         self.events_str_shooter = "0000000"
         self.events_str_chopper = "0000000"
+        self.events_lst_shooter = list(self.events_str_shooter)
+        self.events_lst_chopper = list(self.events_str_chopper)
 
         self.current_level = None
 
@@ -127,11 +129,11 @@ class Game:
 
     def events(self):
         # Game Loop - events
-        lst_s = list(self.events_str_shooter)
-        lst_c = list(self.events_str_chopper)
+        # lst_s = list(self.events_str_shooter)
+        # lst_c = list(self.events_str_chopper)
 
-        events_lst_shooter = [int(item) for item in lst_s]
-        events_lst_chopper = [int(item) for item in lst_c]
+        events_lst_shooter = [int(item) for item in self.events_lst_shooter]
+        events_lst_chopper = [int(item) for item in self.events_lst_chopper]
 
         if events_lst_shooter[0] or events_lst_chopper[0]:
             if self.playing:
