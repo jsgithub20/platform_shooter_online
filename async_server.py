@@ -36,19 +36,15 @@ LEVEL_STYLES = {'critical': {'bold': True, 'color': 'red'},
 
 @dataclass
 class RoomState:
+    # player0: player[0], player1: player[1]
+    player_names: list[str]  # name:str, room name will be f"{player_name[0]}'s game"
+    player_role_ids: list[int]
+    player_readers: list[None]
+    player_writers: list[None]
+    player_task_names: list[str]
     room_id: int = 0
     player_joined: bool = False  # True if the chosen game room is received from 2nd player
     game_set: bool = False  # True if player0 finished setting map, match, role
-    player_0_name: str = ""  # room name will be f"{player_0_name}'s game"
-    player_0_role_id: int = 0
-    player_1_name: str = ""
-    player_1_role_id: int = 0
-    player_0_reader: Any = None
-    player_0_writer: Any = None
-    player_0_task_name: str = ""
-    player_1_reader: Any = None
-    player_1_writer: Any = None
-    player_1_task_name: str = ""
     map_id: int = 0
     match_id: int = 0
     running = False
@@ -117,11 +113,11 @@ class Server:
         player_name = ""
         connected = CONNECTED
         if player0:
-            player_name = room.player_0_name
+            player_name = room.player_names[0]
             reader = room.player_0_reader
             writer = room.player_0_writer
         elif player1:
-            player_name = room.player_1_name
+            player_name = room.player_names[1]
             reader = room.player_1_reader
             writer = room.player_1_writer
 
@@ -189,11 +185,11 @@ class Server:
     #
     #
     #     if player0:
-    #         player_name = room.player_0_name
+    #         player_name = room.player_names[0]
     #         reader = room.player_0_reader
     #         writer = room.player_0_writer
     #     elif player1:
-    #         player_name = room.player_1_name
+    #         player_name = room.player_names[1]
     #         reader = room.player_1_reader
     #         writer = room.player_1_writer
     #
@@ -205,10 +201,10 @@ class Server:
         player_name = ""
         if player_bool:  # if player1 to be disconnected
             writer = room.player_1_writer
-            player_name = room.player_1_name
+            player_name = room.player_names[1]
         else:
             writer = room.player_0_writer
-            player_name = room.player_0_name
+            player_name = room.player_names[0]
         writer.write("Disconnected;".encode())
         writer.close()
         await writer.wait_closed()
@@ -221,7 +217,7 @@ class Server:
         self.room_id += 1
         room = RoomState()
         room.room_id = self.room_id
-        room.player_0_name = player_name
+        room.player_names[0] = player_name
         room.player_0_reader = reader
         room.player_0_writer = writer
         self.game_dict[self.room_id] = room
@@ -234,7 +230,7 @@ class Server:
             self.clock.tick(FPS)
             # sending room list to the client, no matter full or not [[player0_name, game_ready, room_id],]
             # if game_dict is empty, an empty list will be assigned to "rooms_lst" and no exception will be raised
-            rooms_lst = [[self.game_dict[room_id].player_0_name, self.game_dict[room_id].check_ready(), room_id]
+            rooms_lst = [[self.game_dict[room_id].player_names[0], self.game_dict[room_id].check_ready(), room_id]
                          for room_id in [*self.game_dict]]
             if not rooms_lst:
                 rooms_lst = [["no game", False, 0]]
@@ -258,12 +254,12 @@ class Server:
                 player1 client writes the "events" info. Best way could be using reader.readuntil() with a seperator
                 letter (e.g. ";"), tested working without turn on/off confirmation.
                 """
-                self.game_dict[chosen_room_id].player_1_name = player_name
+                self.game_dict[chosen_room_id].player_names.append(player_name)
                 self.game_dict[chosen_room_id].player_1_reader = reader
                 self.game_dict[chosen_room_id].player_1_writer = writer
                 chosen_room = self.game_dict[chosen_room_id]
                 while not chosen_room.game_set:  # meaning player0 has not finished setting game yet
-                    writer.write(f"{self.game_dict[chosen_room_id].player_0_name} is not ready yet, please wait...;".encode())
+                    writer.write(f"{self.game_dict[chosen_room_id].player_names[0]} is not ready yet, please wait...;".encode())
                     r = await self.check_read(player_name, reader, READ_LEN, writer)  # return connected, string
                     if not r[0]:
                         return not CONNECTED, chosen_room_id
@@ -373,14 +369,14 @@ class Server:
             """
             if room.check_ready():
                 if player_id == 1:  # player_id = 1 means this is the task for player_1
-                    self.my_logger.warning(f"Player '{room.player_1_name}' joined player '{room.player_0_name}''s game")
+                    self.my_logger.warning(f"Player '{room.player_names[1]}' joined player '{room.player_names[0]}''s game")
                     return  # the task (for player_1) is returned (completed) once player_1 is in the room
                 # data = "Game Ready".encode()
                 room.running = True
                 room.player_0_writer.write(
-                    f"Game Ready,{room.player_1_name},{room.map_id},{room.match_id},{room.player_0_role_id};".encode())
+                    f"Game Ready,{room.player_names[1]},{room.map_id},{room.match_id},{room.player_0_role_id};".encode())
                 room.player_1_writer.write(
-                    f"Game Ready,{room.player_0_name},{room.map_id},{room.match_id},{room.player_1_role_id};".encode())
+                    f"Game Ready,{room.player_names[0]},{room.map_id},{room.match_id},{room.player_1_role_id};".encode())
                 break  # break current while loop to start the routine game tick
             else:  # if game_ready is False, it means there is only player_0 in the game room
                 data = f"New game is created, waiting for the second player to join...;".encode()
@@ -410,7 +406,7 @@ class Server:
         g.map_id = int(room.map_id)
         g.match_id = int(room.match_id)
         gs = GameState()
-        self.my_logger.warning(f"{room.player_0_name} is gaming with {room.player_1_name}!")
+        self.my_logger.warning(f"{room.player_names[0]} is gaming with {room.player_names[1]}!")
         while g.playing:  # This is the routine game tick
             self.clock.tick(FPS)
             actual_fps = int(self.clock.get_fps())
@@ -428,7 +424,7 @@ class Server:
                     room.player_1_writer.write("Disconnected;".encode())
                     room.player_1_writer.close()
                     await room.player_1_writer.wait_closed()
-                    self.my_logger.warning(f"Game room <{room.room_id}>: {room.player_1_name} is disconnected")
+                    self.my_logger.warning(f"Game room <{room.room_id}>: {room.player_names[1]} is disconnected")
                     self.cnt -= 1
                     # await self.disconnect_2nd_player(room, 1)
                     return
@@ -444,7 +440,7 @@ class Server:
                     room.player_0_writer.write("Disconnected;".encode())
                     room.player_0_writer.close()
                     await room.player_0_writer.wait_closed()
-                    self.my_logger.warning(f"Game room [{room.room_id}]: {room.player_0_name} is disconnected")
+                    self.my_logger.warning(f"Game room [{room.room_id}]: {room.player_names[0]} is disconnected")
                     self.cnt -= 1
                     print(f"total connection: {self.cnt}")
                     # await self.disconnect_2nd_player(room, 0)

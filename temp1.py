@@ -55,6 +55,23 @@
 # #     kv =
 #
 # print(kv)
+from dataclasses import dataclass, field
 
-for i in range(2):
-    print(i)
+@dataclass
+class RoomState:
+    # player0: player[0], player1: player[1]
+    room_id: int = 0
+    player_joined: bool = False  # True if the chosen game room is received from 2nd player
+    game_set: bool = False  # True if player0 finished setting map, match, role
+    map_id: int = 0
+    match_id: int = 0
+    running = False
+    winner = None  # the winner name of the round
+    player_names: list[str] = field(default_factory=list)  # name:str, room name will be f"{player_name[0]}'s game"
+
+rs = RoomState()
+
+rs.player_names.append("aaa")
+rs.player_names.append("bbb")
+
+print(rs)
