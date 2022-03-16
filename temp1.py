@@ -57,21 +57,37 @@
 # print(kv)
 from dataclasses import dataclass, field
 
-@dataclass
-class RoomState:
-    # player0: player[0], player1: player[1]
-    room_id: int = 0
-    player_joined: bool = False  # True if the chosen game room is received from 2nd player
-    game_set: bool = False  # True if player0 finished setting map, match, role
-    map_id: int = 0
-    match_id: int = 0
-    running = False
-    winner = None  # the winner name of the round
-    player_names: list[str] = field(default_factory=list)  # name:str, room name will be f"{player_name[0]}'s game"
+# @dataclass
+# class RoomState:
+#     # player0: player[0], player1: player[1]
+#     room_id: int = 0
+#     player_joined: bool = False  # True if the chosen game room is received from 2nd player
+#     game_set: bool = False  # True if player0 finished setting map, match, role
+#     map_id: int = 0
+#     match_id: int = 0
+#     running = False
+#     winner = None  # the winner name of the round
+#     player_names: list[str] = field(default_factory=list)  # name:str, room name will be f"{player_name[0]}'s game"
+#
+# rs = RoomState()
+#
+# rs.player_names.append("aaa")
+# rs.player_names.append("bbb")
 
-rs = RoomState()
 
-rs.player_names.append("aaa")
-rs.player_names.append("bbb")
+class Test:
+    def __init__(self):
+        self.self_var = "self_var"
 
-print(rs)
+    def foo(self, room):
+        i = 1
+
+        def bar():
+            print(f"room = {room} in def bar(i)")
+            print(f"i = {i}")
+            print(f"self.self_var = {self.self_var}")
+        a = bar()
+
+
+c = Test()
+f = c.foo("test_room")
