@@ -105,49 +105,50 @@ class Server:
                 connected = not CONNECTED
         return connected, string
 
-    async def check_read_room(self, room: RoomState, player0: bool, player1: bool, length: int):
-        # used for read() after the connected player is in a game room
-        string = None
-        reader = None
-        writer = None
-        player_name = ""
-        connected = CONNECTED
-        if player0:
-            player_name = room.player_names[0]
-            reader = room.player_readers[0]
-            writer = room.player_writers[0]
-        elif player1:
-            player_name = room.player_names[1]
-            reader = room.player_readers[1]
-            writer = room.player_writers[1]
+    # this method (check_read_room) is replaced by the method with same name to reduce the lines
+    # async def check_read_room(self, room: RoomState, player0: bool, player1: bool, length: int):
+    #     # used for read() after the connected player is in a game room
+    #     string = None
+    #     reader = None
+    #     writer = None
+    #     player_name = ""
+    #     connected = CONNECTED
+    #     if player0:
+    #         player_name = room.player_names[0]
+    #         reader = room.player_readers[0]
+    #         writer = room.player_writers[0]
+    #     elif player1:
+    #         player_name = room.player_names[1]
+    #         reader = room.player_readers[1]
+    #         writer = room.player_writers[1]
+    #
+    #     try:
+    #         # received = await reader.read(length)
+    #         received = await reader.readuntil(separator=b";")
+    #         string = received.decode().split(";")[0]
+    #     except ConnectionError:
+    #         self.cnt -= 1
+    #         self.my_logger.warning(
+    #             f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
+    #         # writer.close() is not needed because the writer is already closed
+    #         # await writer.wait_closed(): this line could never be returned when the writer is already closed
+    #         if room.room_id in self.game_dict:
+    #             self.game_dict.pop(room.room_id)
+    #         connected = not CONNECTED
+    #     else:  # if the connection is properly connected, there will be no ConnectionError exception raised
+    #         if not received:
+    #             self.cnt -= 1
+    #             self.my_logger.warning(
+    #                 f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
+    #             if not writer.is_closing():
+    #                 writer.close()
+    #                 await writer.wait_closed()
+    #             if room.room_id in self.game_dict:
+    #                 self.game_dict.pop(room.room_id)
+    #             connected = not CONNECTED
+    #     return connected, list(string)
 
-        try:
-            # received = await reader.read(length)
-            received = await reader.readuntil(separator=b";")
-            string = received.decode().split(";")[0]
-        except ConnectionError:
-            self.cnt -= 1
-            self.my_logger.warning(
-                f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
-            # writer.close() is not needed because the writer is already closed
-            # await writer.wait_closed(): this line could never be returned when the writer is already closed
-            if room.room_id in self.game_dict:
-                self.game_dict.pop(room.room_id)
-            connected = not CONNECTED
-        else:  # if the connection is properly connected, there will be no ConnectionError exception raised
-            if not received:
-                self.cnt -= 1
-                self.my_logger.warning(
-                    f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
-                if not writer.is_closing():
-                    writer.close()
-                    await writer.wait_closed()
-                if room.room_id in self.game_dict:
-                    self.game_dict.pop(room.room_id)
-                connected = not CONNECTED
-        return connected, list(string)
-
-    async def check_read_room1(self, room: RoomState):
+    async def check_read_room(self, room: RoomState):
         # used for read() after the connected player is in a game room
         string_lists = [[], []]
         connected = CONNECTED
@@ -164,13 +165,13 @@ class Server:
                 # receiving event strings or game setting strings
                 received = await room.player_readers[i].readuntil(separator=b";")
                 string_lists[i] = list(received.decode().split(";")[0])
-            except ConnectionError:
+            except asyncio.IncompleteReadError:
                 reduce_player()
                 # writer.close() is not needed because the writer is already closed
                 # await writer.wait_closed(): this line could never be returned when the writer is already closed
                 connected = not CONNECTED
             else:  # if the connection is properly connected, there will be no ConnectionError exception raised
-                if not received:
+                if string_lists[i][0] == "1":  # player quit the game normally
                     if not room.player_writers[i].is_closing():
                         room.player_writers[i].close()
                         await room.player_writers[i].wait_closed()
@@ -181,7 +182,7 @@ class Server:
                 try:
                     # check if the other player is still connected or not
                     await room.player_readers[i].readuntil(separator=b";")
-                except ConnectionError:
+                except asyncio.IncompleteReadError:
                     # writer.close() is not needed because the writer is already closed
                     # await writer.wait_closed(): this line could never be returned when the writer is already closed
                     pass
@@ -191,7 +192,7 @@ class Server:
                     await room.player_writers[i].wait_closed()
                 finally:
                     reduce_player()
-                    return
+                    return connected, string_lists
 
         return connected, string_lists
 
@@ -395,9 +396,13 @@ class Server:
                 self.timer = actual_tick
                 self.my_logger.warning(f"Low fps: {actual_fps}")
 
-            string_lists = await self.check_read_room1(room)
-            g.events_lst_shooter = string_lists[1][0]
-            g.events_lst_chopper = string_lists[1][1]
+            r = await self.check_read_room(room)
+            if not r[0]:
+                self.my_logger.warning(f"Connection issue to player(s): "
+                                       f"{room.player_names}, game room is being closed!")
+                return
+            g.events_lst_shooter = r[1][0]
+            g.events_lst_chopper = r[1][1]
 
             g.events()
             g.update()
