@@ -61,3 +61,4 @@ class GameState:
     round: int = 0  # 21
     shooter_score: int = 0  # 22
     chopper_score: int = 0  # 23
+    winner: str = "nobody"  # 24

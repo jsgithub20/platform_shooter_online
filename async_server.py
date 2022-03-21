@@ -165,7 +165,7 @@ class Server:
                 # receiving event strings or game setting strings
                 received = await room.player_readers[i].readuntil(separator=b";")
                 string_lists[i] = list(received.decode().split(";")[0])
-            except asyncio.IncompleteReadError:
+            except (ConnectionError, asyncio.IncompleteReadError):
                 reduce_player()
                 # writer.close() is not needed because the writer is already closed
                 # await writer.wait_closed(): this line could never be returned when the writer is already closed
@@ -182,7 +182,7 @@ class Server:
                 try:
                     # check if the other player is still connected or not
                     await room.player_readers[i].readuntil(separator=b";")
-                except asyncio.IncompleteReadError:
+                except (ConnectionError, asyncio.IncompleteReadError):
                     # writer.close() is not needed because the writer is already closed
                     # await writer.wait_closed(): this line could never be returned when the writer is already closed
                     pass
@@ -220,12 +220,15 @@ class Server:
             if not rooms_lst:
                 rooms_lst = [["no game", False, 0]]
             rooms_lst_enc = (json.dumps(rooms_lst)+";").encode()
+            """
             length = len(rooms_lst_enc)
             writer.write((str(length)+";").encode())  # send the receiving length first
             # this will be "ok" returned from client, just to complete a r/w cycle
+            
             r = await self.check_read(player_name, reader, writer)  # return connected, string
             if not r[0]:
                 return not CONNECTED, chosen_room_id
+            """
             writer.write(rooms_lst_enc)
             r = await self.check_read(player_name, reader, writer)  # return connected, string
             if not r[0]:
@@ -377,15 +380,53 @@ class Server:
                         room.player_0_role_id = info[3]
                         room.game_set = True
 
-        if room.running:
-            await self.game(room)  # this is the routine game tick
-            print(f"{room.winner} wins!")
+        g = game_class_s.Game(
+            self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, int(room.map_id), 0, int(room.match_id))  # map_id, level_id, match_id
 
-    async def game(self, room):
-        g = game_class_s.Game(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+        while room.running:
+            await self.game(room, g)  # this is the routine game tick
+            print(f"{room.winner} wins!")
+            await self.re_select(room)
+
+    async def re_select(self, room: RoomState):
+        print("reselect start")
+
+        room.winner = "nobody"
+        room.game_set = False
+        i = 1
+        while not room.check_ready():
+            self.clock.tick(FPS)
+            r = await self.check_read_room(room)
+            if not r[0]:
+                return
+            else:
+                info = r[1][0]  # [[(read player0)], [(read player1)]]
+                if info[0] == "1":  # ready, map_id, match_id, role_id
+                    room.map_id = info[1]
+                    room.match_id = info[2]
+                    room.player_role_ids[0] = info[3]
+                    room.game_set = True
+            room.player_writers[0].write(
+                f"re-selecting;".encode())
+            room.player_writers[1].write(
+                f"re-selecting;".encode())
+            i += 1
+
+        r = await self.check_read_room(room)
+        if not r[0]:
+            return
+
+        room.player_writers[0].write(
+            f"Game Ready,{room.player_names[1]},{room.map_id},{room.match_id},{room.player_role_ids[0]};".encode())
+        room.player_writers[1].write(
+            f"Game Ready,{room.player_names[0]},{room.map_id},{room.match_id},{room.player_role_ids[1]};".encode())
+
+        print("reselect done")
+
+    async def game(self, room, g):
         g.new()
-        g.map_id = int(room.map_id)
-        g.match_id = int(room.match_id)
+        # g.map_id = int(room.map_id)
+        # g.match_id = int(room.match_id)
         gs = GameState()
         self.my_logger.warning(f"{room.player_names[0]} is gaming with {room.player_names[1]}!")
         while g.playing:  # This is the routine game tick
@@ -434,6 +475,7 @@ class Server:
             gs.round = g.match_score["round"]
             gs.shooter_score = g.match_score["shooter"]
             gs.chopper_score = g.match_score["chopper"]
+            gs.winner = g.winner
 
             send_byte = (json.dumps([*asdict(gs).values()])+";").encode()
             # compressed_send_byte = compress(send_byte)

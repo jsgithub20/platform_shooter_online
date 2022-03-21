@@ -1,4 +1,5 @@
 import pygame as pg
+import pygame.freetype as ft
 from ipaddress import ip_address
 from platform_shooter_settings import *
 
@@ -62,10 +63,12 @@ class Buttons(pg.sprite.Sprite):
 
 
 class DrawText(pg.sprite.Sprite):
-    def __init__(self, screen, size, color, x, y, name, text, click=0, max_letter=0, valid_letters=None, centered=False):
+    def __init__(self, screen, size, color, x, y, name, text, click=0, max_letter=0, valid_letters=None,
+                 alignment=None):
         pg.sprite.Sprite.__init__(self)
         self.screen = screen
-        self.size = size + 20
+        self.screen_rect = self.screen.get_rect()
+        self.size = size
         self.color = color
         self.x = x
         self.y = y
@@ -73,14 +76,27 @@ class DrawText(pg.sprite.Sprite):
         self.input_text = ""
         self.text = self.description
         # self.font = pg.font.Font("resources/You Blockhead.ttf", self.size)
-        self.font = pg.font.Font("resources/OvOV20.ttf", self.size)
+        # self.font = pg.font.Font("resources/OvOV20.ttf", self.size)
+        self.font = ft.Font("resources/OvOV20.ttf", self.size)
+        self.font.antialiased = True
 
-        self.image = self.font.render(text, True, color)
+        # self.image = self.font.render(text, True, color)
+        self.image = self.font.render(text, color)[0]
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = (self.x, self.y)
 
-        # if centered, the text surface will be centered horizontally on the screen
-        self.centered = centered
+        self.alignment = alignment
+
+        """
+        alignment is calculated in __init__() and update() twice so that some text that don't need
+        update can also be placed at the right location       
+        """
+        if self.alignment == "left":
+            self.rect.x = 10
+        elif self.alignment == "center":
+            self.rect.midtop = (self.screen_rect.center[0], self.y)
+        elif self.alignment == "right":
+            self.rect.x = self.screen_rect.w - self.rect.w - 10
 
         # if click = 1, mouse-clicking this text item leads to an action, otherwise it doesn't
         self.click = click
@@ -109,11 +125,16 @@ class DrawText(pg.sprite.Sprite):
                     self.input_text = self.input_text[:-1]
                     self.text = self.description + self.input_text
 
-        self.image = self.font.render(self.text, True, self.color)
+        self.image = self.font.render(self.text, self.color)[0]
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = (self.x, self.y)
-        if self.centered:
-            self.rect.midtop = (pg.Surface.get_width(self.screen)/2, self.y)
+
+        if self.alignment == "left":
+            self.rect.x = 10
+        elif self.alignment == "center":
+            self.rect.midtop = (self.screen_rect.center[0], self.y)
+        elif self.alignment == "right":
+            self.rect.x = self.screen_rect.w - self.rect.w - 10
 
     def add_letter(self, letter):
         if self.cursor == 1 and len(self.text) <= self.max:
@@ -175,7 +196,7 @@ class DrawText(pg.sprite.Sprite):
 
     def warning_msg(self, msg, pos_xy):
         # pos_xy format should be (pos_x, pos_y)
-        warning = self.font.render(msg, True, RED)
+        warning = self.font.render(msg, True, RED)[0]
         self.screen.blit(warning, pos_xy)
         pg.display.flip()
 

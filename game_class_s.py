@@ -55,7 +55,7 @@ class Game:
         self.r_sign_flg = 0
         self.snd_yeet = False
 
-        self.winner = None
+        self.winner = "nobody"
         self.running = True
         self.playing = True
 
@@ -243,7 +243,7 @@ class Game:
         self.current_level.update()
 
     def check_winner(self):
-        # return the winner role (if game over) or None, and a bool value for self.playing
+        # return the winner role (if game over) or "nobody", and a bool value for self.playing
         self.match_score["match_type"] = MATCH_TYPE_LST[self.match_id]
         if self.match_score["match_type"] == MATCH_TYPE_LST[0]:
             # death match
@@ -258,7 +258,7 @@ class Game:
             elif self.match_score["chopper"] == 3:
                 return "chopper", False
             else:
-                return None, True
+                return "nobody", True
         elif self.match_score["match_type"] == MATCH_TYPE_LST[2]:
             # best of 3
             if self.match_score["shooter"] == 2 and self.match_score["chopper"] == 0:
@@ -270,4 +270,4 @@ class Game:
             elif self.match_score["chopper"] == 3:
                 return "chopper", False
             else:
-                return None, True
+                return "nobody", True

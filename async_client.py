@@ -8,7 +8,7 @@ import asyncio
 import json
 import time
 from zlib import compress, decompress
-
+from inspect import currentframe, getframeinfo
 import logging
 import queue
 from queue import Queue
@@ -22,6 +22,7 @@ class Network:
         self.server_port = server_port
         self.client_id = 0
         self.game_ready = False
+        self.client_game_flag = True
         self.server_msg = "Waiting for 2nd player"
         self.player_name = ""
         self.opponent_name = ""
@@ -36,19 +37,20 @@ class Network:
         self.speed = 2
         self.pos_send = [0, 0]
         self.pos_recv = Queue(maxsize=3)  # (x, Y) coordinates as tuple for each item in the Queue
+        self.meter = 0
 
-    async def check_read(self, length):
+    async def check_read(self):
         string = None
         connected = CONNECTED
         try:
             received = await self.reader.readuntil(separator=b";")
             string = received.decode().split(";")[0]
         except (ConnectionError, asyncio.IncompleteReadError):
-            print(f"Connection to server is lost")
+            print(f"Connection to server is lost [{getframeinfo(currentframe()).lineno}]")
             connected = not CONNECTED
         else:  # if the connection is properly connected, there will be no ConnectionError exception raised
             if not received:
-                print(f"Connection to server is lost")
+                print(f"Connection to server is lost [{getframeinfo(currentframe()).lineno}]")
                 if not self.writer.is_closing():
                     self.writer.close()
                     await self.writer.wait_closed()
@@ -63,12 +65,12 @@ class Network:
         # id_data = await self.reader.read(100)
         # self.client_id = id_data.decode()
         self.writer.write(f"{conn_type},{self.player_name};".encode())
-        r = await self.check_read(READ_LEN)
+        r = await self.check_read()
         if r[0]:  # return connected, string
             if r[1] != "ok":  # if server doesn't send back "ok", there should be some connection issue
                 print("Server error")
         self.writer.write(f"{conn_type},{self.player_name};".encode())  # just to complete the r/w cycle
-        r = await self.check_read(READ_LEN)
+        r = await self.check_read()
         if r[0]:  # return connected, string
             self.client_id = r[1]
 
@@ -87,14 +89,16 @@ class Network:
         self.writer.write(f"{room[2]};".encode())
 
     async def get_games(self):
-        r = await self.check_read(READ_LEN)
+        """
+        r = await self.check_read()
         if not r[0]:  # return connected, string
             print("Connection issue to server during get_games")
             return
         else:
             length = r[1]
         self.writer.write("ok;".encode())  # just to complete a r/w cycle before receiving the next data
-        r = await self.check_read(int(length))
+        """
+        r = await self.check_read()
         if not r[0]:  # return connected, string
             print("Connection issue to server during get_games")
             return
@@ -109,7 +113,7 @@ class Network:
 
     async def client(self):
         while True:  # this is the loop waiting for the 2nd player to join or player0 to set the game
-            r = await self.check_read(READ_LEN)
+            r = await self.check_read()
             if not r[0]:
                 return
             else:
@@ -126,7 +130,7 @@ class Network:
             self.writer.write(reply.encode())
             # start = perf_counter()
             # data = await self.reader.read(READ_LEN)
-            r = await self.check_read(READ_LEN)
+            r = await self.check_read()
             if not r[0]:  # return connected, string
                 return
             # print(perf_counter() - start)
@@ -137,24 +141,28 @@ class Network:
                     pass  # TODO: code to handle the exception
 
     async def client_game(self):
+        self.client_game_flag = True
+        self.meter += 1
+        print(f"starting client_game: {self.meter}")
         while True:  # this is the loop waiting for the 2nd player to join or player0 to set the game
-            r = await self.check_read(READ_LEN)
+            r = await self.check_read()
             if not r[0]:
                 return
             else:
                 self.server_msg = tuple(r[1].split(","))  # f"Game Ready,{room.player_0_name}"
             if self.server_msg[0] == "Game Ready":
                 self.game_ready = True
+                print("self.game_ready = True")
                 break
             else:
                 send_str = f"{self.game_setting[0]}{self.game_setting[1]}{self.game_setting[2]}{self.game_setting[3]};"
                 self.writer.write(send_str.encode())
 
-        while True:  # this is the routine game tick
+        while self.game_ready:  # this is the routine game tick
             self.writer.write((self.events_str+";").encode())
             # await self.writer.drain()  # .drain() doesn't help when written content is short
             # start = perf_counter()
-            r = await self.check_read(GS_READ_LEN)
+            r = await self.check_read()
             # print(r)
             if not r[0]:  # return connected, string
                 return
@@ -167,14 +175,21 @@ class Network:
                             await self.writer.wait_closed()
                         print("Disconnected by server")
                         return
+                    elif r[1] == "re-selecting":
+                        continue
                     # decompressed_received = decompress(r[1])
                     # game_state_lst = list(decompressed_received.decode())
                     game_state_lst = list(json.loads(r[1]))
                     self.game_state.put(game_state_lst, block=False)
-                except queue.Full as e:
-                    print(e)
-                except Exception:
-                    print("Unknown Error")
+                except queue.Full:
+                    print(self.game_state)
+                    print(f"queue full")
+                except Exception as e1:
+                    print(f"Error: {e1}")
+
+        self.writer.write("reselect;".encode())
+        print(f"client_game end: {self.meter}")
+        self.client_game_flag = False
 
     async def stop(self):
         if not self.writer.is_closing():

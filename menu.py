@@ -148,6 +148,9 @@ class Menu:
     def __init__(self):
         pygame.init()
         self.playing = True
+        self.running = True
+        self.reselect_flag = False
+        self.reselect_done_flag = False
         self.my_logger = MyLogger()
         self.clock = pygame.time.Clock()
         self.screen = pygame.display.set_mode(WINDOW_SIZE)  # , flags=pygame.NOFRAME)
@@ -164,7 +167,7 @@ class Menu:
         self.room_frame = None
         self.conn_type = "handshake"  # "create" or "join"
         self.client_id = "0"
-        self.opponent_name = ""
+        self.your_name = ""
         self.map_id = 0
         self.match_id = 0
         self.level_id = 0
@@ -256,6 +259,7 @@ class Menu:
             self.current_role_id -= 1
 
         current_lbl_lst = self.lbl_lst[self.current_role_id]
+        current_lbl_lst = self.lbl_lst[self.current_role_id]
         previous_lbl_lst = self.lbl_lst[self.previous_role_id]
 
         for j in range(len(current_lbl_lst)):
@@ -301,26 +305,29 @@ class Menu:
         self.player_id = 0
         self.connection.game_setting = [1, self.map_id, self.match_id, self.current_role_id]
         # self.t_loop.create_task(self.connection.client_game())
-
-        self.game()
+        print(f"player0 wait menu opened: {self.reselect_flag, self.reselect_done_flag}")
+        if not self.reselect_flag:  # if reselect, self.play() is already running
+            self.play()
+            self.reselect_flag = True
+        else:
+            self.reselect_done_flag = True
 
     def cb_player1_wait_menu_opened(self, from_menu, to_menu):
         self.player_id = 1
         self.t_loop.create_task(self.connection.send_room_choice(self.chosen_room))
         self.t_loop.create_task(self.connection.client_game())
 
-        self.game()
+        self.play()
 
-    def game(self):
-        self.main_menu.disable()
-
+    def wait_screen(self):
         while not self.connection.game_ready:
             self.clock.tick(FPS)
             self.screen.fill((0, 200, 0))
             if self.player_id == 0:
                 self.splat_font.render_to(self.screen, (100, 200), "Waiting for 2nd player")
             else:
-                self.splat_font.render_to(self.screen, (100, 200), "Waiting for 1st player to set the game")
+                self.splat_font.render_to(self.screen, (120, 200), "Waiting for 1st player")
+                self.splat_font.render_to(self.screen, (160, 300), "to set the game")
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -330,19 +337,64 @@ class Menu:
                     exit()
             pygame.display.flip()
 
-        self.opponent_name = self.connection.server_msg[1]
+    def reselect(self):
+        print("reselect start")
+        self.t_loop.create_task(self.connection.client_game())
+        if self.player_id == 1:
+            return
+
+        elif self.player_id == 0:
+            self.reselect_flag = True
+            self.main_menu._current = self.sub_menu_selection
+            self.main_menu.enable()
+
+            while not self.reselect_done_flag:
+                self.clock.tick(FPS)
+
+                events = pygame.event.get()
+                for event in events:
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        exit()
+
+                self.main_menu.update(events)
+                # self.join_game_menu.update(events)
+
+                if self.main_menu.is_enabled():
+                    self.screen.blit(background_image, (0, 0))
+                    if self.main_menu.is_enabled():
+                        self.main_menu.draw(self.screen)
+                else:
+                    break
+
+                pygame.display.flip()
+
+            self.reselect_done_flag = False
+            print("reselect done")
+
+    def play(self):
+        while self.running:
+            self.game()
+            self.reselect()
+
+    def game(self):
+        self.main_menu.disable()
+        self.wait_screen()
+
+        self.your_name = self.connection.server_msg[1]
         self.map_id = self.connection.server_msg[2]
         self.match_id = self.connection.server_msg[3]
         self.role_id = self.connection.server_msg[4]
-        g = game_class_c.Game(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, self.map_id, self.match_id, self.role_id)
+        g = game_class_c.Game(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT,
+                              self.map_id, self.match_id, self.role_id, self.my_name, self.your_name)
         g.new()
 
         while g.playing:  # routine game tick
             g.events()
             self.connection.events_str = g.events_str
             try:
-                self.gs_lst = self.connection.game_state.get(timeout=1)
-                # self.gs_lst = self.connection.game_state.get()
+                # self.gs_lst = self.connection.game_state.get(timeout=1)
+                self.gs_lst = self.connection.game_state.get()
             except queue.Empty:
                 # TODO: code to acknowledge the player and ask for input
                 print("Connection issue")
@@ -352,8 +404,11 @@ class Menu:
             g.update_game_state(self.gs_lst)
             g.draw()
 
-        pygame.quit()
-        exit()
+        self.connection.game_ready = False
+        while self.connection.client_game_flag:
+            self.clock.tick(FPS)
+            pygame.display.flip()
+
 
     def demo_game(self):
         self.main_menu.disable()

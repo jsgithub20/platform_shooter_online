@@ -12,7 +12,7 @@ from role_def import *
 
 
 class Game:
-    def __init__(self, screen, win_w, win_h, map_id, match_id, role_id):
+    def __init__(self, screen, win_w, win_h, map_id, match_id, role_id, my_name, your_name):
         pg.init()
         self.clock = pg.time.Clock()
         self.screen = screen
@@ -23,6 +23,8 @@ class Game:
         self.current_level_no = 0
         self.match_id = match_id
         self.role_id = role_id
+        self.my_name = my_name
+        self.your_name = your_name
 
         """
         0   , 1        , 2         , 3   , 4     , 5             , 6
@@ -49,15 +51,24 @@ class Game:
             self.bullets_r.append(bullet)
 
         # the "R" sign on the shooter's head to indicate it's the reloading time, so it can't shoot
-        self.r_sign = DrawText(self.screen, 10, RED, 0, 0, "r_sign", "R", 0, 10)
+        self.r_sign = DrawText(self.screen, 30, RED, 0, 0, "r_sign", "R", 0, 10)
         self.snd_yeet = False
 
-        self.fps_txt = DrawText(self.screen, 5, LIGHT_GREEN, 5, 5, "fps_txt", "0")
+        self.fps_txt = DrawText(self.screen, 20, LIGHT_GREEN, 5, 5, "fps_txt", "0")
 
         self.shooter_score = "0"
         self.chopper_score = "0"
         match_score = f"{self.shooter_score} - {MATCH_TYPE_LST[int(self.match_id)]} - {self.chopper_score}"
-        self.match_type_txt = DrawText(self.screen, 20, WHITE, 25, 720, "match_score", match_score, centered=True)
+        self.level_txt = DrawText(self.screen, 30, WHITE, 20, 10, "level", f"Level {self.current_level_no}", alignment="center")
+        self.match_type_txt = DrawText(self.screen, 30, WHITE, 25, 720, "match_score", match_score, alignment="center")
+
+        if self.role_id == "0":
+            self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="left")
+            self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name, alignment="right")
+        elif self.role_id == "1":
+            self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="right")
+            self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name, alignment="left")
+
         self.snd_yeet = pg.mixer.Sound("resources/sound/yeet.ogg")
         self.snd_yeet.set_volume(0.2)
 
@@ -98,9 +109,12 @@ class Game:
 
         # Set the current level
         self.current_level = self.level_list[self.current_level_no]
+        self.level_txt.text = f"Level {self.current_level_no}"
 
         self.active_sprite_grp = pg.sprite.Group()
         self.bullet_sprite_grp = pg.sprite.Group()
+        self.upd_text_sprite_grp = pg.sprite.Group()
+        self.idle_text_sprite_grp = pg.sprite.Group()
 
         self.player_shooter.level = self.current_level
         self.player_shooter.rect.x = 200
@@ -110,8 +124,9 @@ class Game:
         self.player_chopper.rect.x = 600
         self.player_chopper.rect.y = 200
 
-        self.active_sprite_grp.add(self.player_shooter, self.player_chopper)
-        self.active_sprite_grp.add(self.fps_txt, self.match_type_txt, self.r_sign)
+        self.active_sprite_grp.add(self.player_shooter, self.player_chopper, self.r_sign)
+        self.upd_text_sprite_grp.add(self.fps_txt, self.match_type_txt)  # only text sprites that need to be updated
+        self.idle_text_sprite_grp.add(self.my_name_txt, self.your_name_txt, self.level_txt)
         self.bullet_sprite_grp.add(*self.bullets_r, *self.bullets_l)
 
     def events(self):
@@ -162,6 +177,9 @@ class Game:
         self.events_str = "".join(self.events_lst)
 
     def update_game_state(self, gs_lst):
+        self.clock.tick()
+        if gs_lst[24] != "nobody":
+            self.playing = False
         self.player_shooter.update_img(gs_lst[0], gs_lst[1])
         self.player_shooter.rect.x, self.player_shooter.rect.y = gs_lst[2]
         self.player_chopper.update_img(gs_lst[3], gs_lst[4])
@@ -178,15 +196,14 @@ class Game:
 
         # {self.shooter_score} - {MATCH_TYPE_LST[int(self.match_id)]} - {self.chopper_score}
         self.match_type_txt.text = f"{gs_lst[22]} - {MATCH_TYPE_LST[int(gs_lst[19])]} - {gs_lst[23]}"
-        self.match_type_txt.update()
-
-        self.clock.tick()
         self.fps_txt.text = str(int(self.clock.get_fps()))
-        self.fps_txt.update()
+        self.upd_text_sprite_grp.update()
 
     def draw(self):
         self.current_level.draw(self.screen)
         self.active_sprite_grp.draw(self.screen)
         self.bullet_sprite_grp.draw(self.screen)
+        self.upd_text_sprite_grp.draw(self.screen)
+        self.idle_text_sprite_grp.draw(self.screen)
 
         pg.display.update()

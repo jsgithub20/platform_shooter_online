@@ -75,19 +75,95 @@ from dataclasses import dataclass, field
 # rs.player_names.append("bbb")
 
 
-class Test:
-    def __init__(self):
-        self.self_var = "self_var"
+# class Test:
+#     def __init__(self):
+#         self.self_var = "self_var"
+#
+#     def foo(self, room):
+#         i = 1
+#
+#         def bar():
+#             print(f"room = {room} in def bar(i)")
+#             print(f"i = {i}")
+#             print(f"self.self_var = {self.self_var}")
+#         a = bar()
+#
+#
+# c = Test()
+# f = c.foo("test_room")
 
-    def foo(self, room):
-        i = 1
-
-        def bar():
-            print(f"room = {room} in def bar(i)")
-            print(f"i = {i}")
-            print(f"self.self_var = {self.self_var}")
-        a = bar()
+import pygame
+import pygame.freetype
+import pygame.examples.freetype_misc as fm
+from platform_shooter_sprites import DrawText
 
 
-c = Test()
-f = c.foo("test_room")
+pygame.init()
+
+font1 = pygame.freetype.SysFont("Arial", 30)
+window = pygame.display.set_mode((700, 400))
+
+def drawTextCentered(surface, text, text_size, color):
+    text_rect = font.get_rect(text, size = text_size)
+    # print(text_rect)
+    # text_rect.center = surface.get_rect().center
+    # font.render_to(surface, (0, 0), text, color, (128, 128, 128), size = text_size)
+    # font.render_to(surface, (0, 0), text, color, (128, 128, 128), size = text_size)
+
+# font = pygame.freetype.SysFont("comicsansms", 30)
+font = pygame.freetype.Font("resources/OvOV20.ttf", 50)
+# font.origin = True
+
+# fm.run()
+
+# a = DrawText(window, 20, (255, 255, 255), 25, 300, "your_name", "self.your_name", alignment="right")
+# b = DrawText(window, 20, (255, 255, 255), 25, 300, "your_name", "self.my_name", alignment="left")
+# grp = pygame.sprite.Group()
+# grp.add(a, b)
+fr = font.render("hello g a", (255, 0, 0), (128, 128, 128))[0]
+print(fr.get_rect())
+
+run = True
+while run:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
+
+    window.fill(0)
+    window.blit(fr, (0, 0))
+    window.blit(fr, (0, 45))
+    # drawTextCentered(window, "Hello g World", 50, (255, 0, 0))
+    # grp.update()
+    # grp.draw(window)
+    pygame.display.flip()
+
+pygame.quit()
+exit()
+#
+# def word_wrap(surf, text, font, color=(0, 0, 0)):
+#     font.origin = True
+#     words = text.split(' ')
+#     width, height = surf.get_size()
+#     line_spacing = font.get_sized_height() + 2
+#     # x, y = 0, line_spacing
+#     x, y = 0, 0
+#     space = font.get_rect(' ')
+#     for word in words:
+#         bounds = font.get_rect(word)
+#         print(word, bounds)
+#         if x + bounds.width + bounds.x >= width:
+#             x, y = 0, y + line_spacing
+#         if x + bounds.width + bounds.x >= width:
+#             raise ValueError("word too wide for the surface")
+#         if y + bounds.height - bounds.y >= height:
+#             raise ValueError("text to long for the surface")
+#         font.render_to(surf, (x, y), None, color)
+#         x += bounds.width + space.width
+#     return x, y
+#
+#
+# text = "this is a test to find out the use of .origin, when it's true or false"
+#
+# while True:
+#     draw = word_wrap(screen, text, font1, (255, 255, 255))
+#     pygame.display.flip()
