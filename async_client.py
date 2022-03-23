@@ -37,7 +37,6 @@ class Network:
         self.speed = 2
         self.pos_send = [0, 0]
         self.pos_recv = Queue(maxsize=3)  # (x, Y) coordinates as tuple for each item in the Queue
-        self.meter = 0
 
     async def check_read(self):
         string = None
@@ -142,8 +141,6 @@ class Network:
 
     async def client_game(self):
         self.client_game_flag = True
-        self.meter += 1
-        print(f"starting client_game: {self.meter}")
         while True:  # this is the loop waiting for the 2nd player to join or player0 to set the game
             r = await self.check_read()
             if not r[0]:
@@ -152,7 +149,6 @@ class Network:
                 self.server_msg = tuple(r[1].split(","))  # f"Game Ready,{room.player_0_name}"
             if self.server_msg[0] == "Game Ready":
                 self.game_ready = True
-                print("self.game_ready = True")
                 break
             else:
                 send_str = f"{self.game_setting[0]}{self.game_setting[1]}{self.game_setting[2]}{self.game_setting[3]};"
@@ -182,13 +178,11 @@ class Network:
                     game_state_lst = list(json.loads(r[1]))
                     self.game_state.put(game_state_lst, block=False)
                 except queue.Full:
-                    print(self.game_state)
                     print(f"queue full")
                 except Exception as e1:
                     print(f"Error: {e1}")
 
         self.writer.write("reselect;".encode())
-        print(f"client_game end: {self.meter}")
         self.client_game_flag = False
 
     async def stop(self):

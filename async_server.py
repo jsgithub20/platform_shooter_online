@@ -148,17 +148,18 @@ class Server:
     #             connected = not CONNECTED
     #     return connected, list(string)
 
+    def remove_room(self, room, i):
+        self.cnt -= 1
+        room.running = False
+        self.my_logger.warning(
+            f"Connection to player {room.player_names[i]} is lost [{getframeinfo(currentframe()).lineno}]")
+        if room.room_id in self.game_dict:
+            self.game_dict.pop(room.room_id)
+
     async def check_read_room(self, room: RoomState):
         # used for read() after the connected player is in a game room
         string_lists = [[], []]
         connected = CONNECTED
-
-        def reduce_player():
-            self.cnt -= 1
-            self.my_logger.warning(
-                f"Connection to player {room.player_names[i]} is lost [{getframeinfo(currentframe()).lineno}]")
-            if room.room_id in self.game_dict:
-                self.game_dict.pop(room.room_id)
 
         for i in range(2):
             try:
@@ -166,16 +167,16 @@ class Server:
                 received = await room.player_readers[i].readuntil(separator=b";")
                 string_lists[i] = list(received.decode().split(";")[0])
             except (ConnectionError, asyncio.IncompleteReadError):
-                reduce_player()
+                self.remove_room(room, i)
                 # writer.close() is not needed because the writer is already closed
                 # await writer.wait_closed(): this line could never be returned when the writer is already closed
                 connected = not CONNECTED
             else:  # if the connection is properly connected, there will be no ConnectionError exception raised
-                if string_lists[i][0] == "1":  # player quit the game normally
+                if string_lists[i][0] == "q":  # player quit the game normally
                     if not room.player_writers[i].is_closing():
                         room.player_writers[i].close()
                         await room.player_writers[i].wait_closed()
-                    reduce_player()
+                    self.remove_room(room, i)
                     connected = not CONNECTED
             if not connected:  # if player i is disconnected
                 i = (i+1) % 2  # if i = 0, make it 1, if i = 1, make it 0
@@ -191,9 +192,8 @@ class Server:
                     room.player_writers[i].close()
                     await room.player_writers[i].wait_closed()
                 finally:
-                    reduce_player()
+                    self.remove_room(room, i)
                     return connected, string_lists
-
         return connected, string_lists
 
     def create_room(self, player_name, reader, writer):
@@ -389,11 +389,8 @@ class Server:
             await self.re_select(room)
 
     async def re_select(self, room: RoomState):
-        print("reselect start")
-
         room.winner = "nobody"
         room.game_set = False
-        i = 1
         while not room.check_ready():
             self.clock.tick(FPS)
             r = await self.check_read_room(room)
@@ -410,7 +407,6 @@ class Server:
                 f"re-selecting;".encode())
             room.player_writers[1].write(
                 f"re-selecting;".encode())
-            i += 1
 
         r = await self.check_read_room(room)
         if not r[0]:
@@ -421,12 +417,10 @@ class Server:
         room.player_writers[1].write(
             f"Game Ready,{room.player_names[0]},{room.map_id},{room.match_id},{room.player_role_ids[1]};".encode())
 
-        print("reselect done")
-
     async def game(self, room, g):
         g.new()
-        # g.map_id = int(room.map_id)
-        # g.match_id = int(room.match_id)
+        g.map_id = int(room.map_id)
+        g.match_id = int(room.match_id)
         gs = GameState()
         self.my_logger.warning(f"{room.player_names[0]} is gaming with {room.player_names[1]}!")
         while g.playing:  # This is the routine game tick

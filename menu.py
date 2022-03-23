@@ -305,7 +305,6 @@ class Menu:
         self.player_id = 0
         self.connection.game_setting = [1, self.map_id, self.match_id, self.current_role_id]
         # self.t_loop.create_task(self.connection.client_game())
-        print(f"player0 wait menu opened: {self.reselect_flag, self.reselect_done_flag}")
         if not self.reselect_flag:  # if reselect, self.play() is already running
             self.play()
             self.reselect_flag = True
@@ -338,7 +337,6 @@ class Menu:
             pygame.display.flip()
 
     def reselect(self):
-        print("reselect start")
         self.t_loop.create_task(self.connection.client_game())
         if self.player_id == 1:
             return
@@ -370,7 +368,6 @@ class Menu:
                 pygame.display.flip()
 
             self.reselect_done_flag = False
-            print("reselect done")
 
     def play(self):
         while self.running:
@@ -405,7 +402,10 @@ class Menu:
             g.draw()
 
         self.connection.game_ready = False
+        self.connection.game_setting[0] = 0
         while self.connection.client_game_flag:
+            # waiting for connection.client_game() to return
+            # True: not returned, False: returned
             self.clock.tick(FPS)
             pygame.display.flip()
 

@@ -55,11 +55,14 @@ class Game:
         self.r_sign_flg = 0
         self.snd_yeet = False
 
-        self.winner = "nobody"
         self.running = True
-        self.playing = True
 
     def new(self):
+        self.winner = "nobody"
+        self.playing = True
+        self.match_score["shooter"] = 0
+        self.match_score["chopper"] = 0
+
         if self.match_score["game_finished"]:
             return
         else:

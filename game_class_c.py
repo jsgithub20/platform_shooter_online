@@ -58,6 +58,7 @@ class Game:
 
         self.shooter_score = "0"
         self.chopper_score = "0"
+
         match_score = f"{self.shooter_score} - {MATCH_TYPE_LST[int(self.match_id)]} - {self.chopper_score}"
         self.level_txt = DrawText(self.screen, 30, WHITE, 20, 10, "level", f"Level {self.current_level_no}", alignment="center")
         self.match_type_txt = DrawText(self.screen, 30, WHITE, 25, 720, "match_score", match_score, alignment="center")
@@ -72,11 +73,11 @@ class Game:
         self.snd_yeet = pg.mixer.Sound("resources/sound/yeet.ogg")
         self.snd_yeet.set_volume(0.2)
 
-        self.winner = None
         self.running = True
-        self.playing = True
 
     def new(self):
+        self.winner = None
+        self.playing = True
         pg.mixer.music.load("resources/sound/Resurrection of the Dagger.ogg")
         pg.mixer.music.set_volume(0.3)
         pg.mixer.music.play(loops=-1)
@@ -136,8 +137,9 @@ class Game:
         for event in pg.event.get():
             # check for closing window
             if event.type == pg.QUIT:
-                self.events_lst[0] = "1"
+                self.events_lst[0] = "q"
                 self.playing = False
+                self.running = False
 
             if event.type == pg.KEYDOWN:
                 # player_shooter controls
