@@ -70,7 +70,7 @@ class Game:
         # match type
         match_type = self.match_score["match_type"]
         match_score = str(self.match_score["shooter"]) + " - " + match_type + " - " + str(self.match_score["chopper"])
-        self.match_type_txt = DrawText(self.screen, 20, WHITE, 25, 720, "match_score", match_score, centered=True)
+        self.match_type_txt = DrawText(self.screen, 20, WHITE, 25, 720, "match_score", match_score, alignment="center")
 
         # start a new game
         self.bullets = []
@@ -380,13 +380,13 @@ class Game:
 
         match_type_txt_lst = []
         for match in self.match_types:
-            txt = DrawText(self.screen, 35, GREEN, 0, 35, match, match, 0, 10, centered=True)
+            txt = DrawText(self.screen, 35, GREEN, 0, 35, match, match, 0, 10, alignment="center")
             match_type_txt_lst.append(txt)
         match_select = pg.sprite.GroupSingle(match_type_txt_lst[0])
 
         map_txt_lst = []
         for i in range(len(self.map_list)):
-            txt = DrawText(self.screen, 35, GREEN, 0, 700, "map"+str(i), "map"+str(i), 0, 10, centered=True)
+            txt = DrawText(self.screen, 35, GREEN, 0, 700, "map"+str(i), "map"+str(i), 0, 10, alignment="center")
             map_txt_lst.append(txt)
         map_select = pg.sprite.GroupSingle(map_txt_lst[0])
 
@@ -509,7 +509,7 @@ class Game:
             map_select.draw(self.screen)
             mouse_pos_grp.draw(self.screen)
 
-            self.network.send(self)
+            # self.network.send(self)
 
             pg.display.flip()
 
@@ -525,13 +525,13 @@ class Game:
         # pg.mixer.music.play(loops=-1)
         self.screen.fill(BLACK)
         game_over_text = DrawText(self.screen, 60, WHITE, 0, SCREEN_HEIGHT / 4, "game_over", "GAME OVER",
-                                  centered=True)
+                                  alignment="center")
         match_type = self.match_score["match_type"]
         winner_text = DrawText(self.screen, 50, WHITE, 0, SCREEN_HEIGHT/2, "winner",
-                               f"{match_type}: {self.winner} WINS!", centered=True)
+                               f"{match_type}: {self.winner} WINS!", alignment="center")
         # self.draw_text("Score: " + str(self.score), 22, WHITE, WIDTH / 2, HEIGHT / 2)
         press_key_text = DrawText(self.screen, 40, WHITE, 0, SCREEN_HEIGHT * 3 / 4, "press_key",
-                                  "Press a key to play again", centered=True)
+                                  "Press a key to play again", alignment="center")
         # if self.score > self.highscore:
         #     self.highscore = self.score
         #     self.draw_text("NEW HIGH SCORE!", 22, WHITE, WIDTH / 2, HEIGHT / 2 + 40)

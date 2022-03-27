@@ -4,6 +4,7 @@ Related file id:  07oct2021_async_client, 07oct2021_async_server
 This is the alpha player menu code for the "shooter" game
 """
 import time
+from sys import exit
 from threading import Thread
 from pygame_menu.locals import *
 from typing import Optional
@@ -141,7 +142,7 @@ class MyLogger:
         format_str = logging.Formatter(format)
         fh = handlers.RotatingFileHandler("client_log.txt", "a", 100000, 3)
         fh.setFormatter(format_str)
-        self.my_logger.addHandler(fh)
+        # self.my_logger.addHandler(fh)
 
 
 class Menu:
@@ -149,6 +150,7 @@ class Menu:
         pygame.init()
         self.playing = True
         self.running = True
+        self.winner = ""
         self.reselect_flag = False
         self.reselect_done_flag = False
         self.my_logger = MyLogger()
@@ -177,9 +179,10 @@ class Menu:
         self.splat_font = ft.Font("resources/fonts/earwig factory rg.ttf", 60)
         self.main_menu: [pygame_menu.menu] = None
         self.b_connect: [pygame_menu.widgets.widget.button] = None
-        self.selector_game: [pygame_menu.widgets.widget.selector] = None
+        self.selector_game: [pygame_menu.widgets.widget.dropselect] = None
         self.surface: [pygame.Surface] = pygame.image.load("resources/gui/Window_06.png")
         self.sound: [pygame_menu.sound.Sound] = None
+        self.game_over_screen_flag = True
 
         girl_idle = []
 
@@ -248,6 +251,8 @@ class Menu:
             self.game_rooms = self.connection.game_rooms
             self.game_rooms = [tuple(lst) for lst in self.game_rooms]
             self.selector_game.update_items(self.game_rooms)
+            self.selector_game.set_default_value(0)
+            self.selector_game.reset_value()
             self.chosen_room = self.selector_game.get_items()[0]  # Default choice is the first game room
         except Exception as e:
             self.my_logger.my_logger.error(f"Connection issue during joining - {e}")
@@ -280,6 +285,7 @@ class Menu:
         self.chosen_room = item_index[0]
 
     def cb_join_menu_openned(self, from_menu, to_menu):
+        self.player_id = 1
         self.conn_join()
 
     def cb_refresh(self):
@@ -291,6 +297,9 @@ class Menu:
             self.game_rooms = self.connection.game_rooms
             self.game_rooms = [tuple(lst) for lst in self.game_rooms]
             self.selector_game.update_items(self.game_rooms)
+            self.selector_game.set_default_value(0)
+            self.selector_game.reset_value()
+            self.chosen_room = self.game_rooms[0]
             # self.selector_game.render()
         except asyncio.TimeoutError:
             self.my_logger.my_logger.error(f"Connection issue to server during refreshing")
@@ -300,6 +309,23 @@ class Menu:
 
     def cb_selector_match_type_onchange(self, item_tuple, *args, **kwargs):
         self.match_id = item_tuple[1]
+
+    def cb_check_join_menu_openned(self, from_menu, to_menu):
+        self.t_loop.create_task(self.connection.send_room_choice(self.chosen_room))
+        try:
+            msg = self.connection.chosen_room_ok.get(timeout=TIMEOUT)
+            if msg == "ok":
+                self.msg_lbl.set_title("Game room choice accepted, wait for the host to set the game")
+                self.check_join_back_btn.hide()
+                self.check_join_ok_btn.show()
+            else:
+                self.msg_lbl.set_title("Game room choice is not accepted, please choose again")
+                self.check_join_back_btn.show()
+                self.check_join_ok_btn.hide()
+        except queue.Empty:
+            # TODO: code to acknowledge the player and ask for input
+            print("Connection issue")
+            self.end()
 
     def cb_player0_wait_menu_opened(self, from_menu, to_menu):
         self.player_id = 0
@@ -312,11 +338,27 @@ class Menu:
             self.reselect_done_flag = True
 
     def cb_player1_wait_menu_opened(self, from_menu, to_menu):
-        self.player_id = 1
-        self.t_loop.create_task(self.connection.send_room_choice(self.chosen_room))
+        # self.t_loop.create_task(self.connection.send_room_choice(self.chosen_room))
         self.t_loop.create_task(self.connection.client_game())
 
         self.play()
+
+    def check_end(self, events):
+        for event in events:
+            if event.type == pygame.QUIT or \
+                    (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+                # if self.connection is not None:
+                #     self.connection.connected_flag = False
+                self.end()
+            if self.connection is not None:
+                if not self.connection.connected_flag:
+                    self.end()
+
+    def end(self):
+        self.t_loop.stop_tasks()
+        self.t_loop.stop()
+        pygame.quit()
+        exit()
 
     def wait_screen(self):
         while not self.connection.game_ready:
@@ -328,16 +370,15 @@ class Menu:
                 self.splat_font.render_to(self.screen, (120, 200), "Waiting for 1st player")
                 self.splat_font.render_to(self.screen, (160, 300), "to set the game")
 
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.t_loop.stop_tasks()
-                    self.t_loop.stop()
-                    pygame.quit()
-                    exit()
+            events = pygame.event.get()
+            self.check_end(events)
             pygame.display.flip()
 
-    def reselect(self):
+    def reselect(self, g):
+        if not g.running:
+            self.end()
         self.t_loop.create_task(self.connection.client_game())
+        self.winner = ""
         if self.player_id == 1:
             return
 
@@ -350,10 +391,7 @@ class Menu:
                 self.clock.tick(FPS)
 
                 events = pygame.event.get()
-                for event in events:
-                    if event.type == pygame.QUIT:
-                        pygame.quit()
-                        exit()
+                self.check_end(events)
 
                 self.main_menu.update(events)
                 # self.join_game_menu.update(events)
@@ -369,46 +407,69 @@ class Menu:
 
             self.reselect_done_flag = False
 
-    def play(self):
-        while self.running:
-            self.game()
-            self.reselect()
+    def game_over_screen(self, g):
+        if not g.running:
+            self.end()
+        while self.game_over_screen_flag:
+            self.clock.tick(FPS)
+            events = pygame.event.get()
+            self.check_end(events)
 
-    def game(self):
+            for event in events:
+                if event.type == pygame.KEYDOWN:
+                    self.game_over_screen_flag = False
+                    return
+
+            self.splat_font.render_to(self.screen, (300, 350), f"{self.winner} wins!", bgcolor=LIGHT_GREEN)
+            pygame.display.flip()
+
+    def play(self):
+        g = game_class_c.Game(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT,
+                              self.map_id, self.match_id, self.role_id, self.my_name, self.your_name)
+        while g.running and self.connection.connected_flag:
+            self.game(g)
+            self.game_over_screen(g)
+            self.reselect(g)
+        pygame.quit()
+        exit()
+
+    def game(self, g):
         self.main_menu.disable()
         self.wait_screen()
 
-        self.your_name = self.connection.server_msg[1]
-        self.map_id = self.connection.server_msg[2]
-        self.match_id = self.connection.server_msg[3]
-        self.role_id = self.connection.server_msg[4]
-        g = game_class_c.Game(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT,
-                              self.map_id, self.match_id, self.role_id, self.my_name, self.your_name)
+        g.your_name = self.connection.server_msg[1]
+        g.map_id = self.connection.server_msg[2]
+        g.match_id = self.connection.server_msg[3]
+        g.role_id = self.connection.server_msg[4]
+
         g.new()
 
         while g.playing:  # routine game tick
             g.events()
             self.connection.events_str = g.events_str
+            # if not g.playing:
+            #     print(f"g.events_str {g.events_str}")
+            #     return
             try:
-                # self.gs_lst = self.connection.game_state.get(timeout=1)
-                self.gs_lst = self.connection.game_state.get()
+                self.gs_lst = self.connection.game_state.get(timeout=TIMEOUT)
+                # self.gs_lst = self.connection.game_state.get()
             except queue.Empty:
                 # TODO: code to acknowledge the player and ask for input
                 print("Connection issue")
-                g.playing = False
-                pass
+                self.end()
 
             g.update_game_state(self.gs_lst)
             g.draw()
 
         self.connection.game_ready = False
         self.connection.game_setting[0] = 0
+        self.game_over_screen_flag = True
+        self.winner = g.winner
         while self.connection.client_game_flag:
             # waiting for connection.client_game() to return
             # True: not returned, False: returned
             self.clock.tick(FPS)
             pygame.display.flip()
-
 
     def demo_game(self):
         self.main_menu.disable()
@@ -422,18 +483,11 @@ class Menu:
             self.clock.tick(60)
             self.screen.fill((0, 200, 0))
 
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.t_loop.stop_tasks()
-                    self.t_loop.stop()
-                    pygame.quit()
-                    exit()
+            events = pygame.event.get()
+            self.check_end()
+
+            for event in events:
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        self.t_loop.stop_tasks()
-                        self.t_loop.stop()
-                        pygame.quit()
-                        exit()
                     if event.key == pygame.K_SPACE:
                         self.connection.pos_send[0] += 1
                         self.connection.pos_send[1] += 1
@@ -553,6 +607,16 @@ class Menu:
 
         self.join_game_menu.set_onbeforeopen(self.cb_join_menu_openned)
 
+        self.check_join_menu = pygame_menu.Menu(
+            'Game Room Selection', WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.8,
+            center_content=True,
+            # onclose=pygame_menu.events.EXIT,  # User press ESC button
+            theme=no_title_theme_join_game,
+            position=[40, 20],
+        )
+
+        self.check_join_menu.set_onbeforeopen(self.cb_check_join_menu_openned)
+
         self.sub_menu_selection = pygame_menu.Menu(
             'Choosing Games', 1024, 768,
             center_content=False,
@@ -588,6 +652,8 @@ class Menu:
         wait_lbl.set_float(True, False, True)
         wait_lbl.translate(100, 300)
 
+        # main_menu start
+
         self.main_menu.add.vertical_margin(30)
 
         server_ip = self.main_menu.add.text_input(
@@ -621,6 +687,17 @@ class Menu:
 
         self.main_menu.add.button("Choose an existing game to join", self.join_game_menu)
 
+        self.main_menu.add.button('Quit', pygame_menu.events.EXIT)
+        self.main_menu.add.vertical_margin(50)
+        self.main_menu.add.label("Disclaimer: you agree to use this program on your own risks.",
+                                 font_color="red",
+                                 font_size=20,
+                                 align=ALIGN_CENTER)
+        self.main_menu.set_sound(all_sound, recursive=True)  # Apply on menu and all sub-menus
+
+        # main_menu end
+        # join_game_menu start
+
         self.join_game_menu.add.vertical_margin(30)
 
         refresh_frame = self.join_game_menu.add.frame_h(400, 50, align=ALIGN_LEFT)
@@ -649,7 +726,7 @@ class Menu:
 
         self.join_game_menu.add.vertical_margin(15)
 
-        self.join_game_menu.add.button("Join", self.sub_menu_player1_wait, cursor=CURSOR_HAND)
+        self.join_game_menu.add.button("Join", self.check_join_menu, cursor=CURSOR_HAND)
         self.join_game_menu.add.vertical_margin(15)
         #
         # self.join_game_menu.add.button("Back", pygame_menu.events.BACK)
@@ -657,13 +734,21 @@ class Menu:
 
         self.join_game_menu.add.button("Quit", pygame_menu.events.EXIT)
 
-        self.main_menu.add.button('Quit', pygame_menu.events.EXIT)
-        self.main_menu.add.vertical_margin(50)
-        self.main_menu.add.label("Disclaimer: you agree to use this program on your own risks.",
-                                 font_color="red",
-                                 font_size=20,
-                                 align=ALIGN_CENTER)
-        self.main_menu.set_sound(all_sound, recursive=True)  # Apply on menu and all sub-menus
+        # join_game_menu end
+        # check_join_menu start
+
+        self.check_join_menu.add.vertical_margin(150)
+
+        self.msg_lbl = self.check_join_menu.add.label("Game room choice accepted, click ok to proceed")
+        # self.msg_lbl.set_float(True, False, True)
+        # self.msg_lbl.translate(100, 300)
+
+        self.check_join_menu.add.vertical_margin(30)
+        self.check_join_back_btn = self.check_join_menu.add.button("Back", pygame_menu.events.BACK)
+        self.check_join_ok_btn = self.check_join_menu.add.button("OK", self.sub_menu_player1_wait)
+
+        # check_join_menu end
+        # sub_menu_selection start
 
         lbl_match_type = self.sub_menu_selection.add.label("Match Types")
         lbl_match_type.set_float(True, False, True)
@@ -750,6 +835,8 @@ class Menu:
         img.set_float(True, False, True)
         img.translate(350, 100)
 
+        # sub_menu_selection end
+
         img_idx = 0
         current_img_idx = 0
         # -------------------------------------------------------------------------
@@ -759,10 +846,7 @@ class Menu:
             self.clock.tick(FPS)
 
             events = pygame.event.get()
-            for event in events:
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    exit()
+            self.check_end(events)
 
             self.main_menu.update(events)
             # self.join_game_menu.update(events)
@@ -796,5 +880,5 @@ class Menu:
 m = Menu()
 if __name__ == '__main__':
     m.main()
-    # game_window()
-    # pygame.quit()
+    pygame.quit()
+    exit()

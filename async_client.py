@@ -23,6 +23,8 @@ class Network:
         self.client_id = 0
         self.game_ready = False
         self.client_game_flag = True
+        self.connected_flag = True
+        self.chosen_room_ok = Queue()
         self.server_msg = "Waiting for 2nd player"
         self.player_name = ""
         self.opponent_name = ""
@@ -54,7 +56,8 @@ class Network:
                     self.writer.close()
                     await self.writer.wait_closed()
                 connected = not CONNECTED
-
+        if not connected:
+            self.connected_flag = False
         return connected, string
 
     async def conn(self, player_name):
@@ -86,6 +89,15 @@ class Network:
 
     async def send_room_choice(self, room):  # room = [player0_name, game_ready, room_id]
         self.writer.write(f"{room[2]};".encode())
+        r = await self.check_read()
+        if not r[0]:  # return connected, string
+            print("Connection issue to server during send_room_choice")
+            return
+        elif r[1] != "ok":  # if the server doesn't say "ok", meaning the chosen room is not available
+            self.chosen_room_ok.put("no", block=False)
+            return
+        self.chosen_room_ok.put("ok", block=False)
+        self.writer.write("ok;".encode())  # r/w cycle
 
     async def get_games(self):
         """
@@ -141,7 +153,7 @@ class Network:
 
     async def client_game(self):
         self.client_game_flag = True
-        while True:  # this is the loop waiting for the 2nd player to join or player0 to set the game
+        while self.connected_flag:  # this is the loop waiting for the 2nd player to join or player0 to set the game
             r = await self.check_read()
             if not r[0]:
                 return
@@ -161,18 +173,19 @@ class Network:
             r = await self.check_read()
             # print(r)
             if not r[0]:  # return connected, string
-                return
+                break
             # print(perf_counter() - start)
             else:
                 try:
+                    if r[1] == "re-selecting":
+                        continue
                     if r[1] == "Disconnected":
                         if not self.writer.is_closing():
                             self.writer.close()
                             await self.writer.wait_closed()
                         print("Disconnected by server")
+                        self.connected_flag = False
                         return
-                    elif r[1] == "re-selecting":
-                        continue
                     # decompressed_received = decompress(r[1])
                     # game_state_lst = list(decompressed_received.decode())
                     game_state_lst = list(json.loads(r[1]))

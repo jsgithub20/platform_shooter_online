@@ -1,3 +1,4 @@
+import pygame
 import pygame as pg
 import pygame.freetype as ft
 from ipaddress import ip_address
@@ -61,6 +62,27 @@ class Buttons(pg.sprite.Sprite):
         self.btn_clicked = 0
         self.name = name
 
+
+class HealthBar(pg.sprite.Sprite):
+    def __init__(self, x, y, health):
+        pg.sprite.Sprite.__init__(self)
+        self.full_length = 200
+        self.red_width = 24
+        self.image = pygame.Surface((self.full_length, 25))
+        self.image.fill((0, 255, 0))
+        self.rect = self.image.get_rect()
+        self.x, self.y = (x, y)
+        self.rect.x, self.y = (self.x, self.y)
+        self.health = health
+        self.hit = 0
+        self.red_surface = pygame.Surface((self.hit * (self.full_length / self.health), self.red_width))
+
+    def update(self) -> None:
+        self.red_surface = pygame.Surface((self.hit*(self.full_length/self.health), self.red_width))
+        self.red_surface.fill((255, 0, 0))
+        self.image.blit(self.red_surface, (0, 1))
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = (self.x, self.y)
 
 class DrawText(pg.sprite.Sprite):
     def __init__(self, screen, size, color, x, y, name, text, click=0, max_letter=0, valid_letters=None,

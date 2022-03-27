@@ -20,6 +20,7 @@ MAP_LST = ["map0", "map1"]
 # others
 TITLE = "Platform Shooter"
 FPS = 60
+FPS_T = 1000/FPS
 TTL_BULLETS = 5
 DEAD_BULLET_POS = (-99, -99)
 DEAD_R_POS = (-99, -200)
@@ -62,3 +63,5 @@ class GameState:
     shooter_score: int = 0  # 22
     chopper_score: int = 0  # 23
     winner: str = "nobody"  # 24
+    shooter_hit: int = 0  # 25
+    chopper_hit: int = 0  # 26

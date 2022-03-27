@@ -36,6 +36,19 @@ class Game:
 
         self.current_level = None
 
+        self.snd_yeet = pg.mixer.Sound("resources/sound/yeet.ogg")
+        self.snd_yeet.set_volume(0.2)
+
+        self.running = True
+
+    def new(self):
+        self.winner = None
+        self.playing = True
+
+        pg.mixer.music.load("resources/sound/Resurrection of the Dagger.ogg")
+        pg.mixer.music.set_volume(0.3)
+        pg.mixer.music.play(loops=-1)
+
         self.bullets_l = []
         self.live_bullet_l = 0
         for i in range(TTL_BULLETS):
@@ -66,21 +79,13 @@ class Game:
         if self.role_id == "0":
             self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="left")
             self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name, alignment="right")
+            self.my_health_bar = HealthBar(10, 720, SHOOTER_SCORE_HIT)
+            self.your_health_bar = HealthBar(800, 720, CHOPPER_SCORE_HIT)
         elif self.role_id == "1":
             self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="right")
             self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name, alignment="left")
-
-        self.snd_yeet = pg.mixer.Sound("resources/sound/yeet.ogg")
-        self.snd_yeet.set_volume(0.2)
-
-        self.running = True
-
-    def new(self):
-        self.winner = None
-        self.playing = True
-        pg.mixer.music.load("resources/sound/Resurrection of the Dagger.ogg")
-        pg.mixer.music.set_volume(0.3)
-        pg.mixer.music.play(loops=-1)
+            self.your_health_bar = HealthBar(10, 720, SHOOTER_SCORE_HIT)
+            self.my_health_bar = HealthBar(800, 720, CHOPPER_SCORE_HIT)
 
         self.restart()
 
@@ -126,7 +131,7 @@ class Game:
         self.player_chopper.rect.y = 200
 
         self.active_sprite_grp.add(self.player_shooter, self.player_chopper, self.r_sign)
-        self.upd_text_sprite_grp.add(self.fps_txt, self.match_type_txt)  # only text sprites that need to be updated
+        self.upd_text_sprite_grp.add(self.fps_txt, self.match_type_txt, self.my_health_bar, self.your_health_bar)  # only text sprites that need to be updated
         self.idle_text_sprite_grp.add(self.my_name_txt, self.your_name_txt, self.level_txt)
         self.bullet_sprite_grp.add(*self.bullets_r, *self.bullets_l)
 
@@ -142,6 +147,10 @@ class Game:
                 self.running = False
 
             if event.type == pg.KEYDOWN:
+                if event.key == pg.K_ESCAPE:
+                    self.events_lst[0] = "q"
+                    self.playing = False
+                    self.running = False
                 # player_shooter controls
                 if event.key == pg.K_LEFT:
                     self.events_lst[1] = "1"
@@ -181,6 +190,7 @@ class Game:
     def update_game_state(self, gs_lst):
         self.clock.tick()
         if gs_lst[24] != "nobody":
+            self.winner = gs_lst[24]
             self.playing = False
         self.player_shooter.update_img(gs_lst[0], gs_lst[1])
         self.player_shooter.rect.x, self.player_shooter.rect.y = gs_lst[2]
@@ -199,6 +209,8 @@ class Game:
         # {self.shooter_score} - {MATCH_TYPE_LST[int(self.match_id)]} - {self.chopper_score}
         self.match_type_txt.text = f"{gs_lst[22]} - {MATCH_TYPE_LST[int(gs_lst[19])]} - {gs_lst[23]}"
         self.fps_txt.text = str(int(self.clock.get_fps()))
+        self.my_health_bar.hit = gs_lst[25]
+        self.your_health_bar.hit = gs_lst[26]
         self.upd_text_sprite_grp.update()
 
     def draw(self):
