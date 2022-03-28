@@ -219,11 +219,11 @@ class Server:
         clock = pygame.time.Clock()
         while True:
             # self.clock.tick(FPS)
-            clock.tick()
-            tick = pygame.time.get_ticks() - start
-            if tick < FPS_T:
-                pygame.time.wait(int(FPS_T - tick))
-            start = pygame.time.get_ticks()
+            clock.tick(FPS)
+            # tick = pygame.time.get_ticks() - start
+            # if tick < FPS_T:
+            #     pygame.time.wait(int(FPS_T - tick))
+            # start = pygame.time.get_ticks()
             # sending room list to the client, no matter full or not [[player0_name, game_ready, room_id],]
             # if game_dict is empty, an empty list will be assigned to "rooms_lst" and no exception will be raised
             rooms_lst = [[self.game_dict[room_id].player_names[0], self.game_dict[room_id].check_ready(), room_id]
@@ -370,11 +370,11 @@ class Server:
         clock = pygame.time.Clock()
         while True:  # wait for the 2nd player to join the room and the 1st player to set the game mode
             # self.clock.tick(FPS)
-            clock.tick()
-            tick = pygame.time.get_ticks() - start
-            if tick < FPS_T:
-                pygame.time.wait(int(FPS_T - tick))
-            start = pygame.time.get_ticks()
+            clock.tick(FPS)
+            # tick = pygame.time.get_ticks() - start
+            # if tick < FPS_T:
+            #     pygame.time.wait(int(FPS_T - tick))
+            # start = pygame.time.get_ticks()
             # start = perf_counter()
             """
             once there are two players in one game room, game_ready for that room is set to 
@@ -433,11 +433,11 @@ class Server:
         clock = pygame.time.Clock()
         while not room.check_ready():
             # self.clock.tick(FPS)
-            clock.tick()
-            tick = pygame.time.get_ticks() - start
-            if tick < FPS_T:
-                pygame.time.wait(int(FPS_T - tick))
-            start = pygame.time.get_ticks()
+            clock.tick(FPS)
+            # tick = pygame.time.get_ticks() - start
+            # if tick < FPS_T:
+            #     pygame.time.wait(int(FPS_T - tick))
+            # start = pygame.time.get_ticks()
             r = await self.check_read_room(room)
             if not r[0]:
                 room.running = False
