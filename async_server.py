@@ -474,12 +474,15 @@ class Server:
         clock = pygame.time.Clock()
         while g.playing:  # This is the routine game tick
             # self.clock.tick(FPS)
-            clock.tick(FPS)  # needs to be called for get_fps() to result in correct value
-            # tick = pygame.time.get_ticks() - start
-            # if tick < FPS_T:
-            #     pygame.time.wait(int(FPS_T - tick))
-            # start = pygame.time.get_ticks()
-            # start_p = perf_counter()
+            clock.tick()  # needs to be called for get_fps() to result in correct value
+            tick = pygame.time.get_ticks() - start
+            if tick < FPS_T:
+                # await asyncio.sleep(0)
+                # pygame.time.wait(int(FPS_T - tick))
+                print((FPS_T - tick)/1000)
+                await asyncio.sleep((FPS_T - tick)/1000)
+            start = pygame.time.get_ticks()
+            start_p = perf_counter()
             actual_fps = int(clock.get_fps())
             actual_tick = int(pygame.time.get_ticks())
             if actual_fps <= 40 and (actual_tick-self.timer) > 5000:
@@ -534,7 +537,7 @@ class Server:
             # TODO: it seems zlib compressed data can't be directly sent over a StreamsWriter
             room.player_writers[0].write(send_byte)
             room.player_writers[1].write(send_byte)
-            # print((perf_counter()-start_p)*1000)
+            print(room.room_id, (perf_counter()-start_p)*1000)
 
         room.winner = g.winner
 

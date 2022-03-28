@@ -84,8 +84,8 @@ class Game:
         elif self.role_id == "1":
             self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="right")
             self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name, alignment="left")
-            self.your_health_bar = HealthBar(10, 720, SHOOTER_SCORE_HIT)
-            self.my_health_bar = HealthBar(800, 720, CHOPPER_SCORE_HIT)
+            self.your_health_bar = HealthBar(10, 750, SHOOTER_SCORE_HIT)
+            self.my_health_bar = HealthBar(830, 750, CHOPPER_SCORE_HIT)
 
         self.restart()
 
