@@ -5,8 +5,9 @@ This is the alpha client code for the "shooter" game
 """
 
 import asyncio
+import pygame
 import json
-import time
+from time import time, sleep
 from zlib import compress, decompress
 from inspect import currentframe, getframeinfo
 import logging
@@ -14,7 +15,6 @@ import queue
 from queue import Queue
 from time import perf_counter
 from platform_shooter_settings import *
-
 
 class Network:
     def __init__(self, server_ip='192.168.3.10', server_port="8888"):
@@ -28,7 +28,8 @@ class Network:
         self.server_msg = "Waiting for 2nd player"
         self.player_name = ""
         self.opponent_name = ""
-        self.events_str = "0000000"
+        self.events_str_send = "0000000"
+        self.events_str = Queue(maxsize=3)
         self.reader = None
         self.writer = None
         self.game_setting = [0, 0, 0, 0]  # [ready, map_id, match_id, role_id]
@@ -39,6 +40,8 @@ class Network:
         self.speed = 2
         self.pos_send = [0, 0]
         self.pos_recv = Queue(maxsize=3)  # (x, Y) coordinates as tuple for each item in the Queue
+        pygame.init()
+        self.clock = pygame.time.Clock()
 
     async def check_read(self):
         string = None
@@ -153,7 +156,13 @@ class Network:
 
     async def client_game(self):
         self.client_game_flag = True
+        # now = time()
         while self.connected_flag:  # this is the loop waiting for the 2nd player to join or player0 to set the game
+            self.clock.tick(FPS)
+            # elapsed = time() - now
+            # if elapsed < FPS_T:
+            #     sleep(FPS_T - elapsed)
+            # now = time()
             r = await self.check_read()
             if not r[0]:
                 return
@@ -166,8 +175,18 @@ class Network:
                 send_str = f"{self.game_setting[0]}{self.game_setting[1]}{self.game_setting[2]}{self.game_setting[3]};"
                 self.writer.write(send_str.encode())
 
+        # now = time()
         while self.game_ready:  # this is the routine game tick
-            self.writer.write((self.events_str+";").encode())
+            self.clock.tick(FPS)
+            try:
+                self.events_str_send = self.events_str.get(timeout=TIMEOUT)
+            except queue.Empty:
+                print("Empty <self.events_str.get()>")
+            self.writer.write((self.events_str_send+";").encode())
+            # elapsed = time() - now
+            # if elapsed < FPS_T:
+            #     sleep(FPS_T - elapsed)
+            # now = time()
             # await self.writer.drain()  # .drain() doesn't help when written content is short
             # start = perf_counter()
             r = await self.check_read()

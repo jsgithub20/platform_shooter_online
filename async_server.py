@@ -219,7 +219,7 @@ class Server:
         clock = pygame.time.Clock()
         while True:
             # self.clock.tick(FPS)
-            clock.tick(FPS)
+            # clock.tick(FPS)
             # tick = pygame.time.get_ticks() - start
             # if tick < FPS_T:
             #     pygame.time.wait(int(FPS_T - tick))
@@ -263,6 +263,7 @@ class Server:
                 self.game_dict[chosen_room_id].player_writers.append(writer)  # player1
                 chosen_room = self.game_dict[chosen_room_id]
                 while not chosen_room.game_set:  # meaning player0 has not finished setting game yet
+                    # clock.tick(FPS)
                     writer.write(f"{self.game_dict[chosen_room_id].player_names[0]} is not ready yet, please wait...;".encode())
                     r = await self.check_read(player_name, reader, writer)  # return connected, string
                     if not r[0]:
@@ -366,16 +367,15 @@ class Server:
                     player_joined can't be set to True in self.join(), otherwise player0 will enter the 
                     routine game loop too soon, refer to comments in self.join() for details
                     """
-        start = pygame.time.get_ticks()
-        clock = pygame.time.Clock()
+        # start = pygame.time.get_ticks()
+        # clock = pygame.time.Clock()
         while True:  # wait for the 2nd player to join the room and the 1st player to set the game mode
-            # self.clock.tick(FPS)
-            clock.tick(FPS)
+            # clock.tick()  # needs to be called for get_fps() to result in correct value
             # tick = pygame.time.get_ticks() - start
             # if tick < FPS_T:
-            #     pygame.time.wait(int(FPS_T - tick))
+            #     print(FPS_T - tick)
+            #     await asyncio.sleep((FPS_T - tick) / 1000)
             # start = pygame.time.get_ticks()
-            # start = perf_counter()
             """
             once there are two players in one game room, game_ready for that room is set to 
             True, then the task for player_1 who joins the room after player_0 created the room
@@ -432,12 +432,12 @@ class Server:
         start = pygame.time.get_ticks()
         clock = pygame.time.Clock()
         while not room.check_ready():
-            # self.clock.tick(FPS)
-            clock.tick(FPS)
-            # tick = pygame.time.get_ticks() - start
-            # if tick < FPS_T:
-            #     pygame.time.wait(int(FPS_T - tick))
-            # start = pygame.time.get_ticks()
+            clock.tick()  # needs to be called for get_fps() to result in correct value
+            tick = pygame.time.get_ticks() - start
+            if tick < FPS_T:
+                # print(FPS_T - tick)
+                await asyncio.sleep((FPS_T - tick) / 1000)
+            start = pygame.time.get_ticks()
             r = await self.check_read_room(room)
             if not r[0]:
                 room.running = False
@@ -470,26 +470,27 @@ class Server:
         g.match_id = int(room.match_id)
         gs = GameState()
         self.my_logger.warning(f"<{room.player_names[0]}> is gaming with <{room.player_names[1]}>!")
-        start = pygame.time.get_ticks()
+        # start = pygame.time.get_ticks()
+        # start_p = perf_counter()
         clock = pygame.time.Clock()
         while g.playing:  # This is the routine game tick
-            # self.clock.tick(FPS)
             clock.tick()  # needs to be called for get_fps() to result in correct value
-            tick = pygame.time.get_ticks() - start
-            if tick < FPS_T:
-                # await asyncio.sleep(0)
-                # pygame.time.wait(int(FPS_T - tick))
-                print((FPS_T - tick)/1000)
-                await asyncio.sleep((FPS_T - tick)/1000)
-            start = pygame.time.get_ticks()
-            start_p = perf_counter()
+            # tick = pygame.time.get_ticks() - start
+            # print(FPS_T - tick)
+            # if tick < FPS_T:
+            #     await asyncio.sleep((FPS_T - tick)/1000)
+            # start = pygame.time.get_ticks()
             actual_fps = int(clock.get_fps())
+            # print(actual_fps)
             actual_tick = int(pygame.time.get_ticks())
             if actual_fps <= 40 and (actual_tick-self.timer) > 5000:
                 self.timer = actual_tick
                 self.my_logger.warning(f"Low fps: {actual_fps}")
-
+            # print(room.room_id, (perf_counter()-start_p)*1000)
+            # print(perf_counter()-start_p)
             r = await self.check_read_room(room)
+            # start_p = perf_counter()
+
             if not r[0]:
                 self.my_logger.warning(f"Connection issue to player(s): "
                                        f"{room.player_names}, game room is being closed!")
@@ -537,7 +538,6 @@ class Server:
             # TODO: it seems zlib compressed data can't be directly sent over a StreamsWriter
             room.player_writers[0].write(send_byte)
             room.player_writers[1].write(send_byte)
-            print(room.room_id, (perf_counter()-start_p)*1000)
 
         room.winner = g.winner
 

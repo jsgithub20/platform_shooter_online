@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+TIMEOUT = 2
+
 # Colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -20,7 +22,7 @@ MAP_LST = ["map0", "map1"]
 # others
 TITLE = "Platform Shooter"
 FPS = 60
-FPS_T = 1000/FPS
+FPS_T = 16.67
 TTL_BULLETS = 5
 DEAD_BULLET_POS = (-99, -99)
 DEAD_R_POS = (-99, -200)

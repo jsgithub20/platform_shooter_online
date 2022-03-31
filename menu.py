@@ -28,7 +28,6 @@ FPS = 60
 WINDOW_SIZE = (1024, 768)
 GAME_ROOMS = ["Amy's game", "Jacky's game", "Dora's game", "Amy's game", "Jacky's game", "Dora's game",
               "Amy's game", "Jacky's game", "Dora's game", "Amy's game", "Jacky's game", "Dora's game"]
-TIMEOUT = 2
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -410,17 +409,24 @@ class Menu:
     def game_over_screen(self, g):
         if not g.running:
             self.end()
+        counting = 3
+        now = pygame.time.get_ticks()
         while self.game_over_screen_flag:
             self.clock.tick(FPS)
             events = pygame.event.get()
             self.check_end(events)
 
-            for event in events:
-                if event.type == pygame.KEYDOWN:
-                    self.game_over_screen_flag = False
-                    return
+            if pygame.time.get_ticks() - now >= 1000 and counting > 0:
+                now = pygame.time.get_ticks()
+                counting -= 1
+            if counting == 0:
+                for event in events:
+                    if event.type == pygame.KEYDOWN:
+                        self.game_over_screen_flag = False
+                        return
 
             self.splat_font.render_to(self.screen, (300, 350), f"{self.winner} wins!", bgcolor=LIGHT_GREEN)
+            self.splat_font.render_to(self.screen, (200, 400), f"Press any key to continue in {counting} seconds", bgcolor=LIGHT_GREEN)
             pygame.display.flip()
 
     def play(self):
@@ -446,7 +452,8 @@ class Menu:
 
         while g.playing:  # routine game tick
             g.events()
-            self.connection.events_str = g.events_str
+            self.connection.events_str.put(g.events_str)
+            # self.connection.events_str = g.events_str
             # if not g.playing:
             #     print(f"g.events_str {g.events_str}")
             #     return
@@ -480,7 +487,7 @@ class Menu:
         msg_grp = pygame.sprite.Group()
         msg_grp.add(my_msg, their_msg)
         while True:
-            self.clock.tick(60)
+            self.clock.tick(FPS)
             self.screen.fill((0, 200, 0))
 
             events = pygame.event.get()
@@ -658,7 +665,7 @@ class Menu:
 
         server_ip = self.main_menu.add.text_input(
             'Server ip address: ',
-            default='127.0.0.1',  # '47.94.100.39'
+            default='47.94.100.39',  # '47.94.100.39'
             onreturn=None,
             textinput_id='server_ip')
 
