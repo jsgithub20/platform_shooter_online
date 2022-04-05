@@ -1,48 +1,11 @@
-from dataclasses import dataclass
+import asyncio
+from zlib import compress, decompress
+from dataclasses import dataclass, asdict, field
+import json
+import pickle
 
-TIMEOUT = 2
-
-# Colors
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-GREEN = (0, 255, 0)
-RED = (255, 0, 0)
-BLUE = (0, 0, 255)
-LIGHT_BLUE = (68, 105, 252)
-LIGHT_GREEN = (100, 250, 122)
-
-# Screen dimensions
-WINDOW_SIZE = (1024, 768)
-SCREEN_WIDTH = 1024
-SCREEN_HEIGHT = 768
-
-# Game setting
-MATCH_TYPE_LST = ["Deathmatch", "1st23", "Best of 3"]
-ROUND_CNT = ["1", "3", "3"]
-MAP_LST = ["map0", "map1"]
-
-# others
-TITLE = "Platform Shooter"
-FPS = 60
-FPS_T = 16.67
-TTL_BULLETS = 5
 DEAD_BULLET_POS = (-99, -99)
-DEAD_R_POS = (-99, -200)
-DEAD_CRATER_POS = (-99, -300)
-DEAD_BLOCK_POS = (-99, -400)
 
-CONNECTED = True
-
-READ_LEN = 100
-GS_READ_LEN = 300  # this is the length to read GameState, to be confirmed
-
-CHOPPER_SCORE_HIT = 5
-SHOOTER_SCORE_HIT = 3
-
-CHOPPER_CD = 500  # ms
-
-QUIT = "q"
-HOLD = "h"
 
 @dataclass
 class GameState:
@@ -62,15 +25,44 @@ class GameState:
     bullet_r2_pos: tuple = DEAD_BULLET_POS  # bullet_r[2] 13
     bullet_r3_pos: tuple = DEAD_BULLET_POS  # bullet_r[3] 14
     bullet_r4_pos: tuple = DEAD_BULLET_POS  # bullet_r[4] 15
-    moving_block_pos: tuple = DEAD_BLOCK_POS  # 16
+    moving_block_pos: tuple = DEAD_BULLET_POS  # 16
     r_sign_flg: int = 0  # 17
     # r_sign_pos: tuple = DEAD_R_POS  # 17
     map_id: int = 0  # 18
     match_id: int = 0  # 19
     level_id: int = 0  # 20
-    round: int = 1  # 21
+    round: int = 0  # 21
     shooter_score: int = 0  # 22
     chopper_score: int = 0  # 23
     winner: str = "nobody"  # 24
     shooter_hit: int = 0  # 25
     chopper_hit: int = 0  # 26
+
+
+send_o = GameState()
+send = [*asdict(send_o).values()]
+
+send1 = json.dumps(send)
+send2 = send1.encode()
+print(len(send2))
+send3 = compress(send2) + b"||"
+print(len(send3))
+
+
+async def tcp_echo_client(message):
+    reader, writer = await asyncio.open_connection(
+        '127.0.0.1', 8888)
+
+    print(f'Send: {message!r}')
+    writer.write(message)
+
+    data = await reader.readuntil(separator=b"||")
+    data1 = decompress(data[:-1])
+    data2 = data1.decode()
+    recv = json.loads(data2)
+    print(f'Received: {recv!r}')
+
+    print('Close the connection')
+    writer.close()
+
+asyncio.run(tcp_echo_client(send3))

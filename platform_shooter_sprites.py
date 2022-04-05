@@ -78,6 +78,7 @@ class HealthBar(pg.sprite.Sprite):
         self.red_surface = pygame.Surface((self.hit * (self.full_length / self.health), self.bar_width))
 
     def update(self) -> None:
+        self.image.fill((0, 255, 0))
         self.red_surface = pygame.Surface((self.hit*(self.full_length/self.health), self.bar_width))
         self.red_surface.fill((255, 0, 0))
         self.image.blit(self.red_surface, (0, 0))
@@ -613,7 +614,8 @@ class Level_01(Level):
                  [600, 650],
                  [0, 300],
                  [400, 300],
-                 [440, 270]
+                 [440, 270],
+                 [900, 550]
                  ]
 
         # Go through the array above and add platforms

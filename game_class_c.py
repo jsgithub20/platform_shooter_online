@@ -15,16 +15,23 @@ class Game:
     def __init__(self, screen, win_w, win_h, map_id, match_id, role_id, my_name, your_name):
         pg.init()
         self.clock = pg.time.Clock()
+        self.timer = pg.time.get_ticks()
         self.screen = screen
         self.win_w = win_w
         self.win_h = win_h
+        self.splat_font = ft.Font("resources/fonts/earwig factory rg.ttf", 60)
+        self.counting_font = ft.Font("resources/OvOV20.ttf", 60)
+        self.counting = 3
 
         self.map_id = map_id
         self.current_level_no = 0
         self.match_id = match_id
         self.role_id = role_id
+        self.round = 0
+        self.round_count_down_flag = False
         self.my_name = my_name
         self.your_name = your_name
+        self.role_lst = ["shooter", "chopper"]
 
         """
         0   , 1        , 2         , 3   , 4     , 5             , 6
@@ -44,6 +51,7 @@ class Game:
     def new(self):
         self.winner = None
         self.playing = True
+        self.round = 0
 
         pg.mixer.music.load("resources/sound/Resurrection of the Dagger.ogg")
         pg.mixer.music.set_volume(0.3)
@@ -79,18 +87,21 @@ class Game:
         if self.role_id == "0":
             self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="left")
             self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name, alignment="right")
-            self.my_health_bar = HealthBar(10, 720, SHOOTER_SCORE_HIT)
-            self.your_health_bar = HealthBar(800, 720, CHOPPER_SCORE_HIT)
+            self.my_health_bar = HealthBar(10, 750, SHOOTER_SCORE_HIT)
+            self.your_health_bar = HealthBar(820, 750, CHOPPER_SCORE_HIT)
         elif self.role_id == "1":
             self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="right")
             self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name, alignment="left")
             self.your_health_bar = HealthBar(10, 750, SHOOTER_SCORE_HIT)
-            self.my_health_bar = HealthBar(830, 750, CHOPPER_SCORE_HIT)
+            self.my_health_bar = HealthBar(810, 750, CHOPPER_SCORE_HIT)
 
         self.restart()
 
     def restart(self):
         # start a new game
+        self.my_health_bar.hit = 0
+        self.your_health_bar.hit = 0
+
         self.live_bullet_l = 0
         self.live_bullet_r = 0
         for i in range(TTL_BULLETS):
@@ -104,7 +115,7 @@ class Game:
         self.player_chopper = sprite_player_correction.Player()
         self.player_chopper.hit_limit = 3
 
-        self.role_lst = [self.player_shooter, self.player_chopper]
+        self.player_lst = [self.player_shooter, self.player_chopper]
 
         # Create all the levels
         self.level_list = []
@@ -132,6 +143,7 @@ class Game:
 
         self.active_sprite_grp.add(self.player_shooter, self.player_chopper, self.r_sign)
         self.upd_text_sprite_grp.add(self.fps_txt, self.match_type_txt, self.my_health_bar, self.your_health_bar)  # only text sprites that need to be updated
+        # self.upd_text_sprite_grp.add(self.my_health_bar, self.your_health_bar)  # only text sprites that need to be updated
         self.idle_text_sprite_grp.add(self.my_name_txt, self.your_name_txt, self.level_txt)
         self.bullet_sprite_grp.add(*self.bullets_r, *self.bullets_l)
 
@@ -142,13 +154,13 @@ class Game:
         for event in pg.event.get():
             # check for closing window
             if event.type == pg.QUIT:
-                self.events_lst[0] = "q"
+                self.events_lst[0] = QUIT
                 self.playing = False
                 self.running = False
 
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
-                    self.events_lst[0] = "q"
+                    self.events_lst[0] = QUIT
                     self.playing = False
                     self.running = False
                 # player_shooter controls
@@ -159,7 +171,12 @@ class Game:
                 if event.key == pg.K_UP:
                     self.events_lst[3] = "1"
                 if event.key == pg.K_SPACE:
-                    self.events_lst[4] = "1"
+                    if self.role_lst[int(self.role_id)] == "chopper":
+                        if (pg.time.get_ticks() - self.timer) > CHOPPER_CD:
+                            self.events_lst[4] = "1"
+                            self.timer = pg.time.get_ticks()
+                    else:
+                        self.events_lst[4] = "1"
                     # self.snd_yeet.play()
 
                 # player_chopper controls
@@ -185,10 +202,25 @@ class Game:
                 if event.key == pg.K_d:
                     self.events_lst[6] = "1"
 
+        if self.round_count_down_flag and self.counting >= 0:
+            self.events_lst[0] = HOLD
+            if pg.time.get_ticks() - self.timer >= 1000 and self.counting > 0:
+                self.counting -= 1
+                self.timer = pg.time.get_ticks()
+            elif pg.time.get_ticks() - self.timer >= 1000 and self.counting == 0:
+                self.round_count_down_flag = False
+        else:
+            self.round_count_down_flag = False
+
         self.events_str = "".join(self.events_lst)
 
     def update_game_state(self, gs_lst):
         self.clock.tick()
+        if gs_lst[21] > self.round:
+            self.round = gs_lst[21]
+            self.round_count_down_flag = True
+            self.counting = 3
+            self.timer = pg.time.get_ticks()
         if gs_lst[24] != "nobody":
             self.winner = gs_lst[24]
             self.playing = False
@@ -209,8 +241,12 @@ class Game:
         # {self.shooter_score} - {MATCH_TYPE_LST[int(self.match_id)]} - {self.chopper_score}
         self.match_type_txt.text = f"{gs_lst[22]} - {MATCH_TYPE_LST[int(gs_lst[19])]} - {gs_lst[23]}"
         self.fps_txt.text = str(int(self.clock.get_fps()))
-        self.my_health_bar.hit = gs_lst[25]
-        self.your_health_bar.hit = gs_lst[26]
+        if self.role_id == "0":
+            self.my_health_bar.hit = gs_lst[25]
+            self.your_health_bar.hit = gs_lst[26]
+        elif self.role_id == "1":
+            self.my_health_bar.hit = gs_lst[26]
+            self.your_health_bar.hit = gs_lst[25]
         self.upd_text_sprite_grp.update()
 
     def draw(self):
@@ -219,5 +255,10 @@ class Game:
         self.bullet_sprite_grp.draw(self.screen)
         self.upd_text_sprite_grp.draw(self.screen)
         self.idle_text_sprite_grp.draw(self.screen)
+        if self.round_count_down_flag:
+            self.counting_font.render_to(self.screen, (400, 200), f"ROUND {self.round}",
+                                         fgcolor=RED, bgcolor=GREEN)
+            self.counting_font.render_to(self.screen, (500, 300), f"{self.counting}",
+                                         fgcolor=RED, bgcolor=GREEN)
 
         pg.display.update()

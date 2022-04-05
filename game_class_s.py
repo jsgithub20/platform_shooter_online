@@ -21,10 +21,11 @@ class Game:
         self.map_id = map_id
         self.current_level_no = level_id
         self.match_id = match_id
+        self.new_round = False
 
         # match score
         self.match_score = {"match_type": MATCH_TYPE_LST[self.match_id],
-                            "round": 0, "shooter": 0, "chopper": 0,
+                            "round": 1, "shooter": 0, "chopper": 0,
                             "map": MAP_LST[self.map_id], "game_finished": False}
 
         """
@@ -60,13 +61,14 @@ class Game:
     def new(self):
         self.winner = "nobody"
         self.playing = True
-        self.match_score["shooter"] = 0
-        self.match_score["chopper"] = 0
+        self.match_score = {"match_type": MATCH_TYPE_LST[self.match_id],
+                            "round": 0, "shooter": 0, "chopper": 0,
+                            "map": MAP_LST[self.map_id], "game_finished": False}
 
-        if self.match_score["game_finished"]:
-            return
-        else:
-            self.match_score["round"] += 1
+        # if self.match_score["game_finished"]:
+        #     return
+        # else:
+        #     self.match_score["round"] += 1
 
         self.restart()
 
@@ -74,7 +76,8 @@ class Game:
         # match type
         match_type = self.match_score["match_type"]
 
-        # start a new game
+        # initialize variables
+        self.match_score["round"] += 1
 
         # Create the self.player
         self.player_shooter = Player()
@@ -100,11 +103,11 @@ class Game:
 
         self.player_shooter.level = self.current_level
         self.player_shooter.rect.x = 200
-        self.player_shooter.rect.y = 0
+        self.player_shooter.rect.y = -50
 
         self.player_chopper.level = self.current_level
-        self.player_chopper.rect.x = 600
-        self.player_chopper.rect.y = 200
+        self.player_chopper.rect.x = 500
+        self.player_chopper.rect.y = -50
 
         self.live_bullet_l = 0
         self.live_bullet_r = 0
@@ -216,10 +219,11 @@ class Game:
                 if self.player_chopper.hit_count == self.player_chopper.hit_limit:
                     # self.active_sprite_grp.remove(self.player_chopper)
                     self.match_score["shooter"] += 1
-                    self.player_chopper.hit_count = 0
+                    # self.player_chopper.hit_count = 0
                     self.winner, self.playing = self.check_winner()
-                    # if self.winner is None:
-                    #     self.restart()
+                    if self.winner == "nobody":
+                        # self.match_score["round"] += 1
+                        self.new_round = True
 
             if pg.sprite.collide_rect(self.player_shooter, self.player_chopper):
                 if self.player_shooter.hit_flag == 0 and self.player_chopper.chop_flag == 1:
@@ -228,10 +232,11 @@ class Game:
                     if self.player_shooter.hit_count == self.player_shooter.hit_limit:
                         # self.active_sprite_grp.remove(self.player_shooter)
                         self.match_score["chopper"] += 1
-                        self.player_shooter.hit_count = 0
+                        # self.player_shooter.hit_count = 0
                         self.winner, self.playing = self.check_winner()
-                        # if self.winner is None:
-                        #     self.restart()
+                        if self.winner == "nobody":
+                            # self.match_score["round"] += 1
+                            self.new_round = True
 
                 elif self.player_shooter.hit_flag == 1 and self.player_chopper.chop_flag == 0:
                     self.player_shooter.hit_flag = 0
@@ -264,13 +269,13 @@ class Game:
                 return "nobody", True
         elif self.match_score["match_type"] == MATCH_TYPE_LST[2]:
             # best of 3
-            if self.match_score["shooter"] == 2 and self.match_score["chopper"] == 0:
+            if self.match_score["shooter"] == 2:
                 return "shooter", False
-            elif self.match_score["chopper"] == 2 and self.match_score["shooter"] == 0:
+            elif self.match_score["chopper"] == 2:
                 return "chopper", False
-            elif self.match_score["shooter"] == 3:
-                return "shooter", False
-            elif self.match_score["chopper"] == 3:
-                return "chopper", False
+            # elif self.match_score["shooter"] == 3:
+            #     return "shooter", False
+            # elif self.match_score["chopper"] == 3:
+            #     return "chopper", False
             else:
                 return "nobody", True

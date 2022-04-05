@@ -24,18 +24,18 @@ from platform_shooter_settings import *
 # -----------------------------------------------------------------------------
 # Constants and global variables
 # -----------------------------------------------------------------------------
-FPS = 60
-WINDOW_SIZE = (1024, 768)
-GAME_ROOMS = ["Amy's game", "Jacky's game", "Dora's game", "Amy's game", "Jacky's game", "Dora's game",
-              "Amy's game", "Jacky's game", "Dora's game", "Amy's game", "Jacky's game", "Dora's game"]
-
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-GREEN = (0, 255, 0)
-RED = (255, 0, 0)
-BLUE = (0, 0, 255)
-LIGHT_BLUE = (68, 105, 252)
-LIGHT_GREEN = (100, 250, 122)
+# FPS = 60
+# WINDOW_SIZE = (1024, 768)
+# GAME_ROOMS = ["Amy's game", "Jacky's game", "Dora's game", "Amy's game", "Jacky's game", "Dora's game",
+#               "Amy's game", "Jacky's game", "Dora's game", "Amy's game", "Jacky's game", "Dora's game"]
+#
+# BLACK = (0, 0, 0)
+# WHITE = (255, 255, 255)
+# GREEN = (0, 255, 0)
+# RED = (255, 0, 0)
+# BLUE = (0, 0, 255)
+# LIGHT_BLUE = (68, 105, 252)
+# LIGHT_GREEN = (100, 250, 122)
 
 # -----------------------------------------------------------------------------
 # Load image & set game text
@@ -176,6 +176,7 @@ class Menu:
         self.player_id = 0
         self.gs_lst = []  # Game state received as a list
         self.splat_font = ft.Font("resources/fonts/earwig factory rg.ttf", 60)
+        self.counting_font = ft.Font("resources/OvOV20.ttf", 60)
         self.main_menu: [pygame_menu.menu] = None
         self.b_connect: [pygame_menu.widgets.widget.button] = None
         self.selector_game: [pygame_menu.widgets.widget.dropselect] = None
@@ -314,7 +315,7 @@ class Menu:
         try:
             msg = self.connection.chosen_room_ok.get(timeout=TIMEOUT)
             if msg == "ok":
-                self.msg_lbl.set_title("Game room choice accepted, wait for the host to set the game")
+                self.msg_lbl.set_title("Game room choice accepted, press ok to proceed")
                 self.check_join_back_btn.hide()
                 self.check_join_ok_btn.show()
             else:
@@ -364,10 +365,10 @@ class Menu:
             self.clock.tick(FPS)
             self.screen.fill((0, 200, 0))
             if self.player_id == 0:
-                self.splat_font.render_to(self.screen, (100, 200), "Waiting for 2nd player")
+                self.counting_font.render_to(self.screen, (100, 200), "Waiting for 2nd player")
             else:
-                self.splat_font.render_to(self.screen, (120, 200), "Waiting for 1st player")
-                self.splat_font.render_to(self.screen, (160, 300), "to set the game")
+                self.counting_font.render_to(self.screen, (120, 200), "Waiting for 1st player")
+                self.counting_font.render_to(self.screen, (160, 300), "to set the game")
 
             events = pygame.event.get()
             self.check_end(events)
@@ -409,7 +410,7 @@ class Menu:
     def game_over_screen(self, g):
         if not g.running:
             self.end()
-        counting = 3
+        counting = 2
         now = pygame.time.get_ticks()
         while self.game_over_screen_flag:
             self.clock.tick(FPS)
@@ -425,8 +426,8 @@ class Menu:
                         self.game_over_screen_flag = False
                         return
 
-            self.splat_font.render_to(self.screen, (300, 350), f"{self.winner} wins!", bgcolor=LIGHT_GREEN)
-            self.splat_font.render_to(self.screen, (200, 400), f"Press any key to continue in {counting} seconds", bgcolor=LIGHT_GREEN)
+            self.counting_font.render_to(self.screen, (300, 350), f"{self.winner} wins!", bgcolor=LIGHT_GREEN)
+            self.counting_font.render_to(self.screen, (200, 400), f"Press any key to continue in {counting} seconds", bgcolor=LIGHT_GREEN)
             pygame.display.flip()
 
     def play(self):

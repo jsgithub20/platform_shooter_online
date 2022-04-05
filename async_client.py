@@ -5,6 +5,8 @@ This is the alpha client code for the "shooter" game
 """
 
 import asyncio
+import zlib
+
 import pygame
 import json
 from time import time, sleep
@@ -47,11 +49,35 @@ class Network:
         string = None
         connected = CONNECTED
         try:
-            received = await self.reader.readuntil(separator=b";")
-            string = received.decode().split(";")[0]
+            received = await self.reader.readuntil(separator=b"AB")
+            string = received.decode()[:-2]
         except (ConnectionError, asyncio.IncompleteReadError):
             print(f"Connection to server is lost [{getframeinfo(currentframe()).lineno}]")
             connected = not CONNECTED
+        else:  # if the connection is properly connected, there will be no ConnectionError exception raised
+            if not received:
+                print(f"Connection to server is lost [{getframeinfo(currentframe()).lineno}]")
+                if not self.writer.is_closing():
+                    self.writer.close()
+                    await self.writer.wait_closed()
+                connected = not CONNECTED
+        if not connected:
+            self.connected_flag = False
+        return connected, string
+
+    async def check_read_game(self):
+        string = None
+        connected = CONNECTED
+        received = None
+        try:
+            received = await self.reader.readuntil(separator=b"AB")
+            received_decom = decompress(received[:-2])
+            string = received_decom.decode()
+        except (ConnectionError, asyncio.IncompleteReadError):
+            print(f"Connection to server is lost [{getframeinfo(currentframe()).lineno}]")
+            connected = not CONNECTED
+        except zlib.error:
+            string = received[:-2].decode()
         else:  # if the connection is properly connected, there will be no ConnectionError exception raised
             if not received:
                 print(f"Connection to server is lost [{getframeinfo(currentframe()).lineno}]")
@@ -69,29 +95,29 @@ class Network:
         self.reader, self.writer = await asyncio.open_connection(self.server_ip, self.server_port)
         # id_data = await self.reader.read(100)
         # self.client_id = id_data.decode()
-        self.writer.write(f"{conn_type},{self.player_name};".encode())
+        self.writer.write(f"{conn_type},{self.player_name}AB".encode())
         r = await self.check_read()
         if r[0]:  # return connected, string
             if r[1] != "ok":  # if server doesn't send back "ok", there should be some connection issue
                 print("Server error")
-        self.writer.write(f"{conn_type},{self.player_name};".encode())  # just to complete the r/w cycle
+        self.writer.write(f"{conn_type},{self.player_name}AB".encode())  # just to complete the r/w cycle
         r = await self.check_read()
         if r[0]:  # return connected, string
             self.client_id = r[1]
 
     async def create(self):  # create a new game room
         conn_type = "create"
-        self.writer.write(f"{conn_type},{self.player_name};".encode())
+        self.writer.write(f"{conn_type},{self.player_name}AB".encode())
 
     async def join(self):
         conn_type = "join"
-        self.writer.write(f"{conn_type},{self.player_name};".encode())
+        self.writer.write(f"{conn_type},{self.player_name}AB".encode())
         # await self.client()
         print(f"This is 'join' client# {self.client_id}")
         await self.get_games()
 
     async def send_room_choice(self, room):  # room = [player0_name, game_ready, room_id]
-        self.writer.write(f"{room[2]};".encode())
+        self.writer.write(f"{room[2]}AB".encode())
         r = await self.check_read()
         if not r[0]:  # return connected, string
             print("Connection issue to server during send_room_choice")
@@ -100,7 +126,7 @@ class Network:
             self.chosen_room_ok.put("no", block=False)
             return
         self.chosen_room_ok.put("ok", block=False)
-        self.writer.write("ok;".encode())  # r/w cycle
+        self.writer.write("okAB".encode())  # r/w cycle
 
     async def get_games(self):
         """
@@ -110,7 +136,7 @@ class Network:
             return
         else:
             length = r[1]
-        self.writer.write("ok;".encode())  # just to complete a r/w cycle before receiving the next data
+        self.writer.write("okAB".encode())  # just to complete a r/w cycle before receiving the next data
         """
         r = await self.check_read()
         if not r[0]:  # return connected, string
@@ -122,7 +148,7 @@ class Network:
         self.game_rooms = list(json.loads(rooms_string))  # [[player0_name, game_ready, room_id],]
 
     async def refresh(self):
-        self.writer.write("-99;".encode())  # "-99" to represent a null message to allow server to still use int[] method
+        self.writer.write("-99AB".encode())  # "-99" to represent a null message to allow server to still use int[] method
         await self.get_games()
 
     async def client(self):
@@ -131,12 +157,12 @@ class Network:
             if not r[0]:
                 return
             else:
-                self.server_msg = tuple(r[1].split(","))  # f"Game Ready,{room.player_0_name}"
+                self.server_msg = tuple(r[1][:-2])  # f"Game Ready,{room.player_0_name}"
             if self.server_msg[0] == "Game Ready":
                 self.opponent_name = self.server_msg[1]
                 break
             else:
-                send_str = f"{self.game_setting[0]}{self.game_setting[1]}{self.game_setting[2]}{self.game_setting[3]};"
+                send_str = f"{self.game_setting[0]}{self.game_setting[1]}{self.game_setting[2]}{self.game_setting[3]}AB"
                 self.writer.write(send_str.encode())
 
         while True:  # this is the routine game tick
@@ -172,24 +198,28 @@ class Network:
                 self.game_ready = True
                 break
             else:
-                send_str = f"{self.game_setting[0]}{self.game_setting[1]}{self.game_setting[2]}{self.game_setting[3]};"
+                send_str = f"{self.game_setting[0]}{self.game_setting[1]}{self.game_setting[2]}{self.game_setting[3]}AB"
                 self.writer.write(send_str.encode())
 
-        # now = time()
+        # start_p = perf_counter()
         while self.game_ready:  # this is the routine game tick
             self.clock.tick(FPS)
+            # print((perf_counter() - start_p)*1000)
+            # start_p = perf_counter()
             try:
-                self.events_str_send = self.events_str.get(timeout=TIMEOUT)
+                self.events_str_send = self.events_str.get(timeout=0.02)
+                # 1/60 is rounded up to 20ms, if no event_str is received, then the game is out of routine ticks, no need to wait
             except queue.Empty:
-                print("Empty <self.events_str.get()>")
-            self.writer.write((self.events_str_send+";").encode())
+                # print("Empty <self.events_str.get()>")
+                self.events_str_send = "0000000"
+            self.writer.write((self.events_str_send+"AB").encode())
             # elapsed = time() - now
             # if elapsed < FPS_T:
             #     sleep(FPS_T - elapsed)
             # now = time()
             # await self.writer.drain()  # .drain() doesn't help when written content is short
             # start = perf_counter()
-            r = await self.check_read()
+            r = await self.check_read_game()
             # print(r)
             if not r[0]:  # return connected, string
                 break
@@ -214,7 +244,7 @@ class Network:
                 except Exception as e1:
                     print(f"Error: {e1}")
 
-        self.writer.write("reselect;".encode())
+        self.writer.write("reselectAB".encode())
         self.client_game_flag = False
 
     async def stop(self):
@@ -225,7 +255,7 @@ class Network:
     def pos2str(self, pos: list):
         # the returned string is like "100,100" from tuple (100, 100)
         result = ','.join(map(str, pos))
-        return result + ";"
+        return result + "AB"
 
     def str2pos(self, string: str):
         # string must be "100,100" or "100, 100" which will be converted to (100, 100)
