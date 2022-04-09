@@ -1,6 +1,13 @@
 from dataclasses import dataclass
+import configparser
 
-TIMEOUT = 2
+config = configparser.ConfigParser()
+config.read("server_config.ini")
+
+TIMEOUT = config["DEFAULT"].getint("TIMEOUT")
+CHOPPER_SCORE_HIT = config["DEFAULT"].getint("CHOPPER_SCORE_HIT")
+SHOOTER_SCORE_HIT = config["DEFAULT"].getint("SHOOTER_SCORE_HIT")
+CHOPPER_CD = config["DEFAULT"].getint("CHOPPER_CD")  # ms
 
 # Colors
 BLACK = (0, 0, 0)
@@ -35,11 +42,6 @@ CONNECTED = True
 
 READ_LEN = 100
 GS_READ_LEN = 300  # this is the length to read GameState, to be confirmed
-
-CHOPPER_SCORE_HIT = 5
-SHOOTER_SCORE_HIT = 3
-
-CHOPPER_CD = 500  # ms
 
 QUIT = "q"
 HOLD = "h"

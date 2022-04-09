@@ -666,7 +666,7 @@ class Menu:
 
         server_ip = self.main_menu.add.text_input(
             'Server ip address: ',
-            default='47.94.100.39',  # '47.94.100.39'
+            default='127.0.0.1',  # '47.94.100.39'
             onreturn=None,
             textinput_id='server_ip')
 
