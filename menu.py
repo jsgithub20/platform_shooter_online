@@ -427,7 +427,7 @@ class Menu:
                         return
 
             self.counting_font.render_to(self.screen, (300, 350), f"{self.winner} wins!", bgcolor=LIGHT_GREEN)
-            self.counting_font.render_to(self.screen, (200, 400), f"Press any key to continue in {counting} seconds", bgcolor=LIGHT_GREEN)
+            self.counting_font.render_to(self.screen, (20, 400), f"Press any key to continue in {counting} sec", bgcolor=LIGHT_GREEN)
             pygame.display.flip()
 
     def play(self):
@@ -445,9 +445,10 @@ class Menu:
         self.wait_screen()
 
         g.your_name = self.connection.server_msg[1]
-        g.map_id = self.connection.server_msg[2]
-        g.match_id = self.connection.server_msg[3]
-        g.role_id = self.connection.server_msg[4]
+        # g.map_id = self.connection.server_msg[2]
+        g.current_level_no = int(self.connection.server_msg[2])
+        g.match_id = int(self.connection.server_msg[3])
+        g.role_id = int(self.connection.server_msg[4])
 
         g.new()
 

@@ -19,7 +19,8 @@ class Game:
         self.win_h = win_h
 
         self.map_id = map_id
-        self.current_level_no = level_id
+        # self.current_level_no = level_id
+        self.current_level_no = map_id
         self.match_id = match_id
         self.new_round = False
 

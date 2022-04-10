@@ -50,7 +50,7 @@ class RoomState:
     match_id: int = 0
     running: bool = False
     winner: str = "none"  # the winner name of the round
-    choosable:bool = True
+    choosable: bool = True
 
     def check_ready(self):
         return self.player_joined and self.game_set
@@ -193,7 +193,7 @@ class Server:
                     # self.remove_room(room, i)
                     connected = not CONNECTED
             if not connected:  # if player i is disconnected
-                i = (i+1) % 2  # if i = 0, make it 1, if i = 1, make it 0
+                i = (i + 1) % 2  # if i = 0, make it 1, if i = 1, make it 0
                 room.player_writers[i].write("DisconnectedAB".encode())
                 room.player_writers[i].close()
                 await room.player_writers[i].wait_closed()
@@ -232,12 +232,12 @@ class Server:
                          for room_id in [*self.game_dict] if self.game_dict[room_id].choosable]
             if not rooms_lst:
                 rooms_lst = [["no game", False, 0]]
-            rooms_lst_enc = (json.dumps(rooms_lst)+"AB").encode()
+            rooms_lst_enc = (json.dumps(rooms_lst) + "AB").encode()
             """
             length = len(rooms_lst_enc)
             writer.write((str(length)+"AB").encode())  # send the receiving length first
             # this will be "ok" returned from client, just to complete a r/w cycle
-            
+
             r = await self.check_read(player_name, reader, writer)  # return connected, string
             if not r[0]:
                 return not CONNECTED, chosen_room_id
@@ -266,7 +266,8 @@ class Server:
                 chosen_room = self.game_dict[chosen_room_id]
                 while not chosen_room.game_set:  # meaning player0 has not finished setting game yet
                     # clock.tick(FPS)
-                    writer.write(f"{self.game_dict[chosen_room_id].player_names[0]} is not ready yet, please wait...AB".encode())
+                    writer.write(
+                        f"{self.game_dict[chosen_room_id].player_names[0]} is not ready yet, please wait...AB".encode())
                     r = await self.check_read(player_name, reader, writer)  # return connected, string
                     if not r[0]:
                         if chosen_room_id in self.game_dict:
@@ -306,7 +307,8 @@ class Server:
         # but empty byte will be received
         else:
             if not received:
-                self.my_logger.warning(f"Connection to player <{player_name}> is lost [{getframeinfo(currentframe()).lineno}]")
+                self.my_logger.warning(
+                    f"Connection to player <{player_name}> is lost [{getframeinfo(currentframe()).lineno}]")
                 if not writer.is_closing():
                     writer.close()
                     await writer.wait_closed()
@@ -336,7 +338,7 @@ class Server:
             self.new_connection(player_name)
             client_name = f"{player_name}-{self.client_id}"
             client_task.set_name(client_name)
-            writer.write((str(self.client_id)+"AB").encode())
+            writer.write((str(self.client_id) + "AB").encode())
 
             r = await self.check_read(player_name, reader, writer)  # waiting for "create" or "join"
             if not r[0]:  # return connected, string
@@ -348,7 +350,7 @@ class Server:
             if conn_type == "create":
                 player_id = 0
                 room = self.create_room(player_name, reader, writer)
-                room.player_task_names.append(client_name)   # player0
+                room.player_task_names.append(client_name)  # player0
             elif conn_type == "join":
                 player_id = 1
                 try:
@@ -362,7 +364,7 @@ class Server:
                     return
                 else:
                     room = join_room[1]
-                    room.player_task_names.append(client_name)   # player1
+                    room.player_task_names.append(client_name)  # player1
                     room.player_role_ids.append(1)  # player1
                     room.player_joined = True
                     """
@@ -386,7 +388,8 @@ class Server:
             """
             if room.check_ready():
                 if player_id == 1:  # player_id = 1 means this is the task for player_1
-                    self.my_logger.warning(f"Player <{room.player_names[1]}> joined player <{room.player_names[0]}>'s game")
+                    self.my_logger.warning(
+                        f"Player <{room.player_names[1]}> joined player <{room.player_names[0]}>'s game")
                     return  # the task (for player_1) is returned (completed) once player_1 is in the room
                 # data = "Game Ready".encode()
                 room.running = True
@@ -399,7 +402,8 @@ class Server:
                 data = f"New game is created, waiting for the second player to join...AB".encode()
                 room.player_writers[0].write(data)
                 r = await self.check_read(
-                    room.player_names[0], room.player_readers[0], room.player_writers[0])  # r/w cycle and check the connection
+                    room.player_names[0], room.player_readers[0],
+                    room.player_writers[0])  # r/w cycle and check the connection
                 if not r[0]:  # return connected, string
                     if room.room_id in self.game_dict and player_id == 0:
                         self.room_cnt -= 1
@@ -420,7 +424,8 @@ class Server:
             # print((perf_counter() - start)*1000)
 
         g = game_class_s.Game(
-            self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, int(room.map_id), 0, int(room.match_id))  # map_id, level_id, match_id
+            self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, int(room.map_id), 0,
+            int(room.match_id))  # map_id, level_id, match_id
 
         while room.running:
             await self.game(room, g)  # this is the routine game tick
@@ -467,9 +472,11 @@ class Server:
             f"Game Ready,{room.player_names[0]},{room.map_id},{room.match_id},{room.player_role_ids[1]}AB".encode())
 
     async def game(self, room, g):
-        g.new()
-        g.map_id = int(room.map_id)
+        # g.new()
+        # g.map_id = int(room.map_id)
+        g.current_level_no = int(room.map_id)
         g.match_id = int(room.match_id)
+        g.new()
         gs = GameState()
         self.my_logger.warning(f"<{room.player_names[0]}> is gaming with <{room.player_names[1]}>!")
         # start = pygame.time.get_ticks()
@@ -485,7 +492,7 @@ class Server:
             actual_fps = int(clock.get_fps())
             # print(actual_fps)
             actual_tick = int(pygame.time.get_ticks())
-            if 0 < actual_fps <= 40 and (actual_tick-self.timer) > 5000:
+            if 0 < actual_fps <= 40 and (actual_tick - self.timer) > 5000:
                 self.timer = actual_tick
                 self.my_logger.warning(f"Low fps: {actual_fps}")
             # print(room.room_id, (perf_counter()-start_p)*1000)

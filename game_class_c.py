@@ -24,7 +24,8 @@ class Game:
         self.counting = 3
 
         self.map_id = map_id
-        self.current_level_no = 0
+        # self.current_level_no = 0
+        self.current_level_no = map_id
         self.match_id = match_id
         self.role_id = role_id
         self.round = 0
@@ -80,16 +81,16 @@ class Game:
         self.shooter_score = "0"
         self.chopper_score = "0"
 
-        match_score = f"{self.shooter_score} - {MATCH_TYPE_LST[int(self.match_id)]} - {self.chopper_score}"
+        match_score = f"{self.shooter_score} - {MATCH_TYPE_LST[self.match_id]} - {self.chopper_score}"
         self.level_txt = DrawText(self.screen, 30, WHITE, 20, 10, "level", f"Level {self.current_level_no}", alignment="center")
         self.match_type_txt = DrawText(self.screen, 30, WHITE, 25, 720, "match_score", match_score, alignment="center")
 
-        if self.role_id == "0":
+        if self.role_id == 0:
             self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="left")
             self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name, alignment="right")
             self.my_health_bar = HealthBar(10, 750, SHOOTER_SCORE_HIT)
             self.your_health_bar = HealthBar(820, 750, CHOPPER_SCORE_HIT)
-        elif self.role_id == "1":
+        elif self.role_id == 1:
             self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="right")
             self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name, alignment="left")
             self.your_health_bar = HealthBar(10, 750, SHOOTER_SCORE_HIT)
@@ -171,7 +172,7 @@ class Game:
                 if event.key == pg.K_UP:
                     self.events_lst[3] = "1"
                 if event.key == pg.K_SPACE:
-                    if self.role_lst[int(self.role_id)] == "chopper":
+                    if self.role_lst[self.role_id] == "chopper":
                         if (pg.time.get_ticks() - self.timer) > CHOPPER_CD:
                             self.events_lst[4] = "1"
                             self.timer = pg.time.get_ticks()
@@ -241,10 +242,10 @@ class Game:
         # {self.shooter_score} - {MATCH_TYPE_LST[int(self.match_id)]} - {self.chopper_score}
         self.match_type_txt.text = f"{gs_lst[22]} - {MATCH_TYPE_LST[int(gs_lst[19])]} - {gs_lst[23]}"
         self.fps_txt.text = str(int(self.clock.get_fps()))
-        if self.role_id == "0":
+        if self.role_id == 0:
             self.my_health_bar.hit = gs_lst[25]
             self.your_health_bar.hit = gs_lst[26]
-        elif self.role_id == "1":
+        elif self.role_id == 1:
             self.my_health_bar.hit = gs_lst[26]
             self.your_health_bar.hit = gs_lst[25]
         self.upd_text_sprite_grp.update()
