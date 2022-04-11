@@ -46,6 +46,19 @@ GS_READ_LEN = 300  # this is the length to read GameState, to be confirmed
 QUIT = "q"
 HOLD = "h"
 
+FIELD_STYLES = {'asctime': {'color': 'green'},
+                'levelname': {'bold': False, 'color': (200, 200, 200)},
+                'filename': {'color': 'cyan'},
+                'funcName': {'color': 'blue'}}
+
+LEVEL_STYLES = {'critical': {'bold': True, 'color': 'red'},
+                'debug': {'color': 'magenta'},
+                'error': {'color': 'red'},
+                'exception': {'color': 'red'},
+                'info': {'color': 'green'},
+                'warning': {'color': 'yellow'}}
+
+
 @dataclass
 class GameState:
     shooter_img_dict_key: str = "run_R"  # 0

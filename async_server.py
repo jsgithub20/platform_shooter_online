@@ -22,19 +22,6 @@ from platform_shooter_settings import *
 
 FRAME_INFO = getframeinfo(currentframe())
 
-FIELD_STYLES = {'asctime': {'color': 'green'},
-                'levelname': {'bold': False, 'color': (200, 200, 200)},
-                'filename': {'color': 'cyan'},
-                'funcName': {'color': 'blue'}}
-
-LEVEL_STYLES = {'critical': {'bold': True, 'color': 'red'},
-                'debug': {'color': 'magenta'},
-                'error': {'color': 'red'},
-                'exception': {'color': 'red'},
-                'info': {'color': 'green'},
-                'warning': {'color': 'yellow'}}
-
-
 @dataclass
 class RoomState:
     # player0: player[0], player1: player[1]
@@ -45,7 +32,8 @@ class RoomState:
     player_task_names: list[str] = field(default_factory=list)
     room_id: int = 0
     player_joined: bool = False  # True if the chosen game room is received from 2nd player
-    game_set: bool = False  # True if player0 finished setting map, match, role
+    game_set0: bool = False  # True if player0 finished setting map, match, role
+    game_set1: bool = False  # True if player 1 finished setting role
     map_id: int = 0
     match_id: int = 0
     running: bool = False
@@ -53,7 +41,7 @@ class RoomState:
     choosable: bool = True
 
     def check_ready(self):
-        return self.player_joined and self.game_set
+        return self.player_joined and self.game_set0
 
 
 class Server:
@@ -264,7 +252,7 @@ class Server:
                 self.game_dict[chosen_room_id].player_readers.append(reader)  # player1
                 self.game_dict[chosen_room_id].player_writers.append(writer)  # player1
                 chosen_room = self.game_dict[chosen_room_id]
-                while not chosen_room.game_set:  # meaning player0 has not finished setting game yet
+                while not chosen_room.game_set0:  # meaning player0 has not finished setting game yet
                     # clock.tick(FPS)
                     writer.write(
                         f"{self.game_dict[chosen_room_id].player_names[0]} is not ready yet, please wait...AB".encode())
@@ -420,7 +408,7 @@ class Server:
                         room.map_id = info[1]
                         room.match_id = info[2]
                         room.player_0_role_id = info[3]
-                        room.game_set = True
+                        room.game_set0 = True
             # print((perf_counter() - start)*1000)
 
         g = game_class_s.Game(
@@ -435,7 +423,7 @@ class Server:
 
     async def re_select(self, room: RoomState):
         room.winner = "nobody"
-        room.game_set = False
+        room.game_set0 = False
         start = pygame.time.get_ticks()
         clock = pygame.time.Clock()
         while not room.check_ready():
@@ -455,7 +443,7 @@ class Server:
                     room.map_id = info[1]
                     room.match_id = info[2]
                     room.player_role_ids[0] = info[3]
-                    room.game_set = True
+                    room.game_set0 = True
             room.player_writers[0].write(
                 f"re-selectingAB".encode())
             room.player_writers[1].write(

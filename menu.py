@@ -275,6 +275,24 @@ class Menu:
 
         self.current_img_lst = self.img_lst[self.current_role_id]
 
+    def cb_role_sel_rgt(self):
+        if self.current_role_id + 1 > len(self.img_lst):
+            self.current_role_id = 0
+        else:
+            self.current_role_id += 1
+
+        current_lbl_lst = self.lbl_lst[self.current_role_id]
+        current_lbl_lst = self.lbl_lst[self.current_role_id]
+        previous_lbl_lst = self.lbl_lst[self.previous_role_id]
+
+        for j in range(len(current_lbl_lst)):
+            current_lbl_lst[j].show()
+            previous_lbl_lst[j].hide()
+
+        self.previous_role_id = self.current_role_id
+
+        self.current_img_lst = self.img_lst[self.current_role_id]
+
     # def cb_join_game_btn(self):
     #     self.t_loop.create_task(self.connection.send_room_choice(self.chosen_room))
     #     self.t_loop.create_task(self.connection.client_game())
@@ -387,6 +405,7 @@ class Menu:
             self.main_menu._current = self.sub_menu_selection
             self.main_menu.enable()
 
+            img_idx = 0
             while not self.reselect_done_flag:
                 self.clock.tick(FPS)
 
@@ -403,9 +422,19 @@ class Menu:
                 else:
                     break
 
+                img_idx = self.role_img_animation(img_idx)
+
                 pygame.display.flip()
 
             self.reselect_done_flag = False
+
+    def role_img_animation(self, img_idx):
+        if img_idx + 1 == len(self.current_img_lst) * 2:
+            img_idx = 0
+        else:
+            img_idx += 1
+        self.img.set_surface(self.current_img_lst[img_idx // 2])
+        return img_idx
 
     def game_over_screen(self, g):
         if not g.running:
@@ -809,7 +838,7 @@ class Menu:
 
         btn_img_rgt = pygame_menu.BaseImage("resources/gui/right.png")
 
-        sub1_btn_rgt = self.sub_menu_selection.add.button(" ", None, background_color=btn_img_rgt)
+        sub1_btn_rgt = self.sub_menu_selection.add.button(" ", self.cb_role_sel_lft, background_color=btn_img_rgt)
         sub1_btn_rgt.resize(100, 100)
         sub1_btn_rgt.set_float(True, False, True)
         sub1_btn_rgt.translate(750, 200)
@@ -840,14 +869,14 @@ class Menu:
         ok_btn.set_float(True, False, True)
         ok_btn.translate(890, 570)
 
-        img = self.sub_menu_selection.add.surface(self.current_img_lst[0])
-        img.set_float(True, False, True)
-        img.translate(350, 100)
+        self.img = self.sub_menu_selection.add.surface(self.current_img_lst[0])
+        self.img.set_float(True, False, True)
+        self.img.translate(350, 100)
 
         # sub_menu_selection end
 
         img_idx = 0
-        current_img_idx = 0
+        # current_img_idx = 0
         # -------------------------------------------------------------------------
         # Main loop
         # -------------------------------------------------------------------------
@@ -867,13 +896,16 @@ class Menu:
             else:
                 break
 
-            if img_idx + 1 == len(self.current_img_lst) * 2:
-                img_idx = 0
-            else:
-                img_idx += 1
+            img_idx = self.role_img_animation(img_idx)
 
-            if img_idx // 2 != current_img_idx:
-                img.set_surface(self.current_img_lst[img_idx // 2])
+            # if img_idx + 1 == len(self.current_img_lst) * 2:
+            #     img_idx = 0
+            # else:
+            #     img_idx += 1
+            # self.img.set_surface(self.current_img_lst[img_idx // 2])
+
+            # if img_idx // 2 != current_img_idx:
+            #     self.img.set_surface(self.current_img_lst[img_idx // 2])
 
             # Main menu
             # self.main_menu.mainloop(surface, main_background, disable_loop=test, fps_limit=FPS)
