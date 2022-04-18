@@ -235,7 +235,7 @@ class Menu:
         self.t_loop.create_task(self.connection.client())
         self.demo_game()
 
-    def cb_selection_menu_opened(self, from_menu, to_menu):
+    def cb_selection0_menu_opened(self, from_menu, to_menu):
         self.conn_type = "create"
         self.t_loop.create_task(self.connection.create())
         self.t_loop.create_task(self.connection.client_game())
@@ -402,7 +402,7 @@ class Menu:
 
         elif self.player_id == 0:
             self.reselect_flag = True
-            self.main_menu._current = self.sub_menu_selection
+            self.main_menu._current = self.sub_menu_selection0
             self.main_menu.enable()
 
             img_idx = 0
@@ -428,12 +428,12 @@ class Menu:
 
             self.reselect_done_flag = False
 
-    def role_img_animation(self, img_idx):
+    def role_img_animation(self, img, img_idx):
         if img_idx + 1 == len(self.current_img_lst) * 2:
             img_idx = 0
         else:
             img_idx += 1
-        self.img.set_surface(self.current_img_lst[img_idx // 2])
+        img.set_surface(self.current_img_lst[img_idx // 2])
         return img_idx
 
     def game_over_screen(self, g):
@@ -616,16 +616,16 @@ class Menu:
         # no_title_theme_join_game.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_SIMPLE
         no_title_theme_join_game.widget_padding = 5
 
-        sub_menu_selection_theme = pygame_menu.themes.THEME_ORANGE.copy()
-        sub_menu_selection_theme.background_color = (0, 0, 0, 0)
-        sub_menu_selection_theme.title_close_button = False
-        sub_menu_selection_theme.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_NONE
-        sub_menu_selection_theme.title_offset = (200, 0)
-        sub_menu_selection_theme.title_font_shadow = True
-        sub_menu_selection_theme.title_font_color = (200, 50, 50)
-        sub_menu_selection_theme.widget_font = "resources/OvOV20.ttf"
-        sub_menu_selection_theme.widget_alignment = pygame_menu.locals.ALIGN_LEFT
-        sub_menu_selection_theme.widget_padding = 5
+        sub_menu_selection0_theme = pygame_menu.themes.THEME_ORANGE.copy()
+        sub_menu_selection0_theme.background_color = (0, 0, 0, 0)
+        sub_menu_selection0_theme.title_close_button = False
+        sub_menu_selection0_theme.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_NONE
+        sub_menu_selection0_theme.title_offset = (200, 0)
+        sub_menu_selection0_theme.title_font_shadow = True
+        sub_menu_selection0_theme.title_font_color = (200, 50, 50)
+        sub_menu_selection0_theme.widget_font = "resources/OvOV20.ttf"
+        sub_menu_selection0_theme.widget_alignment = pygame_menu.locals.ALIGN_LEFT
+        sub_menu_selection0_theme.widget_padding = 5
 
         self.main_menu = pygame_menu.Menu(
             "Platform Game", WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.8,
@@ -655,20 +655,20 @@ class Menu:
 
         self.check_join_menu.set_onbeforeopen(self.cb_check_join_menu_openned)
 
-        self.sub_menu_selection = pygame_menu.Menu(
+        self.sub_menu_selection0 = pygame_menu.Menu(
             'Choosing Games', 1024, 768,
             center_content=False,
             onclose=pygame_menu.events.EXIT,  # User press ESC button
-            theme=sub_menu_selection_theme,
+            theme=sub_menu_selection0_theme,
             position=[40, 20])
 
-        self.sub_menu_selection.set_onbeforeopen(self.cb_selection_menu_opened)
+        self.sub_menu_selection0.set_onbeforeopen(self.cb_selection0_menu_opened)
 
         self.sub_menu_player0_wait = pygame_menu.Menu(
             'Waiting for player', 1024, 768,
             center_content=False,
             onclose=pygame_menu.events.EXIT,  # User press ESC button
-            theme=sub_menu_selection_theme,
+            theme=sub_menu_selection0_theme,
             position=[40, 20])
 
         self.sub_menu_player0_wait.set_onbeforeopen(self.cb_player0_wait_menu_opened)
@@ -681,7 +681,7 @@ class Menu:
             'Waiting for player', 1024, 768,
             center_content=False,
             onclose=pygame_menu.events.EXIT,  # User press ESC button
-            theme=sub_menu_selection_theme,
+            theme=sub_menu_selection0_theme,
             position=[40, 20])
 
         self.sub_menu_player1_wait.set_onbeforeopen(self.cb_player1_wait_menu_opened)
@@ -720,7 +720,7 @@ class Menu:
                                               player_name)
         b_connect.add_self_to_kwargs()
 
-        b_create = self.main_menu.add.button("Create a new game", self.sub_menu_selection)
+        b_create = self.main_menu.add.button("Create a new game", self.sub_menu_selection0)
         # b_create.add_self_to_kwargs()
 
         self.main_menu.add.button("Choose an existing game to join", self.join_game_menu)
@@ -786,13 +786,13 @@ class Menu:
         self.check_join_ok_btn = self.check_join_menu.add.button("OK", self.sub_menu_player1_wait)
 
         # check_join_menu end
-        # sub_menu_selection start
+        # sub_menu_selection0 start
 
-        lbl_match_type = self.sub_menu_selection.add.label("Match Types")
+        lbl_match_type = self.sub_menu_selection0.add.label("Match Types")
         lbl_match_type.set_float(True, False, True)
         lbl_match_type.translate(100, 60)
 
-        selector_match_type = self.sub_menu_selection.add.dropselect(
+        selector_match_type = self.sub_menu_selection0.add.dropselect(
             title='',
             items=[("Deathmatch", 0),
                    ("1st23", 1),
@@ -808,11 +808,11 @@ class Menu:
         selector_match_type.set_float(True, False, True)
         selector_match_type.translate(60, 100)
 
-        lbl_map = self.sub_menu_selection.add.label("Map Selection")
+        lbl_map = self.sub_menu_selection0.add.label("Map Selection")
         lbl_map.set_float(True, False, True)
         lbl_map.translate(680, 60)
 
-        selector_map = self.sub_menu_selection.add.dropselect(
+        selector_map = self.sub_menu_selection0.add.dropselect(
             title='',
             items=[("Map0", 0),
                    ("Map1", 1),
@@ -831,20 +831,20 @@ class Menu:
         btn_img_lft = pygame_menu.BaseImage("resources/gui/left.png")
 
         # title text can't be empty, otherwise resize doesn't work!
-        sub1_btn_lft = self.sub_menu_selection.add.button(" ", self.cb_role_sel_lft, background_color=btn_img_lft)
+        sub1_btn_lft = self.sub_menu_selection0.add.button(" ", self.cb_role_sel_lft, background_color=btn_img_lft)
         sub1_btn_lft.resize(100, 100)
         sub1_btn_lft.set_float(True, False, True)
         sub1_btn_lft.translate(150, 200)
 
         btn_img_rgt = pygame_menu.BaseImage("resources/gui/right.png")
 
-        sub1_btn_rgt = self.sub_menu_selection.add.button(" ", self.cb_role_sel_lft, background_color=btn_img_rgt)
+        sub1_btn_rgt = self.sub_menu_selection0.add.button(" ", self.cb_role_sel_lft, background_color=btn_img_rgt)
         sub1_btn_rgt.resize(100, 100)
         sub1_btn_rgt.set_float(True, False, True)
         sub1_btn_rgt.translate(750, 200)
 
         for j in range(len(role_def.girl_txt)):
-            lbl = self.sub_menu_selection.add.label(role_def.girl_txt[j][5],
+            lbl = self.sub_menu_selection0.add.label(role_def.girl_txt[j][5],
                                                     "",
                                                     font_size=role_def.girl_txt[j][0],
                                                     font_color=role_def.girl_txt[j][1])
@@ -853,7 +853,7 @@ class Menu:
             self.girl_desc_lbl_lst.append(lbl)
 
         for j in range(len(role_def.boy_txt)):
-            lbl = self.sub_menu_selection.add.label(role_def.boy_txt[j][5],
+            lbl = self.sub_menu_selection0.add.label(role_def.boy_txt[j][5],
                                                     "",
                                                     font_size=role_def.boy_txt[j][0],
                                                     font_color=role_def.boy_txt[j][1])
@@ -864,16 +864,16 @@ class Menu:
 
         btn_img_ok = pygame_menu.BaseImage("resources/gui/Button_18_small.png")
 
-        ok_btn = self.sub_menu_selection.add.button(" ", self.sub_menu_player0_wait, background_color=btn_img_ok)
+        ok_btn = self.sub_menu_selection0.add.button(" ", self.sub_menu_player0_wait, background_color=btn_img_ok)
         ok_btn.resize(100, 100)
         ok_btn.set_float(True, False, True)
         ok_btn.translate(890, 570)
 
-        self.img = self.sub_menu_selection.add.surface(self.current_img_lst[0])
-        self.img.set_float(True, False, True)
-        self.img.translate(350, 100)
+        self.img_selection0 = self.sub_menu_selection0.add.surface(self.current_img_lst[0])
+        self.img_selection0.set_float(True, False, True)
+        self.img_selection0.translate(350, 100)
 
-        # sub_menu_selection end
+        # sub_menu_selection0 end
 
         img_idx = 0
         # current_img_idx = 0
@@ -896,7 +896,9 @@ class Menu:
             else:
                 break
 
-            img_idx = self.role_img_animation(img_idx)
+            img_idx = self.role_img_animation(self.img_selection0, img_idx)
+            # if self.main_menu.get_current() == self.sub_menu_selection0:
+            #     self.splat_font.render_to(self.screen, (100, 100), "render to menu screen")
 
             # if img_idx + 1 == len(self.current_img_lst) * 2:
             #     img_idx = 0

@@ -89,3 +89,35 @@ class GameState:
     winner: str = "nobody"  # 24
     shooter_hit: int = 0  # 25
     chopper_hit: int = 0  # 26
+
+
+@dataclass
+class GameState1:
+    player0_img_dict_key: str = "run_R"  # 0
+    player0_img_idx: int = 0  # 1
+    player0_pos: tuple = (0, 0)  # 2
+    player1_img_dict_key: str = "run_R"  # 3
+    player1_img_idx: int = 0  # 4
+    player1_pos: tuple = (0, 0)  # 5
+    bullet_l0_pos: tuple = DEAD_BULLET_POS  # bullet_l[0] 6
+    bullet_l1_pos: tuple = DEAD_BULLET_POS  # bullet_l[1] 7
+    bullet_l2_pos: tuple = DEAD_BULLET_POS  # bullet_l[2] 8
+    bullet_l3_pos: tuple = DEAD_BULLET_POS  # bullet_l[3] 9
+    bullet_l4_pos: tuple = DEAD_BULLET_POS  # bullet_l[4] 10
+    bullet_r0_pos: tuple = DEAD_BULLET_POS  # bullet_r[0] 11
+    bullet_r1_pos: tuple = DEAD_BULLET_POS  # bullet_r[1] 12
+    bullet_r2_pos: tuple = DEAD_BULLET_POS  # bullet_r[2] 13
+    bullet_r3_pos: tuple = DEAD_BULLET_POS  # bullet_r[3] 14
+    bullet_r4_pos: tuple = DEAD_BULLET_POS  # bullet_r[4] 15
+    moving_block_pos: tuple = DEAD_BLOCK_POS  # 16
+    r_sign_flg: int = 0  # 17
+    # r_sign_pos: tuple = DEAD_R_POS  # 17
+    map_id: int = 0  # 18
+    match_id: int = 0  # 19
+    level_id: int = 0  # 20
+    round: int = 1  # 21
+    shooter_score: int = 0  # 22
+    chopper_score: int = 0  # 23
+    winner: str = "nobody"  # 24
+    shooter_hit: int = 0  # 25
+    chopper_hit: int = 0  # 26
