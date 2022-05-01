@@ -72,9 +72,20 @@ import configparser
 # print(recv)
 
 
-config = configparser.ConfigParser()
-config.read("server_config.ini")
+# config = configparser.ConfigParser()
+# config.read("server_config.ini")
+#
+# TIMEOUT = config["Game Setting"].getint("TIMEOUT")
+# CHOPPER_CD = config["DEFAULT"].getint("CHOPPER_CD")
+# print(TIMEOUT, CHOPPER_CD)
 
-TIMEOUT = config["Game Setting"].getint("TIMEOUT")
-CHOPPER_CD = config["DEFAULT"].getint("CHOPPER_CD")
-print(TIMEOUT, CHOPPER_CD)
+@dataclass
+class RoomState:
+    l: list[int, int] = field(default_factory=list)
+
+
+a = "01234"
+b = list(a)
+c = b[1:-1]
+
+print(c)

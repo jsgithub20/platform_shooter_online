@@ -107,7 +107,7 @@ class Game:
         self.player_shooter.rect.y = -50
 
         self.player_chopper.level = self.current_level
-        self.player_chopper.rect.x = 500
+        self.player_chopper.rect.x = 700
         self.player_chopper.rect.y = -50
 
         self.live_bullet_l = 0

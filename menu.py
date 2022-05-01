@@ -194,7 +194,7 @@ class Menu:
         for j in range(9):
             boy_idle.append(pygame.image.load(f"resources/gui/boy/Idle__00{j}.png"))
 
-        self.img_lst = [girl_idle, boy_idle]
+        self.img_lst = [boy_idle, girl_idle]
 
         self.current_role_id = 0
         self.previous_role_id = 1
@@ -203,7 +203,7 @@ class Menu:
         self.girl_desc_lbl_lst = []
         self.boy_desc_lbl_lst = []
 
-        self.lbl_lst = [self.girl_desc_lbl_lst, self.boy_desc_lbl_lst]
+        self.lbl_lst = [self.boy_desc_lbl_lst, self.girl_desc_lbl_lst]
 
     def cb_conn_conn(self, server_ip, server_port, player_name, **kwargs):
         if not self.connected_flag:
@@ -264,7 +264,6 @@ class Menu:
             self.current_role_id -= 1
 
         current_lbl_lst = self.lbl_lst[self.current_role_id]
-        current_lbl_lst = self.lbl_lst[self.current_role_id]
         previous_lbl_lst = self.lbl_lst[self.previous_role_id]
 
         for j in range(len(current_lbl_lst)):
@@ -276,12 +275,12 @@ class Menu:
         self.current_img_lst = self.img_lst[self.current_role_id]
 
     def cb_role_sel_rgt(self):
-        if self.current_role_id + 1 > len(self.img_lst):
+        if self.current_role_id + 1 == len(self.img_lst):
             self.current_role_id = 0
         else:
             self.current_role_id += 1
 
-        current_lbl_lst = self.lbl_lst[self.current_role_id]
+        # current_lbl_lst = self.lbl_lst[self.current_role_id]
         current_lbl_lst = self.lbl_lst[self.current_role_id]
         previous_lbl_lst = self.lbl_lst[self.previous_role_id]
 
@@ -422,7 +421,8 @@ class Menu:
                 else:
                     break
 
-                img_idx = self.role_img_animation(img_idx)
+                # img_idx = self.role_img_animation(img_idx)
+                img_idx = self.role_img_animation(self.img_selection0, img_idx)
 
                 pygame.display.flip()
 
@@ -838,7 +838,7 @@ class Menu:
 
         btn_img_rgt = pygame_menu.BaseImage("resources/gui/right.png")
 
-        sub1_btn_rgt = self.sub_menu_selection0.add.button(" ", self.cb_role_sel_lft, background_color=btn_img_rgt)
+        sub1_btn_rgt = self.sub_menu_selection0.add.button(" ", self.cb_role_sel_rgt, background_color=btn_img_rgt)
         sub1_btn_rgt.resize(100, 100)
         sub1_btn_rgt.set_float(True, False, True)
         sub1_btn_rgt.translate(750, 200)
@@ -850,6 +850,7 @@ class Menu:
                                                     font_color=role_def.girl_txt[j][1])
             lbl.set_float(True, False, True)
             lbl.translate(role_def.girl_txt[j][2], role_def.girl_txt[j][3])
+            lbl.hide()
             self.girl_desc_lbl_lst.append(lbl)
 
         for j in range(len(role_def.boy_txt)):
@@ -859,7 +860,7 @@ class Menu:
                                                     font_color=role_def.boy_txt[j][1])
             lbl.set_float(True, False, True)
             lbl.translate(role_def.boy_txt[j][2], role_def.boy_txt[j][3])
-            lbl.hide()
+            # lbl.hide()
             self.boy_desc_lbl_lst.append(lbl)
 
         btn_img_ok = pygame_menu.BaseImage("resources/gui/Button_18_small.png")

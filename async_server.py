@@ -26,7 +26,8 @@ FRAME_INFO = getframeinfo(currentframe())
 class RoomState:
     # player0: player[0], player1: player[1]
     player_names: list[str] = field(default_factory=list)  # name:str, room name will be f"{player_name[0]}'s game"
-    player_role_ids: list[int] = field(default_factory=list)
+    # player_role_ids: list[int] = field(default_factory=list)  # [player0, player1]
+    player_role_ids = [0, 1]  # [player0, player1]
     player_readers: list[asyncio.streams.StreamReader] = field(default_factory=list)
     player_writers: list[asyncio.streams.StreamWriter] = field(default_factory=list)
     player_task_names: list[str] = field(default_factory=list)
@@ -164,7 +165,9 @@ class Server:
             try:
                 # receiving event strings or game setting strings
                 received = await room.player_readers[i].readuntil(separator=b"AB")
-                string_lists[i] = list(received.decode()[:-2])
+                # string_lists[i] = list(received.decode()[:-2])  # discard trailing "AB"
+                # string_lists[0] is always shooter, room.player_role_ids[i] actually represents the events for the role
+                string_lists[room.player_role_ids[i]] = list(received.decode()[:-2])  # discard trailing "AB"
             except (ConnectionError, asyncio.IncompleteReadError):
                 # writer.close() is not needed because the writer is already closed
                 # await writer.wait_closed(): this line could never be returned when the writer is already closed
@@ -172,7 +175,7 @@ class Server:
                     f"Connection to player <{room.player_names[i]}> is lost [{getframeinfo(currentframe()).lineno}]")
                 connected = not CONNECTED
             else:  # if the connection is properly connected, there will be no ConnectionError exception raised
-                if string_lists[i][0] == QUIT:  # player quit the game normally, don't use "1", used for selection ready
+                if string_lists[room.player_role_ids[i]][0] == QUIT:  # player quit the game normally, don't use "1", used for selection ready
                     self.my_logger.warning(
                         f"Player <{room.player_names[i]}> quit the game")
                     if not room.player_writers[i].is_closing():
@@ -198,7 +201,7 @@ class Server:
         room.player_names.append(player_name)  # player0
         room.player_readers.append(reader)  # player0
         room.player_writers.append(writer)  # player0
-        room.player_role_ids.append(0)  # player0
+        # room.player_role_ids.append(0)  # player0
         self.game_dict[self.room_id] = room
         return room
 
@@ -353,7 +356,7 @@ class Server:
                 else:
                     room = join_room[1]
                     room.player_task_names.append(client_name)  # player1
-                    room.player_role_ids.append(1)  # player1
+                    room.player_role_ids[1] = 1  # player1
                     room.player_joined = True
                     """
                     player_joined can't be set to True in self.join(), otherwise player0 will enter the 
@@ -407,7 +410,8 @@ class Server:
                     if info[0] == "1":  # ready, map_id, match_id, role_id
                         room.map_id = info[1]
                         room.match_id = info[2]
-                        room.player_0_role_id = info[3]
+                        room.player_role_ids[0] = int(info[3])  # role_id for player0
+                        room.player_role_ids[1] = 1 - room.player_role_ids[0]  # 1-1 = 0, 1-0 = 1
                         room.game_set0 = True
             # print((perf_counter() - start)*1000)
 
@@ -438,16 +442,17 @@ class Server:
                 room.running = False
                 return
             else:
-                info = r[1][0]  # [[(read player0)], [(read player1)]]
+                # [[(read player0)], [(read player1)]] or [[(read player1)], [(read player0)]]
+                # based on role selection
+                info = r[1][room.player_role_ids[0]]
                 if info[0] == "1":  # ready, map_id, match_id, role_id
                     room.map_id = info[1]
                     room.match_id = info[2]
-                    room.player_role_ids[0] = info[3]
+                    room.player_role_ids[0] = int(info[3])  # role_id for player0
+                    room.player_role_ids[1] = 1 - room.player_role_ids[0]  # 1-1 = 0, 1-0 = 1
                     room.game_set0 = True
-            room.player_writers[0].write(
-                f"re-selectingAB".encode())
-            room.player_writers[1].write(
-                f"re-selectingAB".encode())
+            room.player_writers[0].write(f"re-selectingAB".encode())
+            room.player_writers[1].write(f"re-selectingAB".encode())
 
         r = await self.check_read_room(room)  # r/w cycle
         if not r[0]:
