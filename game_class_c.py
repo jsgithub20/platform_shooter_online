@@ -11,7 +11,7 @@ import sprite_player_correction
 from role_def import *
 
 
-class Game:
+class GameSC:
     def __init__(self, screen, win_w, win_h, map_id, match_id, role_id, my_name, your_name):
         pg.init()
         self.clock = pg.time.Clock()

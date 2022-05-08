@@ -460,7 +460,7 @@ class Menu:
             pygame.display.flip()
 
     def play(self):
-        g = game_class_c.Game(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT,
+        g = game_class_c.GameSC(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT,
                               self.map_id, self.match_id, self.role_id, self.my_name, self.your_name)
         while g.running and self.connection.connected_flag:
             self.game(g)

@@ -18,6 +18,7 @@ from time import perf_counter
 from inspect import currentframe, getframeinfo
 
 import game_class_s
+import game_state
 from platform_shooter_settings import *
 
 FRAME_INFO = getframeinfo(currentframe())
@@ -208,15 +209,7 @@ class Server:
     async def join(self, player_name, reader, writer):
         # if the client request to join an existing game, a new coroutine will be created with this function
         chosen_room_id = None
-        start = pygame.time.get_ticks()
-        clock = pygame.time.Clock()
         while True:
-            # self.clock.tick(FPS)
-            # clock.tick(FPS)
-            # tick = pygame.time.get_ticks() - start
-            # if tick < FPS_T:
-            #     pygame.time.wait(int(FPS_T - tick))
-            # start = pygame.time.get_ticks()
             # sending room list to the client, no matter full or not [[player0_name, game_ready, room_id],]
             # if game_dict is empty, an empty list will be assigned to "rooms_lst" and no exception will be raised
             rooms_lst = [[self.game_dict[room_id].player_names[0], self.game_dict[room_id].check_ready(), room_id]
@@ -224,15 +217,6 @@ class Server:
             if not rooms_lst:
                 rooms_lst = [["no game", False, 0]]
             rooms_lst_enc = (json.dumps(rooms_lst) + "AB").encode()
-            """
-            length = len(rooms_lst_enc)
-            writer.write((str(length)+"AB").encode())  # send the receiving length first
-            # this will be "ok" returned from client, just to complete a r/w cycle
-
-            r = await self.check_read(player_name, reader, writer)  # return connected, string
-            if not r[0]:
-                return not CONNECTED, chosen_room_id
-            """
             writer.write(rooms_lst_enc)
             r = await self.check_read(player_name, reader, writer)  # return connected, string
             if not r[0]:
@@ -367,10 +351,6 @@ class Server:
         while True:  # wait for the 2nd player to join the room and the 1st player to set the game mode
             # clock.tick()  # needs to be called for get_fps() to result in correct value
             # tick = pygame.time.get_ticks() - start
-            # if tick < FPS_T:
-            #     print(FPS_T - tick)
-            #     await asyncio.sleep((FPS_T - tick) / 1000)
-            # start = pygame.time.get_ticks()
             """
             once there are two players in one game room, game_ready for that room is set to 
             True, then the task for player_1 who joins the room after player_0 created the room
@@ -415,7 +395,7 @@ class Server:
                         room.game_set0 = True
             # print((perf_counter() - start)*1000)
 
-        g = game_class_s.Game(
+        g = game_class_s.GameSC(
             self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, int(room.map_id), 0,
             int(room.match_id))  # map_id, level_id, match_id
 
@@ -470,7 +450,7 @@ class Server:
         g.current_level_no = int(room.map_id)
         g.match_id = int(room.match_id)
         g.new()
-        gs = GameState()
+        # gs = GameState()
         self.my_logger.warning(f"<{room.player_names[0]}> is gaming with <{room.player_names[1]}>!")
         # start = pygame.time.get_ticks()
         # start_p = perf_counter()
@@ -495,53 +475,22 @@ class Server:
             if not r[0]:
                 room.running = False
                 return
-            g.events_lst_shooter = r[1][0]
-            g.events_lst_chopper = r[1][1]
+            g.events_lst0 = r[1][0]
+            g.events_lst1 = r[1][1]
 
-            if g.events_lst_shooter[0] != HOLD and g.events_lst_chopper[0] != HOLD:
+            if g.events_lst0[0] != HOLD and g.events_lst1[0] != HOLD:
                 g.events()
                 g.update()
 
-            gs.shooter_img_dict_key = g.player_shooter.img_dict_key
-            gs.shooter_img_idx = g.player_shooter.image_idx
-            gs.shooter_pos = (g.player_shooter.rect.x, g.player_shooter.rect.y)
-            gs.chopper_img_dict_key = g.player_chopper.img_dict_key
-            gs.chopper_img_idx = g.player_chopper.image_idx
-            gs.chopper_pos = (g.player_chopper.rect.x, g.player_chopper.rect.y)
-            gs.bullet_l0_pos = (g.bullets_l[0].rect.x, g.bullets_l[0].rect.y)
-            gs.bullet_l1_pos = (g.bullets_l[1].rect.x, g.bullets_l[1].rect.y)
-            gs.bullet_l2_pos = (g.bullets_l[2].rect.x, g.bullets_l[2].rect.y)
-            gs.bullet_l3_pos = (g.bullets_l[3].rect.x, g.bullets_l[3].rect.y)
-            gs.bullet_l4_pos = (g.bullets_l[4].rect.x, g.bullets_l[4].rect.y)
-            gs.bullet_r0_pos = (g.bullets_r[0].rect.x, g.bullets_r[0].rect.y)
-            gs.bullet_r1_pos = (g.bullets_r[1].rect.x, g.bullets_r[1].rect.y)
-            gs.bullet_r2_pos = (g.bullets_r[2].rect.x, g.bullets_r[2].rect.y)
-            gs.bullet_r3_pos = (g.bullets_r[3].rect.x, g.bullets_r[3].rect.y)
-            gs.bullet_r4_pos = (g.bullets_r[4].rect.x, g.bullets_r[4].rect.y)
-            gs.shooter_hit = g.player_shooter.hit_count
-            gs.chopper_hit = g.player_chopper.hit_count
-            if g.current_level_no == 0:
-                gs.moving_block_pos = DEAD_CRATER_POS
-            else:
-                gs.moving_block_pos = (g.level02.moving_block.rect.x, g.level02.moving_block.rect.y)
-            gs.r_sign_flg = g.r_sign_flg
-            gs.map_id = g.map_id
-            gs.match_id = g.match_id
-            gs.level_id = g.current_level_no
-            gs.round = g.match_score["round"]
-            gs.shooter_score = g.match_score["shooter"]
-            gs.chopper_score = g.match_score["chopper"]
-            gs.winner = g.winner
-
-            if g.new_round:
-                g.restart()
-                g.new_round = False
-
-            byte = (json.dumps([*asdict(gs).values()])).encode()
+            byte = (json.dumps(g.gs_conversion()).encode())
             compressed_send_bytes = compress(byte) + b"AB"
             # print(compressed_send_bytes)
             room.player_writers[0].write(compressed_send_bytes)
             room.player_writers[1].write(compressed_send_bytes)
+
+            if g.new_round:
+                g.restart()
+                g.new_round = False
 
         room.winner = g.winner
 

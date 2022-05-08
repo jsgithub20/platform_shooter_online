@@ -10,7 +10,7 @@ import sprite_player_correction
 from role_def import *
 
 
-class Game:  # shooter fights chopper
+class GameSC:  # shooter fights chopper
     def __init__(self, screen, win_w, win_h, map_id, level_id, match_id):
         pg.init()
         # get settings when called by the server program
@@ -33,10 +33,11 @@ class Game:  # shooter fights chopper
         0   , 1        , 2         , 3   , 4     , 5             , 6
         quit, move_left, move_right, jump, attack, move_left_stop, move_right_stop
         """
-        self.events_str_shooter = "0000000"
-        self.events_str_chopper = "0000000"
-        self.events_lst_shooter = list(self.events_str_shooter)
-        self.events_lst_chopper = list(self.events_str_chopper)
+        self.events_str0 = "0000000"
+        self.events_str1 = "0000000"
+        self.events_lst0 = list(self.events_str0)
+        self.events_lst1 = list(self.events_str1)
+        # self.game_state = []
 
         self.current_level = None
 
@@ -139,8 +140,8 @@ class Game:  # shooter fights chopper
         # lst_s = list(self.events_str_shooter)
         # lst_c = list(self.events_str_chopper)
 
-        events_lst_shooter = [int(item) for item in self.events_lst_shooter]
-        events_lst_chopper = [int(item) for item in self.events_lst_chopper]
+        events_lst_shooter = [int(item) for item in self.events_lst0]
+        events_lst_chopper = [int(item) for item in self.events_lst1]
 
         if events_lst_shooter[0] or events_lst_chopper[0]:
             if self.playing:
@@ -280,6 +281,41 @@ class Game:  # shooter fights chopper
             #     return "chopper", False
             else:
                 return "nobody", True
+
+    def gs_conversion(self):
+        game_state = []
+        game_state.append(self.player_shooter.img_dict_key)
+        game_state.append(self.player_shooter.image_idx)
+        game_state.append((self.player_shooter.rect.x, self.player_shooter.rect.y))
+        game_state.append(self.player_chopper.img_dict_key)
+        game_state.append(self.player_chopper.image_idx)
+        game_state.append((self.player_chopper.rect.x, self.player_chopper.rect.y))
+        game_state.append((self.bullets_l[0].rect.x, self.bullets_l[0].rect.y))
+        game_state.append((self.bullets_l[1].rect.x, self.bullets_l[1].rect.y))
+        game_state.append((self.bullets_l[2].rect.x, self.bullets_l[2].rect.y))
+        game_state.append((self.bullets_l[3].rect.x, self.bullets_l[3].rect.y))
+        game_state.append((self.bullets_l[4].rect.x, self.bullets_l[4].rect.y))
+        game_state.append((self.bullets_r[0].rect.x, self.bullets_r[0].rect.y))
+        game_state.append((self.bullets_r[1].rect.x, self.bullets_r[1].rect.y))
+        game_state.append((self.bullets_r[2].rect.x, self.bullets_r[2].rect.y))
+        game_state.append((self.bullets_r[3].rect.x, self.bullets_r[3].rect.y))
+        game_state.append((self.bullets_r[4].rect.x, self.bullets_r[4].rect.y))
+        if self.current_level_no == 0:
+            game_state.append(DEAD_CRATER_POS)
+        else:
+            game_state.append((self.level02.moving_block.rect.x, self.level02.moving_block.rect.y))
+        game_state.append(self.r_sign_flg)
+        game_state.append(self.map_id)
+        game_state.append(self.match_id)
+        game_state.append(self.current_level_no)
+        game_state.append(self.match_score["round"])
+        game_state.append(self.match_score["shooter"])
+        game_state.append(self.match_score["chopper"])
+        game_state.append(self.winner)
+        game_state.append(self.player_shooter.hit_count)
+        game_state.append(self.player_chopper.hit_count)
+
+        return game_state
 
 
 class GameSS:  # shooter fights shooter
