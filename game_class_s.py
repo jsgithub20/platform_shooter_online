@@ -10,7 +10,8 @@ import sprite_player_correction
 from role_def import *
 
 
-class GameSC:  # shooter fights chopper
+
+class GameSC:  # shooter vs chopper
     def __init__(self, screen, win_w, win_h, map_id, level_id, match_id):
         pg.init()
         # get settings when called by the server program
@@ -318,7 +319,7 @@ class GameSC:  # shooter fights chopper
         return game_state
 
 
-class GameSS:  # shooter fights shooter
+class GameSS:  # shooter vs shooter
     def __init__(self, screen, win_w, win_h, map_id, level_id, match_id):
         pg.init()
         # get settings when called by the server program
@@ -341,10 +342,10 @@ class GameSS:  # shooter fights shooter
         0   , 1        , 2         , 3   , 4     , 5             , 6
         quit, move_left, move_right, jump, attack, move_left_stop, move_right_stop
         """
-        self.events_str_shooter0 = "0000000"
-        self.events_str_shooter1 = "0000000"
-        self.events_lst_shooter0 = list(self.events_str_shooter0)
-        self.events_lst_shooter1 = list(self.events_str_shooter1)
+        self.events_str0 = "0000000"
+        self.events_str1 = "0000000"
+        self.events_lst0 = list(self.events_str0)
+        self.events_lst1 = list(self.events_str1)
 
         self.current_level = None
 
@@ -466,8 +467,8 @@ class GameSS:  # shooter fights shooter
         # lst_s = list(self.events_str_shooter0)
         # lst_c = list(self.events_str_shooter1)
 
-        events_lst_shooter0 = [int(item) for item in self.events_lst_shooter0]
-        events_lst_shooter1 = [int(item) for item in self.events_lst_shooter1]
+        events_lst_shooter0 = [int(item) for item in self.events_lst0]
+        events_lst_shooter1 = [int(item) for item in self.events_lst1]
 
         if events_lst_shooter0[0] or events_lst_shooter1[0]:
             if self.playing:
@@ -503,11 +504,11 @@ class GameSS:  # shooter fights shooter
                     # self.snd_yeet.play()
 
         if events_lst_shooter1[1]:
-            self.player_shooter0.go_left()
+            self.player_shooter1.go_left()
         if events_lst_shooter1[2]:
-            self.player_shooter0.go_right()
+            self.player_shooter1.go_right()
         if events_lst_shooter1[3]:
-            self.player_shooter0.jump()
+            self.player_shooter1.jump()
         if events_lst_shooter1[4]:
             if self.player_shooter1.loaded > 0:
                 self.player_shooter1.image_idx = 0
@@ -632,3 +633,64 @@ class GameSS:  # shooter fights shooter
             #     return "shooter1", False
             else:
                 return "nobody", True
+
+
+    def gs_conversion(self):
+        game_state = []
+        game_state.append(self.player_shooter0.img_dict_key)  # 0
+        game_state.append(self.player_shooter0.image_idx)  # 1
+        game_state.append((self.player_shooter0.rect.x, self.player_shooter0.rect.y))  # 2
+        game_state.append(self.player_shooter1.img_dict_key)  # 3
+        game_state.append(self.player_shooter1.image_idx)  # 4
+        game_state.append((self.player_shooter1.rect.x, self.player_shooter1.rect.y))  # 5
+        game_state.append((self.bullets_l0[0].rect.x, self.bullets_l0[0].rect.y))  # 6
+        game_state.append((self.bullets_l0[1].rect.x, self.bullets_l0[1].rect.y))  # 7
+        game_state.append((self.bullets_l0[2].rect.x, self.bullets_l0[2].rect.y))  # 8
+        game_state.append((self.bullets_l0[3].rect.x, self.bullets_l0[3].rect.y))  # 9
+        game_state.append((self.bullets_l0[4].rect.x, self.bullets_l0[4].rect.y))  # 10
+        game_state.append((self.bullets_r0[0].rect.x, self.bullets_r0[0].rect.y))  # 11
+        game_state.append((self.bullets_r0[1].rect.x, self.bullets_r0[1].rect.y))  # 12
+        game_state.append((self.bullets_r0[2].rect.x, self.bullets_r0[2].rect.y))  # 13
+        game_state.append((self.bullets_r0[3].rect.x, self.bullets_r0[3].rect.y))  # 14
+        game_state.append((self.bullets_r0[4].rect.x, self.bullets_r0[4].rect.y))  # 15
+        game_state.append((self.bullets_l1[0].rect.x, self.bullets_l1[0].rect.y))  # 16
+        game_state.append((self.bullets_l1[1].rect.x, self.bullets_l1[1].rect.y))  # 17
+        game_state.append((self.bullets_l1[2].rect.x, self.bullets_l1[2].rect.y))  # 18
+        game_state.append((self.bullets_l1[3].rect.x, self.bullets_l1[3].rect.y))  # 19
+        game_state.append((self.bullets_l1[4].rect.x, self.bullets_l1[4].rect.y))  # 20
+        game_state.append((self.bullets_r1[0].rect.x, self.bullets_r1[0].rect.y))  # 21
+        game_state.append((self.bullets_r1[1].rect.x, self.bullets_r1[1].rect.y))  # 22
+        game_state.append((self.bullets_r1[2].rect.x, self.bullets_r1[2].rect.y))  # 23
+        game_state.append((self.bullets_r1[3].rect.x, self.bullets_r1[3].rect.y))  # 24
+        game_state.append((self.bullets_r1[4].rect.x, self.bullets_r1[4].rect.y))  # 25
+        if self.current_level_no == 0:
+            game_state.append(DEAD_CRATER_POS)  # 26
+        else:
+            game_state.append((self.level02.moving_block.rect.x, self.level02.moving_block.rect.y))  # 26
+        game_state.append(self.r_sign_flg0)  # 27
+        game_state.append(self.r_sign_flg1)  # 28
+        game_state.append(self.map_id)  # 29
+        game_state.append(self.match_id)  # 30
+        game_state.append(self.current_level_no)  # 31
+        game_state.append(self.match_score["round"])  # 32
+        game_state.append(self.match_score["shooter0"])  # 33
+        game_state.append(self.match_score["shooter1"])  # 34
+        game_state.append(self.winner)  # 35
+        game_state.append(self.player_shooter0.hit_count)  # 36
+        game_state.append(self.player_shooter1.hit_count)  # 37
+
+        return game_state
+
+
+class GameCC:  # chopper vs chopper
+    pass
+
+
+"""
+game type selection:
+
+player0_role_id = 0, player1_role_id = 0, player0_role_id + player1_role_id = 0, both players are shooters, GameSS 
+player0_role_id or player1_role_id = 1, player0_role_id + player1_role_id = 1, one shooter one chopper, GameSC 
+player0_role_id = 1, player1_role_id = 1, player0_role_id + player1_role_id = 2, both players are choppers, GameCC 
+"""
+game_type_lst = [GameSS, GameSC, GameCC]

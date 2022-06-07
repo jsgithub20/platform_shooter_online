@@ -12,6 +12,8 @@ run_R = [pg.image.load("resources/shooter/Run__000.png"), pg.image.load("resourc
          pg.image.load("resources/shooter/Run__006.png"), pg.image.load("resources/shooter/Run__007.png"),
          pg.image.load("resources/shooter/Run__008.png"), pg.image.load("resources/shooter/Run__009.png")]
 
+
+
 # Run animation for the LEFT
 run_L = [pg.transform.flip(sprite, True, False) for sprite in run_R]
 
@@ -73,7 +75,7 @@ class HealthBar(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.x, self.y = (x, y)
         self.rect.x, self.y = (self.x, self.y)
-        self.health = health
+        self.health = health  # when the health bar is all red, it's dead
         self.hit = 0
         self.red_surface = pygame.Surface((self.hit * (self.full_length / self.health), self.bar_width))
 
@@ -328,7 +330,7 @@ class Player(pg.sprite.Sprite):
         self.score_text = None
 
         # number of bullets that can be shot before reload
-        self.loaded = 5
+        self.loaded = RELOAD
 
         # number of seconds before the player can shoot more bullets
         self.reload_timer = 0

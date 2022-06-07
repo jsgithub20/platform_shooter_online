@@ -28,9 +28,9 @@ class RoomState:
     # player0: player[0], player1: player[1]
     player_names: list[str] = field(default_factory=list)  # name:str, room name will be f"{player_name[0]}'s game"
     # player_role_ids: list[int] = field(default_factory=list)  # [player0, player1]
-    player_role_ids = [0, 1]  # [player0, player1]
-    player_readers: list[asyncio.streams.StreamReader] = field(default_factory=list)
-    player_writers: list[asyncio.streams.StreamWriter] = field(default_factory=list)
+    player_role_ids = [0, 1]  # [player0, player1], 0: shooter, 1: chopper
+    player_readers: list[asyncio.streams.StreamReader] = field(default_factory=list)  # [player0, player1]
+    player_writers: list[asyncio.streams.StreamWriter] = field(default_factory=list)  # [player0, player1]
     player_task_names: list[str] = field(default_factory=list)
     room_id: int = 0
     player_joined: bool = False  # True if the chosen game room is received from 2nd player
@@ -97,49 +97,6 @@ class Server:
                 connected = not CONNECTED
         return connected, string
 
-    # this method (check_read_room) is replaced by the method with same name to reduce the lines
-    # async def check_read_room(self, room: RoomState, player0: bool, player1: bool, length: int):
-    #     # used for read() after the connected player is in a game room
-    #     string = None
-    #     reader = None
-    #     writer = None
-    #     player_name = ""
-    #     connected = CONNECTED
-    #     if player0:
-    #         player_name = room.player_names[0]
-    #         reader = room.player_readers[0]
-    #         writer = room.player_writers[0]
-    #     elif player1:
-    #         player_name = room.player_names[1]
-    #         reader = room.player_readers[1]
-    #         writer = room.player_writers[1]
-    #
-    #     try:
-    #         # received = await reader.read(length)
-    #         received = await reader.readuntil(separator=b"AB")
-    #         string = received.decode()[:-2]
-    #     except ConnectionError:
-    #         self.cnt -= 1
-    #         self.my_logger.warning(
-    #             f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
-    #         # writer.close() is not needed because the writer is already closed
-    #         # await writer.wait_closed(): this line could never be returned when the writer is already closed
-    #         if room.room_id in self.game_dict:
-    #             self.game_dict.pop(room.room_id)
-    #         connected = not CONNECTED
-    #     else:  # if the connection is properly connected, there will be no ConnectionError exception raised
-    #         if not received:
-    #             self.cnt -= 1
-    #             self.my_logger.warning(
-    #                 f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
-    #             if not writer.is_closing():
-    #                 writer.close()
-    #                 await writer.wait_closed()
-    #             if room.room_id in self.game_dict:
-    #                 self.game_dict.pop(room.room_id)
-    #             connected = not CONNECTED
-    #     return connected, list(string)
-
     def remove_room(self, room):
         self.cnt -= 2  # if a room is removed, two players are removed
         # room.running = False
@@ -166,9 +123,19 @@ class Server:
             try:
                 # receiving event strings or game setting strings
                 received = await room.player_readers[i].readuntil(separator=b"AB")
-                # string_lists[i] = list(received.decode()[:-2])  # discard trailing "AB"
-                # string_lists[0] is always shooter, room.player_role_ids[i] actually represents the events for the role
-                string_lists[room.player_role_ids[i]] = list(received.decode()[:-2])  # discard trailing "AB"
+                """
+                In shooter-chopper game, player_role_ids is [0, 1] or [1, 0] string_lists[0] is always shooter, 
+                room.player_role_ids[i] actually represents the events for the role
+                In shooter-shooter or chopper-chopper game, since player_role_ids is [0, 0] or [1, 1]
+                room.player_role_ids[i] can't be directly used as the index for string_lists[]
+                1 - room.player_role_ids[i] makes it right as the index for string_lists[]
+                """
+                if len(string_lists[room.player_role_ids[i]]) > 0:
+                    # 1-1 = 0, 1-0 = 1
+                    index = 1 - room.player_role_ids[i]
+                    string_lists[index] = list(received.decode()[:-2])  # discard trailing "AB"
+                else:
+                    string_lists[room.player_role_ids[i]] = list(received.decode()[:-2])
             except (ConnectionError, asyncio.IncompleteReadError):
                 # writer.close() is not needed because the writer is already closed
                 # await writer.wait_closed(): this line could never be returned when the writer is already closed
@@ -391,11 +358,14 @@ class Server:
                         room.map_id = info[1]
                         room.match_id = info[2]
                         room.player_role_ids[0] = int(info[3])  # role_id for player0
+                        # room.player_role_ids[1] = 0
                         room.player_role_ids[1] = 1 - room.player_role_ids[0]  # 1-1 = 0, 1-0 = 1
                         room.game_set0 = True
             # print((perf_counter() - start)*1000)
 
-        g = game_class_s.GameSC(
+        # game_type_lst = [GameSS, GameSC, GameCC]
+        game_type = game_class_s.game_type_lst[room.player_role_ids[0] + room.player_role_ids[1]]
+        g = game_type(
             self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, int(room.map_id), 0,
             int(room.match_id))  # map_id, level_id, match_id
 
@@ -471,6 +441,11 @@ class Server:
             # print(room.room_id, (perf_counter()-start_p)*1000)
             # print(perf_counter()-start_p)
             r = await self.check_read_room(room)
+            # for i in range(2):
+            #     for j in range(7):
+            #         if r[1][i][j] == "1":
+            #             print(r[1])
+            #             break
             # start_p = perf_counter()
             if not r[0]:
                 room.running = False

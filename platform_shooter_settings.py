@@ -8,6 +8,7 @@ TIMEOUT = config["DEFAULT"].getint("TIMEOUT")
 CHOPPER_SCORE_HIT = config["DEFAULT"].getint("CHOPPER_SCORE_HIT")
 SHOOTER_SCORE_HIT = config["DEFAULT"].getint("SHOOTER_SCORE_HIT")
 CHOPPER_CD = config["DEFAULT"].getint("CHOPPER_CD")  # ms
+RELOAD = config["DEFAULT"].getint("SHOOTER_RELOAD")
 
 # Colors
 BLACK = (0, 0, 0)

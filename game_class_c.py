@@ -12,7 +12,7 @@ from role_def import *
 
 
 class GameSC:
-    def __init__(self, screen, win_w, win_h, map_id, match_id, role_id, my_name, your_name):
+    def __init__(self, screen, win_w, win_h, map_id, match_id, player_id, role_id, my_name, your_name):
         pg.init()
         self.clock = pg.time.Clock()
         self.timer = pg.time.get_ticks()
@@ -27,6 +27,7 @@ class GameSC:
         # self.current_level_no = 0
         self.current_level_no = map_id
         self.match_id = match_id
+        self.player_id = player_id
         self.role_id = role_id
         self.round = 0
         self.round_count_down_flag = False
@@ -84,12 +85,12 @@ class GameSC:
         self.level_txt = DrawText(self.screen, 30, WHITE, 20, 10, "level", f"Level {self.current_level_no}", alignment="center")
         self.match_type_txt = DrawText(self.screen, 30, WHITE, 25, 720, "match_score", match_score, alignment="center")
 
-        if self.role_id == 0:
+        if self.player_id == 0:
             self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="left")
             self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name, alignment="right")
             self.my_health_bar = HealthBar(10, 750, SHOOTER_SCORE_HIT)
             self.your_health_bar = HealthBar(820, 750, CHOPPER_SCORE_HIT)
-        elif self.role_id == 1:
+        elif self.player_id == 1:
             self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="right")
             self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name, alignment="left")
             self.your_health_bar = HealthBar(10, 750, SHOOTER_SCORE_HIT)
@@ -100,10 +101,7 @@ class GameSC:
     def restart(self):
         # start a new game
         self.player_shooter = Player()
-        # self.player_shooter.hit_limit = 3
-
         self.player_chopper = sprite_player_correction.Player()
-        # self.player_chopper.hit_limit = 3
 
         # Create all the levels
         self.level_list = []
@@ -207,10 +205,10 @@ class GameSC:
 
         self.match_type_txt.text = f"{gs_lst[22]} - {MATCH_TYPE_LST[int(gs_lst[19])]} - {gs_lst[23]}"
         self.fps_txt.text = str(int(self.clock.get_fps()))
-        if self.role_id == 0:
+        if self.player_id == 0:
             self.my_health_bar.hit = gs_lst[25]
             self.your_health_bar.hit = gs_lst[26]
-        elif self.role_id == 1:
+        elif self.player_id == 1:
             self.my_health_bar.hit = gs_lst[26]
             self.your_health_bar.hit = gs_lst[25]
         self.upd_text_sprite_grp.update()
@@ -231,7 +229,7 @@ class GameSC:
 
 
 class GameSS:
-    def __init__(self, screen, win_w, win_h, map_id, match_id, role_id, my_name, your_name):
+    def __init__(self, screen, win_w, win_h, map_id, match_id, player_id, role_id, my_name, your_name):
         pg.init()
         self.clock = pg.time.Clock()
         self.timer = pg.time.get_ticks()
@@ -246,6 +244,7 @@ class GameSS:
         # self.current_level_no = 0
         self.current_level_no = map_id
         self.match_id = match_id
+        self.player_id = player_id
         self.role_id = role_id
         self.round = 0
         self.round_count_down_flag = False
@@ -310,12 +309,12 @@ class GameSS:
         self.level_txt = DrawText(self.screen, 30, WHITE, 20, 10, "level", f"Level {self.current_level_no}", alignment="center")
         self.match_type_txt = DrawText(self.screen, 30, WHITE, 25, 720, "match_score", match_score, alignment="center")
 
-        if self.role_id == 0:
+        if self.player_id == 0:
             self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="left")
             self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name, alignment="right")
             self.my_health_bar = HealthBar(10, 750, SHOOTER_SCORE_HIT)
             self.your_health_bar = HealthBar(820, 750, CHOPPER_SCORE_HIT)
-        elif self.role_id == 1:
+        elif self.player_id == 1:
             self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="right")
             self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name, alignment="left")
             self.your_health_bar = HealthBar(10, 750, SHOOTER_SCORE_HIT)
@@ -349,7 +348,7 @@ class GameSS:
 
         self.player_shooter1.level = self.current_level
 
-        self.active_sprite_grp.add(self.player_shooter0, self.player_shooter1, self.r_sign0)
+        self.active_sprite_grp.add(self.player_shooter0, self.player_shooter1, self.r_sign0, self.r_sign1)
         self.upd_text_sprite_grp.add(self.fps_txt, self.match_type_txt, self.my_health_bar, self.your_health_bar)  # only text sprites that need to be updated
         self.idle_text_sprite_grp.add(self.my_name_txt, self.your_name_txt, self.level_txt)
         self.bullet_sprite_grp0.add(*self.bullets_r0, *self.bullets_l0)
@@ -403,42 +402,49 @@ class GameSS:
 
     def update_game_state(self, gs_lst):
         self.clock.tick()
-        if gs_lst[21] > self.round:
-            self.round = gs_lst[21]
+        if gs_lst[32] > self.round:
+            self.round = gs_lst[32]
             self.round_count_down_flag = True
             self.counting = 3
             self.timer = pg.time.get_ticks()
-        if gs_lst[24] != "nobody":
-            self.winner = gs_lst[24]
+        if gs_lst[35] != "nobody":
+            self.winner = gs_lst[35]
             self.playing = False
         self.player_shooter0.update_img(gs_lst[0], gs_lst[1])
         self.player_shooter0.rect.x, self.player_shooter0.rect.y = gs_lst[2]
         self.player_shooter1.update_img(gs_lst[3], gs_lst[4])
         self.player_shooter1.rect.x, self.player_shooter1.rect.y = gs_lst[5]
         for i in range(TTL_BULLETS):
-            self.bullets_l[i].rect.x, self.bullets_l[i].rect.y = gs_lst[i+6]
-            self.bullets_r[i].rect.x, self.bullets_r[i].rect.y = gs_lst[i+11]
+            self.bullets_l0[i].rect.x, self.bullets_l0[i].rect.y = gs_lst[i+6]
+            self.bullets_r0[i].rect.x, self.bullets_r0[i].rect.y = gs_lst[i+11]
+            self.bullets_l1[i].rect.x, self.bullets_l1[i].rect.y = gs_lst[i+16]
+            self.bullets_r1[i].rect.x, self.bullets_r1[i].rect.y = gs_lst[i+21]
         if self.current_level_no == 1:
-            self.current_level.moving_block.rect.x, self.current_level.moving_block.rect.y = gs_lst[16]
-        if gs_lst[17]:  # r_sign_flg = 1
+            self.current_level.moving_block.rect.x, self.current_level.moving_block.rect.y = gs_lst[26]
+        if gs_lst[27]:  # r_sign_flg = 1
             self.r_sign0.rect.midbottom = self.player_shooter0.rect.midtop
         else:  # r_sign_flg = 0
             self.r_sign0.rect.midbottom = (-99, -99)
+        if gs_lst[28]:  # r_sign_flg = 1
+            self.r_sign1.rect.midbottom = self.player_shooter1.rect.midtop
+        else:  # r_sign_flg = 0
+            self.r_sign1.rect.midbottom = (-99, -99)
 
-        self.match_type_txt.text = f"{gs_lst[22]} - {MATCH_TYPE_LST[int(gs_lst[19])]} - {gs_lst[23]}"
+        self.match_type_txt.text = f"{gs_lst[33]} - {MATCH_TYPE_LST[int(gs_lst[30])]} - {gs_lst[34]}"
         self.fps_txt.text = str(int(self.clock.get_fps()))
-        if self.role_id == 0:
-            self.my_health_bar.hit = gs_lst[25]
-            self.your_health_bar.hit = gs_lst[26]
-        elif self.role_id == 1:
-            self.my_health_bar.hit = gs_lst[26]
-            self.your_health_bar.hit = gs_lst[25]
+        if self.player_id == 0:
+            self.my_health_bar.hit = gs_lst[36]
+            self.your_health_bar.hit = gs_lst[37]
+        elif self.player_id == 1:
+            self.my_health_bar.hit = gs_lst[37]
+            self.your_health_bar.hit = gs_lst[36]
         self.upd_text_sprite_grp.update()
 
     def draw(self):
         self.current_level.draw(self.screen)
         self.active_sprite_grp.draw(self.screen)
-        self.bullet_sprite_grp.draw(self.screen)
+        self.bullet_sprite_grp0.draw(self.screen)
+        self.bullet_sprite_grp1.draw(self.screen)
         self.upd_text_sprite_grp.draw(self.screen)
         self.idle_text_sprite_grp.draw(self.screen)
         if self.round_count_down_flag:

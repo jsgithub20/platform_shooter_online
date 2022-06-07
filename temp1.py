@@ -79,14 +79,35 @@ import configparser
 # CHOPPER_CD = config["DEFAULT"].getint("CHOPPER_CD")
 # print(TIMEOUT, CHOPPER_CD)
 
-@dataclass
-class RoomState:
-    l: list[int, int] = field(default_factory=list)
+# @dataclass
+# class RoomState:
+#     l: list[int, int] = field(default_factory=list)
+#
+#
+# a = "01234"
+# b = list(a)
+# c = b[1:-1]
+#
+# print(c)
+
+import game_class_s as gcs
+
+class TClass1:
+    def __init__(self):
+        print("TClass1")
 
 
-a = "01234"
-b = list(a)
-c = b[1:-1]
+class TClass2:
+    def __init__(self, name):
+        print("TClass2")
+        self.name = name
 
-print(c)
+
+cls_lst = [TClass1, TClass2]
+
+# a = cls_lst[0]()
+b = cls_lst[1]("name")
+print(b)
+b.age = 10
+
 
