@@ -188,9 +188,11 @@ class Server:
             r = await self.check_read(player_name, reader, writer)  # return connected, string
             if not r[0]:
                 return not CONNECTED, chosen_room_id
-            elif int(r[1]) in [*self.game_dict]:
+            elif int(r[1][0]) in [*self.game_dict]:  # r1:string = "room_id, role_id"
                 writer.write("okAB".encode())
-                chosen_room_id = int(r[1])
+                chosen_room_id = int(r[1][0])
+                role_id = int(r[1][2])
+                print(role_id)
                 r = await self.check_read(player_name, reader, writer)  # r/w cycle
                 if not r[0]:
                     return not CONNECTED, chosen_room_id
@@ -205,6 +207,7 @@ class Server:
                 self.game_dict[chosen_room_id].player_names.append(player_name)  # player1
                 self.game_dict[chosen_room_id].player_readers.append(reader)  # player1
                 self.game_dict[chosen_room_id].player_writers.append(writer)  # player1
+                self.game_dict[chosen_room_id].player_role_ids[1] = role_id  # player1
                 chosen_room = self.game_dict[chosen_room_id]
                 while not chosen_room.game_set0:  # meaning player0 has not finished setting game yet
                     # clock.tick(FPS)
@@ -307,7 +310,7 @@ class Server:
                 else:
                     room = join_room[1]
                     room.player_task_names.append(client_name)  # player1
-                    room.player_role_ids[1] = 1  # player1
+                    # room.player_role_ids[1] = 1  # player1
                     room.player_joined = True
                     """
                     player_joined can't be set to True in self.join(), otherwise player0 will enter the 
@@ -332,9 +335,11 @@ class Server:
                 # data = "Game Ready".encode()
                 room.running = True
                 room.player_writers[0].write(
-                    f"Game Ready,{room.player_names[1]},{room.map_id},{room.match_id},{room.player_role_ids[0]}AB".encode())
+                    f"Game Ready,{room.player_names[1]},{room.map_id},{room.match_id},"
+                    f"{room.player_role_ids[0]},{room.player_role_ids[1]}AB".encode())
                 room.player_writers[1].write(
-                    f"Game Ready,{room.player_names[0]},{room.map_id},{room.match_id},{room.player_role_ids[1]}AB".encode())
+                    f"Game Ready,{room.player_names[0]},{room.map_id},{room.match_id},"
+                    f"{room.player_role_ids[0]},{room.player_role_ids[1]}AB".encode())
                 break  # break current while loop to start the routine game tick
             else:  # if game_ready is False, it means there is only player_0 in the game room
                 data = f"New game is created, waiting for the second player to join...AB".encode()
@@ -359,7 +364,7 @@ class Server:
                         room.match_id = info[2]
                         room.player_role_ids[0] = int(info[3])  # role_id for player0
                         # room.player_role_ids[1] = 0
-                        room.player_role_ids[1] = 1 - room.player_role_ids[0]  # 1-1 = 0, 1-0 = 1
+                        # room.player_role_ids[1] = 1 - room.player_role_ids[0]  # 1-1 = 0, 1-0 = 1
                         room.game_set0 = True
             # print((perf_counter() - start)*1000)
 
@@ -410,9 +415,11 @@ class Server:
             return
 
         room.player_writers[0].write(
-            f"Game Ready,{room.player_names[1]},{room.map_id},{room.match_id},{room.player_role_ids[0]}AB".encode())
+            f"Game Ready,{room.player_names[1]},{room.map_id},{room.match_id},"
+            f"{room.player_role_ids[0]},{room.player_role_ids[1]}AB".encode())
         room.player_writers[1].write(
-            f"Game Ready,{room.player_names[0]},{room.map_id},{room.match_id},{room.player_role_ids[1]}AB".encode())
+            f"Game Ready,{room.player_names[0]},{room.map_id},{room.match_id},"
+            f"{room.player_role_ids[0]},{room.player_role_ids[1]}AB".encode())
 
     async def game(self, room, g):
         # g.new()

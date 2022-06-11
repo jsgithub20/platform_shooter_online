@@ -11,6 +11,9 @@ import sprite_player_correction
 from role_def import *
 
 
+running = True
+
+
 class GameSC:
     def __init__(self, screen, win_w, win_h, map_id, match_id, player_id, role_id, my_name, your_name):
         pg.init()
@@ -48,7 +51,7 @@ class GameSC:
         self.snd_yeet = pg.mixer.Sound("resources/sound/yeet.ogg")
         self.snd_yeet.set_volume(0.2)
 
-        self.running = True
+        # self.running = True
 
     def new(self):
         self.winner = None
@@ -137,13 +140,15 @@ class GameSC:
             if event.type == pg.QUIT:
                 self.events_lst[0] = QUIT
                 self.playing = False
-                self.running = False
+                global running
+                running = False
 
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
                     self.events_lst[0] = QUIT
                     self.playing = False
-                    self.running = False
+                    # global running
+                    running = False
                 # player_shooter controls
                 if event.key == pg.K_LEFT:
                     self.events_lst[1] = "1"
@@ -265,7 +270,7 @@ class GameSS:
         self.snd_yeet = pg.mixer.Sound("resources/sound/yeet.ogg")
         self.snd_yeet.set_volume(0.2)
 
-        self.running = True
+        # self.running = True
 
     def new(self):
         self.winner = None
@@ -363,13 +368,15 @@ class GameSS:
             if event.type == pg.QUIT:
                 self.events_lst[0] = QUIT
                 self.playing = False
-                self.running = False
+                global running
+                running = False
 
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
                     self.events_lst[0] = QUIT
                     self.playing = False
-                    self.running = False
+                    # global running
+                    running = False
                 # player_shooter controls
                 if event.key == pg.K_LEFT:
                     self.events_lst[1] = "1"
@@ -454,3 +461,17 @@ class GameSS:
                                          fgcolor=RED, bgcolor=GREEN)
 
         pg.display.update()
+
+
+class GameCC:
+    pass
+
+
+"""
+game type selection:
+
+player0_role_id = 0, player1_role_id = 0, player0_role_id + player1_role_id = 0, both players are shooters, GameSS 
+player0_role_id or player1_role_id = 1, player0_role_id + player1_role_id = 1, one shooter one chopper, GameSC 
+player0_role_id = 1, player1_role_id = 1, player0_role_id + player1_role_id = 2, both players are choppers, GameCC 
+"""
+game_type_lst = [GameSS, GameSC, GameCC]

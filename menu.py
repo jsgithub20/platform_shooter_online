@@ -328,7 +328,7 @@ class Menu:
         self.match_id = item_tuple[1]
 
     def cb_check_join_menu_openned(self, from_menu, to_menu):
-        self.t_loop.create_task(self.connection.send_room_choice(self.chosen_room))
+        self.t_loop.create_task(self.connection.send_room_choice(self.chosen_room, self.current_role_id))
         try:
             msg = self.connection.chosen_room_ok.get(timeout=TIMEOUT)
             if msg == "ok":
@@ -391,8 +391,8 @@ class Menu:
             self.check_end(events)
             pygame.display.flip()
 
-    def reselect(self, g):
-        if not g.running:
+    def reselect(self):
+        if not game_class_c.running:
             self.end()
         self.t_loop.create_task(self.connection.client_game())
         self.winner = ""
@@ -436,8 +436,8 @@ class Menu:
         img.set_surface(self.current_img_lst[img_idx // 3])
         return img_idx
 
-    def game_over_screen(self, g):
-        if not g.running:
+    def game_over_screen(self):
+        if not game_class_c.running:
             self.end()
         counting = 2
         now = pygame.time.get_ticks()
@@ -461,25 +461,30 @@ class Menu:
 
     def play(self):
         # g = game_class_c.GameSC(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT,
-        #                       self.map_id, self.match_id, self.role_id, self.my_name, self.your_name)
-        g = game_class_c.GameSC(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT,
-                              self.map_id, self.match_id, self.player_id, self.role_id, self.my_name, self.your_name)
-        while g.running and self.connection.connected_flag:
-            self.game(g)
-            self.game_over_screen(g)
-            self.reselect(g)
+        #                       self.map_id, self.match_id, self.player_id, self.role_id, self.my_name, self.your_name)
+        while game_class_c.running and self.connection.connected_flag:
+            self.game()
+            self.game_over_screen()
+            self.reselect()
         pygame.quit()
         exit()
 
-    def game(self, g):
+    def game(self):
         self.main_menu.disable()
         self.wait_screen()
+
+        role_ids = (int(self.connection.server_msg[4]), int(self.connection.server_msg[5]))
+        self.role_id = role_ids[self.player_id]
+        game_type = game_class_c.game_type_lst[role_ids[0] + role_ids[1]]
+
+        g = game_type(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT,
+                              self.map_id, self.match_id, self.player_id, self.role_id, self.my_name, self.your_name)
 
         g.your_name = self.connection.server_msg[1]
         # g.map_id = self.connection.server_msg[2]
         g.current_level_no = int(self.connection.server_msg[2])
         g.match_id = int(self.connection.server_msg[3])
-        g.role_id = int(self.connection.server_msg[4])
+        # g.role_id = int(self.connection.server_msg[4])
 
         g.new()
 

@@ -92,22 +92,22 @@ import configparser
 
 import game_class_s as gcs
 
-class TClass1:
-    def __init__(self):
-        print("TClass1")
+# class TClass1:
+#     def __init__(self):
+#         print("TClass1")
+#
+#
+# class TClass2:
+#     def __init__(self, name):
+#         print("TClass2")
+#         self.name = name
+#
+#
+# cls_lst = [TClass1, TClass2]
+#
+# # a = cls_lst[0]()
+# b = cls_lst[1]("name")
+# print(b)
+# b.age = 10
 
-
-class TClass2:
-    def __init__(self, name):
-        print("TClass2")
-        self.name = name
-
-
-cls_lst = [TClass1, TClass2]
-
-# a = cls_lst[0]()
-b = cls_lst[1]("name")
-print(b)
-b.age = 10
-
-
+a = "(c1,c2)"
