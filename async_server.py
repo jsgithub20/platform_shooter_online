@@ -192,7 +192,6 @@ class Server:
                 writer.write("okAB".encode())
                 chosen_room_id = int(r[1][0])
                 role_id = int(r[1][2])
-                print(role_id)
                 r = await self.check_read(player_name, reader, writer)  # r/w cycle
                 if not r[0]:
                     return not CONNECTED, chosen_room_id

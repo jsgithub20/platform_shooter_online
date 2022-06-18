@@ -216,7 +216,7 @@ class GameSC:  # shooter vs chopper
             bullet_hit_chopper = pg.sprite.spritecollideany(self.player_chopper, self.bullet_sprite_grp)
             if bullet_hit_chopper:
                 bullet_hit_chopper.live_flag = 0
-                self.player_chopper.hit_flag = 1
+                # self.player_chopper.hit_flag = 1
                 self.player_chopper.hit_count += 1
 
                 if self.player_chopper.hit_count == self.player_chopper.hit_limit:
@@ -683,7 +683,215 @@ class GameSS:  # shooter vs shooter
 
 
 class GameCC:  # chopper vs chopper
-    pass
+    def __init__(self, screen, win_w, win_h, map_id, level_id, match_id):
+        pg.init()
+        # get settings when called by the server program
+        self.screen = screen
+        self.win_w = win_w
+        self.win_h = win_h
+
+        self.map_id = map_id
+        # self.current_level_no = level_id
+        self.current_level_no = map_id
+        self.match_id = match_id
+        self.new_round = False
+
+        # match score
+        self.match_score = {"match_type": MATCH_TYPE_LST[self.match_id],
+                            "round": 1, "chopper0": 0, "chopper1": 0,
+                            "map": MAP_LST[self.map_id], "game_finished": False}
+
+        """
+        0   , 1        , 2         , 3   , 4     , 5             , 6
+        quit, move_left, move_right, jump, attack, move_left_stop, move_right_stop
+        """
+        self.events_str0 = "0000000"
+        self.events_str1 = "0000000"
+        self.events_lst0 = list(self.events_str0)
+        self.events_lst1 = list(self.events_str1)
+        # self.game_state = []
+
+        self.current_level = None
+
+        self.running = True
+
+    def new(self):
+        self.winner = "nobody"
+        self.playing = True
+        self.match_score = {"match_type": MATCH_TYPE_LST[self.match_id],
+                            "round": 0, "chopper0": 0, "chopper1": 0,
+                            "map": MAP_LST[self.map_id], "game_finished": False}
+
+        # if self.match_score["game_finished"]:
+        #     return
+        # else:
+        #     self.match_score["round"] += 1
+
+        self.restart()
+
+    def restart(self):
+        # match type
+        match_type = self.match_score["match_type"]
+
+        # initialize variables
+        self.match_score["round"] += 1
+
+        # Create the self.player
+        self.player_chopper0 = sprite_player_correction.Player()
+        self.player_chopper0.hit_limit = CHOPPER_SCORE_HIT
+
+        self.player_chopper1 = sprite_player_correction.Player()
+        self.player_chopper1.hit_limit = CHOPPER_SCORE_HIT
+        
+        self.role_lst = [self.player_chopper0, self.player_chopper1]
+
+        # Create all the levels
+        self.level_list = []
+        self.level01 = Level_01(self.player_chopper0, self.player_chopper1)
+        self.level02 = Level_02(self.player_chopper0, self.player_chopper1)
+        self.level_list.append(self.level01)
+        self.level_list.append(self.level02)
+
+        # Set the current level
+        self.current_level = self.level_list[self.current_level_no]
+
+        self.active_sprite_grp = pg.sprite.Group()
+
+        self.player_chopper0.level = self.current_level
+        self.player_chopper0.rect.x = 200
+        self.player_chopper0.rect.y = -50
+        
+        self.player_chopper1.level = self.current_level
+        self.player_chopper1.rect.x = 700
+        self.player_chopper1.rect.y = -50
+
+        self.active_sprite_grp.add(self.player_chopper0, self.player_chopper1)
+
+    def events(self):
+        # Game Loop - events
+        # lst_s = list(self.events_str_shooter)
+        # lst_c = list(self.events_str_chopper)
+
+        events_lst_chopper0 = [int(item) for item in self.events_lst0]
+        events_lst_chopper1 = [int(item) for item in self.events_lst1]
+
+        if events_lst_chopper0[0] or events_lst_chopper1[0]:
+            if self.playing:
+                self.playing = False
+            self.running = False
+
+        # player_chopper0 controls
+        if events_lst_chopper0[1]:
+            self.player_chopper0.go_left()
+        if events_lst_chopper0[2]:
+            self.player_chopper0.go_right()
+        if events_lst_chopper0[3]:
+            self.player_chopper0.jump()
+        if events_lst_chopper0[4]:
+            self.player_chopper0.chop()
+            self.player_chopper0.image_idx = 0
+
+        if events_lst_chopper0[5] and self.player_chopper0.change_x < 0:
+            self.player_chopper0.stop()
+        if events_lst_chopper0[6] and self.player_chopper0.change_x > 0:
+            self.player_chopper0.stop()
+        
+        # player_chopper1 controls
+        if events_lst_chopper1[1]:
+            self.player_chopper1.go_left()
+        if events_lst_chopper1[2]:
+            self.player_chopper1.go_right()
+        if events_lst_chopper1[3]:
+            self.player_chopper1.jump()
+        if events_lst_chopper1[4]:
+            self.player_chopper1.chop()
+            self.player_chopper1.image_idx = 0
+
+        if events_lst_chopper1[5] and self.player_chopper1.change_x < 0:
+            self.player_chopper1.stop()
+        if events_lst_chopper1[6] and self.player_chopper1.change_x > 0:
+            self.player_chopper1.stop()
+
+    def update(self):
+        # Game Loop - Update
+        # Update the player.
+        self.active_sprite_grp.update()
+
+        if pg.sprite.collide_rect(self.player_chopper0, self.player_chopper1):
+            if self.player_chopper0.hit_flag == 0 and self.player_chopper1.chop_flag == 1:
+                self.player_chopper0.hit_flag = 1
+                self.player_chopper0.hit_count += 1
+                if self.player_chopper0.hit_count == self.player_chopper0.hit_limit:
+                    self.match_score["chopper1"] += 1
+                    self.winner, self.playing = self.check_winner()
+                    if self.winner == "nobody":
+                        self.new_round = True
+            elif self.player_chopper0.hit_flag == 1 and self.player_chopper1.chop_flag == 0:
+                self.player_chopper0.hit_flag = 0
+            
+            if self.player_chopper1.hit_flag == 0 and self.player_chopper0.chop_flag == 1:
+                self.player_chopper1.hit_flag = 1
+                self.player_chopper1.hit_count += 1
+                if self.player_chopper1.hit_count == self.player_chopper1.hit_limit:
+                    self.match_score["chopper0"] += 1
+                    self.winner, self.playing = self.check_winner()
+                    if self.winner == "nobody":
+                        self.new_round = True
+            elif self.player_chopper1.hit_flag == 1 and self.player_chopper0.chop_flag == 0:
+                self.player_chopper1.hit_flag = 0
+            
+        # Update items in the level
+        self.current_level.update()
+
+    def check_winner(self):
+        # return the winner role (if game over) or "nobody", and a bool value for self.playing
+        self.match_score["match_type"] = MATCH_TYPE_LST[self.match_id]
+        if self.match_score["match_type"] == MATCH_TYPE_LST[0]:
+            # death match
+            if self.match_score["chopper0"] == 1:
+                return "chopper0", False
+            elif self.match_score["chopper1"] == 1:
+                return "chopper1", False
+        elif self.match_score["match_type"] == MATCH_TYPE_LST[1]:
+            # 1st23
+            if self.match_score["chopper0"] == 3:
+                return "chopper0", False
+            elif self.match_score["chopper1"] == 3:
+                return "chopper1", False
+            else:
+                return "nobody", True
+        elif self.match_score["match_type"] == MATCH_TYPE_LST[2]:
+            # best of 3
+            if self.match_score["chopper0"] == 2:
+                return "chopper0", False
+            elif self.match_score["chopper1"] == 2:
+                return "chopper1", False
+            else:
+                return "nobody", True
+
+    def gs_conversion(self):
+        game_state = []
+        game_state.append(self.player_chopper0.img_dict_key)  # 0
+        game_state.append(self.player_chopper0.image_idx)  # 1
+        game_state.append((self.player_chopper0.rect.x, self.player_chopper0.rect.y))  # 2
+        game_state.append(self.player_chopper1.img_dict_key)  # 3
+        game_state.append(self.player_chopper1.image_idx)  # 4
+        game_state.append((self.player_chopper1.rect.x, self.player_chopper1.rect.y))  # 5
+        if self.current_level_no == 0:
+            game_state.append(DEAD_CRATER_POS)  # 6
+        else:
+            game_state.append((self.level02.moving_block.rect.x, self.level02.moving_block.rect.y))  # 6
+        game_state.append(self.map_id)  # 7
+        game_state.append(self.match_id)  # 8
+        game_state.append(self.current_level_no)  # 9
+        game_state.append(self.match_score["round"])  # 10
+        game_state.append(self.match_score["chopper0"])  # 11
+        game_state.append(self.match_score["chopper1"])  # 12
+        game_state.append(self.winner)  # 13
+        game_state.append(self.player_chopper0.hit_count)  # 14
+        game_state.append(self.player_chopper1.hit_count)  # 15
+
+        return game_state
 
 
 """

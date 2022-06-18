@@ -90,8 +90,8 @@ class Player(pg.sprite.Sprite):
             elif self.change_x > 0:
                 self.chg_frame("run_R")
 
-        if self.hit_flag == 1:
-            self.hit_flag = 0
+        # if self.hit_flag == 1:
+        #     self.hit_flag = 0
 
         self.rect.x += self.change_x
 
