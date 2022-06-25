@@ -130,10 +130,12 @@ class Server:
                 room.player_role_ids[i] can't be directly used as the index for string_lists[]
                 1 - room.player_role_ids[i] makes it right as the index for string_lists[]
                 """
-                if len(string_lists[room.player_role_ids[i]]) > 0:
-                    # 1-1 = 0, 1-0 = 1
-                    index = 1 - room.player_role_ids[i]
-                    string_lists[index] = list(received.decode()[:-2])  # discard trailing "AB"
+                # if len(string_lists[room.player_role_ids[i]]) > 0:
+                #     # 1-1 = 0, 1-0 = 1
+                #     index = 1 - room.player_role_ids[i]
+                #     string_lists[index] = list(received.decode()[:-2])  # discard trailing "AB"
+                if room.player_role_ids[0] == room.player_role_ids[1]:
+                    string_lists[i] = list(received.decode()[:-2])
                 else:
                     string_lists[room.player_role_ids[i]] = list(received.decode()[:-2])
             except (ConnectionError, asyncio.IncompleteReadError):
@@ -143,7 +145,7 @@ class Server:
                     f"Connection to player <{room.player_names[i]}> is lost [{getframeinfo(currentframe()).lineno}]")
                 connected = not CONNECTED
             else:  # if the connection is properly connected, there will be no ConnectionError exception raised
-                if string_lists[room.player_role_ids[i]][0] == QUIT:  # player quit the game normally, don't use "1", used for selection ready
+                if string_lists[i][0] == QUIT:  # player quit the game normally, don't use "1", used for selection ready
                     self.my_logger.warning(
                         f"Player <{room.player_names[i]}> quit the game")
                     if not room.player_writers[i].is_closing():

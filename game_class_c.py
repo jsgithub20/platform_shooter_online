@@ -318,19 +318,23 @@ class GameSS:
             self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="left")
             self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name, alignment="right")
             self.my_health_bar = HealthBar(10, 750, SHOOTER_SCORE_HIT)
-            self.your_health_bar = HealthBar(820, 750, CHOPPER_SCORE_HIT)
+            self.your_health_bar = HealthBar(820, 750, SHOOTER_SCORE_HIT)
         elif self.player_id == 1:
             self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="right")
             self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name, alignment="left")
             self.your_health_bar = HealthBar(10, 750, SHOOTER_SCORE_HIT)
-            self.my_health_bar = HealthBar(810, 750, CHOPPER_SCORE_HIT)
+            self.my_health_bar = HealthBar(810, 750, SHOOTER_SCORE_HIT)
 
         self.restart()
 
     def restart(self):
         # start a new game
-        self.player_shooter0 = Player()
-        self.player_shooter1 = Player()
+        if self.player_id == 0:
+            self.player_shooter0 = Player(0)
+            self.player_shooter1 = Player(1)
+        elif self.player_id == 1:
+            self.player_shooter0 = Player(1)
+            self.player_shooter1 = Player(0)
 
         # Create all the levels
         self.level_list = []
@@ -522,21 +526,25 @@ class GameCC:
             self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="left")
             self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name,
                                           alignment="right")
-            self.my_health_bar = HealthBar(10, 750, SHOOTER_SCORE_HIT)
+            self.my_health_bar = HealthBar(10, 750, CHOPPER_SCORE_HIT)
             self.your_health_bar = HealthBar(820, 750, CHOPPER_SCORE_HIT)
         elif self.player_id == 1:
             self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="right")
             self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name,
                                           alignment="left")
-            self.your_health_bar = HealthBar(10, 750, SHOOTER_SCORE_HIT)
+            self.your_health_bar = HealthBar(10, 750, CHOPPER_SCORE_HIT)
             self.my_health_bar = HealthBar(810, 750, CHOPPER_SCORE_HIT)
 
         self.restart()
 
     def restart(self):
         # start a new game
-        self.player_chopper0 = sprite_player_correction.Player()
-        self.player_chopper1 = sprite_player_correction.Player()
+        if self.player_id == 0:
+            self.player_chopper0 = sprite_player_correction.Player(0)
+            self.player_chopper1 = sprite_player_correction.Player(1)
+        elif self.player_id == 1:
+            self.player_chopper0 = sprite_player_correction.Player(1)
+            self.player_chopper1 = sprite_player_correction.Player(0)
 
         # Create all the levels
         self.level_list = []

@@ -110,4 +110,7 @@ import game_class_s as gcs
 # print(b)
 # b.age = 10
 
-a = "(c1,c2)"
+a = ("(c1,c2)", "aa")
+b = f"{a}1"
+c = (a, b)
+print(c[0][0])

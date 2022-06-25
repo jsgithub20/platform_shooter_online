@@ -436,6 +436,15 @@ class Menu:
         img.set_surface(self.current_img_lst[img_idx // 3])
         return img_idx
 
+    def idle_img_animation(self, img, boy_girl, img_idx):
+        # boy = 0, girl = 1
+        if img_idx + 1 == len(self.img_lst[boy_girl]) * 3:
+            img_idx = 0
+        else:
+            img_idx += 1
+        img.set_surface(self.img_lst[boy_girl][img_idx // 3])
+        return img_idx
+
     def game_over_screen(self):
         if not game_class_c.running:
             self.end()
@@ -642,6 +651,14 @@ class Menu:
             position=[40, 20],
         )
 
+        engine = pygame_menu.sound.Sound()
+        # engine.set_sound(pygame_menu.sound.SOUND_TYPE_CLICK_MOUSE, 'resources/sound/click.ogg')
+        engine.set_sound(pygame_menu.sound.SOUND_TYPE_WIDGET_SELECTION, 'resources/sound/click.ogg')
+        # engine.set_sound(pygame_menu.sound.SOUND_TYPE_OPEN_MENU, 'resources/sound/click.ogg')
+        # engine.set_sound(pygame_menu.sound.SOUND_TYPE_OPEN_MENU, '/home/me/open.ogg')
+
+        # self.sub_menu_selection0.set_sound(engine, recursive=True)  # Apply on menu and all sub-menus
+
         self.connection_menu = pygame_menu.Menu(
             "Platform Game", WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.8,
             center_content=False,
@@ -710,40 +727,13 @@ class Menu:
         lbl0.set_float(True, False, True)
         lbl0.translate(100, 15)
 
-        btn_img_lft = pygame_menu.BaseImage("resources/gui/left.png")
+        self.img_idle_boy = self.main_menu.add.surface(self.img_lst[0][0])
+        self.img_idle_boy.set_float(True, False, True)
+        self.img_idle_boy.translate(100, 100)
 
-        # title text can't be empty, otherwise resize doesn't work!
-        sub1_btn_lft = self.main_menu.add.button(" ", self.cb_role_sel_lft, background_color=btn_img_lft)
-        sub1_btn_lft.resize(100, 100)
-        sub1_btn_lft.set_float(True, False, True)
-        sub1_btn_lft.translate(150, 200)
-
-        btn_img_rgt = pygame_menu.BaseImage("resources/gui/right.png")
-
-        sub1_btn_rgt = self.main_menu.add.button(" ", self.cb_role_sel_rgt, background_color=btn_img_rgt)
-        sub1_btn_rgt.resize(100, 100)
-        sub1_btn_rgt.set_float(True, False, True)
-        sub1_btn_rgt.translate(750, 200)
-
-        for j in range(len(role_def.girl_txt)):
-            lbl = self.main_menu.add.label(role_def.girl_txt[j][5],
-                                                    "",
-                                                    font_size=role_def.girl_txt[j][0],
-                                                    font_color=role_def.girl_txt[j][1])
-            lbl.set_float(True, False, True)
-            lbl.translate(role_def.girl_txt[j][2], role_def.girl_txt[j][3])
-            lbl.hide()
-            self.girl_desc_lbl_lst.append(lbl)
-
-        for j in range(len(role_def.boy_txt)):
-            lbl = self.main_menu.add.label(role_def.boy_txt[j][5],
-                                                    "",
-                                                    font_size=role_def.boy_txt[j][0],
-                                                    font_color=role_def.boy_txt[j][1])
-            lbl.set_float(True, False, True)
-            lbl.translate(role_def.boy_txt[j][2], role_def.boy_txt[j][3])
-            # lbl.hide()
-            self.boy_desc_lbl_lst.append(lbl)
+        self.img_idle_girl = self.main_menu.add.surface(self.img_lst[1][0])
+        self.img_idle_girl.set_float(True, False, True)
+        self.img_idle_girl.translate(500, 100)
 
         btn_img_ok = pygame_menu.BaseImage("resources/gui/Button_18_small.png")
 
@@ -752,17 +742,13 @@ class Menu:
         ok_btn.set_float(True, False, True)
         ok_btn.translate(890, 570)
 
-        self.img_selection0 = self.main_menu.add.surface(self.current_img_lst[0])
-        self.img_selection0.set_float(True, False, True)
-        self.img_selection0.translate(350, 100)
-
         # connection menu
 
         self.connection_menu.add.vertical_margin(30)
 
         server_ip = self.connection_menu.add.text_input(
             'Server ip address: ',
-            default='127.0.0.1',  # '47.94.100.39'
+            default='192.168.3.170',  # '47.94.100.39'
             onreturn=None,
             textinput_id='server_ip')
 
@@ -854,6 +840,8 @@ class Menu:
         # check_join_menu end
         # sub_menu_selection0 start
 
+        self.sub_menu_selection0.set_sound(engine, recursive=True)  # Apply on menu and all sub-menus
+
         lbl_match_type = self.sub_menu_selection0.add.label("Match Types")
         lbl_match_type.set_float(True, False, True)
         lbl_match_type.translate(100, 60)
@@ -894,6 +882,45 @@ class Menu:
         selector_map.set_float(True, False, True)
         selector_map.translate(650, 100)
 
+        btn_img_lft = pygame_menu.BaseImage("resources/gui/left.png")
+
+        # title text can't be empty, otherwise resize doesn't work!
+        sub1_btn_lft = self.sub_menu_selection0.add.button(" ", self.cb_role_sel_lft, background_color=btn_img_lft)
+        sub1_btn_lft.resize(100, 100)
+        sub1_btn_lft.set_float(True, False, True)
+        sub1_btn_lft.translate(150, 200)
+
+        btn_img_rgt = pygame_menu.BaseImage("resources/gui/right.png")
+
+        sub1_btn_rgt = self.sub_menu_selection0.add.button(" ", self.cb_role_sel_rgt, background_color=btn_img_rgt)
+        sub1_btn_rgt.resize(100, 100)
+        sub1_btn_rgt.set_float(True, False, True)
+        sub1_btn_rgt.translate(750, 200)
+
+        for j in range(len(role_def.girl_txt)):
+            lbl = self.sub_menu_selection0.add.label(role_def.girl_txt[j][5],
+                                                    "",
+                                                    font_size=role_def.girl_txt[j][0],
+                                                    font_color=role_def.girl_txt[j][1])
+            lbl.set_float(True, False, True)
+            lbl.translate(role_def.girl_txt[j][2], role_def.girl_txt[j][3])
+            lbl.hide()
+            self.girl_desc_lbl_lst.append(lbl)
+
+        for j in range(len(role_def.boy_txt)):
+            lbl = self.sub_menu_selection0.add.label(role_def.boy_txt[j][5],
+                                                    "",
+                                                    font_size=role_def.boy_txt[j][0],
+                                                    font_color=role_def.boy_txt[j][1])
+            lbl.set_float(True, False, True)
+            lbl.translate(role_def.boy_txt[j][2], role_def.boy_txt[j][3])
+            # lbl.hide()
+            self.boy_desc_lbl_lst.append(lbl)
+
+        self.img_selection0 = self.sub_menu_selection0.add.surface(self.current_img_lst[0])
+        self.img_selection0.set_float(True, False, True)
+        self.img_selection0.translate(350, 100)
+
         ok_btn_sel = self.sub_menu_selection0.add.button(" ", self.sub_menu_player0_wait, background_color=btn_img_ok)
         ok_btn_sel.resize(100, 100)
         ok_btn_sel.set_float(True, False, True)
@@ -901,7 +928,9 @@ class Menu:
 
         # sub_menu_selection0 end
 
-        img_idx = 0
+        img_idx0 = 0
+        img_idx1 = 0
+        img_idx2 = 0
         # current_img_idx = 0
         # -------------------------------------------------------------------------
         # Main loop
@@ -922,7 +951,9 @@ class Menu:
             else:
                 break
 
-            img_idx = self.role_img_animation(self.img_selection0, img_idx)
+            img_idx0 = self.idle_img_animation(self.img_idle_boy, 0, img_idx0)
+            img_idx1 = self.idle_img_animation(self.img_idle_girl, 1, img_idx1)
+            img_idx2 = self.role_img_animation(self.img_selection0, img_idx2)
             # if self.main_menu.get_current() == self.sub_menu_selection0:
             #     self.splat_font.render_to(self.screen, (100, 100), "render to menu screen")
 

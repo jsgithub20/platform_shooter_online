@@ -18,6 +18,14 @@ run_R = [pg.image.load("resources/chopper/Run__000.png"), pg.image.load("resourc
 # Run animation for the LEFT
 run_L = [pg.transform.flip(sprite, True, False) for sprite in run_R]
 
+run_R1 = [pg.image.load("resources/chopper/changed/Run__000.png"), pg.image.load("resources/chopper/changed/Run__001.png"),
+         pg.image.load("resources/chopper/changed/Run__002.png"), pg.image.load("resources/chopper/changed/Run__003.png"),
+         pg.image.load("resources/chopper/changed/Run__004.png"), pg.image.load("resources/chopper/changed/Run__005.png"),
+         pg.image.load("resources/chopper/changed/Run__006.png"), pg.image.load("resources/chopper/changed/Run__007.png"),
+         pg.image.load("resources/chopper/changed/Run__008.png"), pg.image.load("resources/chopper/changed/Run__009.png")]
+
+
+run_L1 = [pg.transform.flip(sprite, True, False) for sprite in run_R1]
 # Attack animation for the RIGHT
 attack_R = [pg.image.load("resources/chopper/Attack__000.png"), pg.image.load("resources/chopper/Attack__001.png"),
          pg.image.load("resources/chopper/Attack__002.png"), pg.image.load("resources/chopper/Attack__003.png"),
@@ -28,7 +36,16 @@ attack_R = [pg.image.load("resources/chopper/Attack__000.png"), pg.image.load("r
 # Attack animation for the LEFT
 attack_L = [pg.transform.flip(sprite, True, False) for sprite in attack_R]
 
+attack_R1 = [pg.image.load("resources/chopper/changed/Attack__000.png"), pg.image.load("resources/chopper/changed/Attack__001.png"),
+         pg.image.load("resources/chopper/changed/Attack__002.png"), pg.image.load("resources/chopper/changed/Attack__003.png"),
+         pg.image.load("resources/chopper/changed/Attack__004.png"), pg.image.load("resources/chopper/changed/Attack__005.png"),
+         pg.image.load("resources/chopper/changed/Attack__006.png"), pg.image.load("resources/chopper/changed/Attack__007.png"),
+         pg.image.load("resources/chopper/changed/Attack__008.png"), pg.image.load("resources/chopper/changed/Attack__009.png")]
+
+attack_L1 = [pg.transform.flip(sprite, True, False) for sprite in attack_R1]
+
 img_dict = {"run_R": run_R, "run_L": run_L, "attack_R": attack_R, "attack_L": attack_L}
+img_dict1 = {"run_R": run_R1, "run_L": run_L1, "attack_R": attack_R1, "attack_L": attack_L1}
 
 
 class Player(pg.sprite.Sprite):
@@ -36,7 +53,7 @@ class Player(pg.sprite.Sprite):
         controls. """
 
     # -- Methods
-    def __init__(self):
+    def __init__(self, player_id=0):
         """ Constructor function """
 
         # Call the parent's constructor
@@ -44,9 +61,11 @@ class Player(pg.sprite.Sprite):
 
         # use a dict to store the images for different actions so that only the numbers need to be transferred from
         # server to the client
+        self.player_id = player_id
         self.image_idx = 0
         self.img_dict_key = "run_R"
-        self.image = img_dict[self.img_dict_key][0]
+        self.img_dict_lst = (img_dict, img_dict1)
+        self.image = self.img_dict_lst[self.player_id][self.img_dict_key][0]
 
         # Set a referance to the image rect.
         self.rect = self.image.get_rect()
@@ -206,7 +225,7 @@ class Player(pg.sprite.Sprite):
                     self.x_correction_off()
         elif self.chop_flag == 0 and self.x_correction_flg == 1:
             self.x_correction_off()
-        if self.image_idx + 1 == len(img_dict[img_dict_key]):
+        if self.image_idx + 1 == len(self.img_dict_lst[self.player_id][img_dict_key]):
             self.image_idx = 0
             if self.chop_flag == 1:
                 self.chop_flag = 0
@@ -214,11 +233,11 @@ class Player(pg.sprite.Sprite):
             self.image_idx += 1
 
         current_pos = self.rect.x, self.rect.y
-        img_list = img_dict[self.img_dict_key]
+        img_list = self.img_dict_lst[self.player_id][self.img_dict_key]
         self.image = img_list[self.image_idx]
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = current_pos
 
     def update_img(self, img_dict_key, image_idx):
-        img_list = img_dict[img_dict_key]
+        img_list = self.img_dict_lst[self.player_id][img_dict_key]
         self.image = img_list[image_idx]

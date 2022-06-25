@@ -12,10 +12,16 @@ run_R = [pg.image.load("resources/shooter/Run__000.png"), pg.image.load("resourc
          pg.image.load("resources/shooter/Run__006.png"), pg.image.load("resources/shooter/Run__007.png"),
          pg.image.load("resources/shooter/Run__008.png"), pg.image.load("resources/shooter/Run__009.png")]
 
-
-
 # Run animation for the LEFT
 run_L = [pg.transform.flip(sprite, True, False) for sprite in run_R]
+
+run_R1 = [pg.image.load("resources/shooter/changed/Run__000.png"), pg.image.load("resources/shooter/changed/Run__001.png"),
+         pg.image.load("resources/shooter/changed/Run__002.png"), pg.image.load("resources/shooter/changed/Run__003.png"),
+         pg.image.load("resources/shooter/changed/Run__004.png"), pg.image.load("resources/shooter/changed/Run__005.png"),
+         pg.image.load("resources/shooter/changed/Run__006.png"), pg.image.load("resources/shooter/changed/Run__007.png"),
+         pg.image.load("resources/shooter/changed/Run__008.png"), pg.image.load("resources/shooter/changed/Run__009.png")]
+
+run_L1 = [pg.transform.flip(sprite, True, False) for sprite in run_R1]
 
 # Attack animation for the RIGHT
 attack_R = [pg.image.load("resources/shooter/Throw__000.png"), pg.image.load("resources/shooter/Throw__001.png"),
@@ -27,7 +33,16 @@ attack_R = [pg.image.load("resources/shooter/Throw__000.png"), pg.image.load("re
 # Attack animation for the LEFT
 attack_L = [pg.transform.flip(sprite, True, False) for sprite in attack_R]
 
+attack_R1 = [pg.image.load("resources/shooter/changed/Throw__000.png"), pg.image.load("resources/shooter/changed/Throw__001.png"),
+            pg.image.load("resources/shooter/changed/Throw__002.png"), pg.image.load("resources/shooter/changed/Throw__003.png"),
+            pg.image.load("resources/shooter/changed/Throw__004.png"), pg.image.load("resources/shooter/changed/Throw__005.png"),
+            pg.image.load("resources/shooter/changed/Throw__006.png"), pg.image.load("resources/shooter/changed/Throw__007.png"),
+            pg.image.load("resources/shooter/changed/Throw__008.png"), pg.image.load("resources/shooter/changed/Throw__009.png")]
+
+attack_L1 = [pg.transform.flip(sprite, True, False) for sprite in attack_R]
+
 img_dict = {"run_R": run_R, "run_L": run_L, "attack_R": attack_R, "attack_L": attack_L}
+img_dict1 = {"run_R": run_R1, "run_L": run_L1, "attack_R": attack_R1, "attack_L": attack_L1}
 
 # tiles of the platforms
 blocks = [pg.image.load("resources/platform/13.png"),
@@ -86,6 +101,7 @@ class HealthBar(pg.sprite.Sprite):
         self.image.blit(self.red_surface, (0, 0))
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = (self.x, self.y)
+
 
 class DrawText(pg.sprite.Sprite):
     def __init__(self, screen, size, color, x, y, name, text, click=0, max_letter=0, valid_letters=None,
@@ -293,7 +309,7 @@ class Player(pg.sprite.Sprite):
         controls. """
 
     # -- Methods
-    def __init__(self):
+    def __init__(self, player_id=0):
         """ Constructor function """
 
         # Call the parent's constructor
@@ -302,8 +318,10 @@ class Player(pg.sprite.Sprite):
         # use a dict to store the images for different actions so that only the numbers need to be transferred from
         # server to the client
         self.image_idx = 0
+        self.player_id = player_id
         self.img_dict_key = "run_R"
-        self.image = img_dict[self.img_dict_key][0]
+        self.img_dict_lst = (img_dict, img_dict1)
+        self.image = self.img_dict_lst[self.player_id][self.img_dict_key][0]
 
         # Set a referance to the image rect.
         self.rect = self.image.get_rect()
@@ -459,18 +477,18 @@ class Player(pg.sprite.Sprite):
                 self.img_dict_key = "attack_L"
             elif self.direction == "r":
                 self.img_dict_key = "attack_R"
-        if self.image_idx + 1 == len(img_dict[img_dict_key]):
+        if self.image_idx + 1 == len(self.img_dict_lst[self.player_id][img_dict_key]):
             self.image_idx = 0
             if self.attack_flg == 1:
                 self.attack_flg = 0
         else:
             self.image_idx += 1
 
-        img_list = img_dict[self.img_dict_key]
+        img_list = self.img_dict_lst[self.player_id][self.img_dict_key]
         self.image = img_list[self.image_idx]
 
     def update_img(self, img_dict_key, image_idx):
-        img_list = img_dict[img_dict_key]
+        img_list = self.img_dict_lst[self.player_id][img_dict_key]
         self.image = img_list[image_idx]
 
 
