@@ -400,10 +400,10 @@ class GameSS:  # shooter vs shooter
 
         # Create the self.player
         self.player_shooter0 = Player()
-        self.player_shooter0.hit_limit = CHOPPER_SCORE_HIT
+        self.player_shooter0.hit_limit = SHOOTER_SCORE_HIT
 
         self.player_shooter1 = Player()
-        self.player_shooter1.hit_limit = CHOPPER_SCORE_HIT
+        self.player_shooter1.hit_limit = SHOOTER_SCORE_HIT
 
         self.role_lst = [self.player_shooter0, self.player_shooter1]
 

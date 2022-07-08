@@ -33,7 +33,7 @@ class RoomState:
     player_writers: list[asyncio.streams.StreamWriter] = field(default_factory=list)  # [player0, player1]
     player_task_names: list[str] = field(default_factory=list)
     room_id: int = 0
-    player_joined: bool = False  # True if the chosen game room is received from 2nd player
+    player_joined: bool = False  # True if the required info is received from 2nd player
     game_set0: bool = False  # True if player0 finished setting map, match, role
     game_set1: bool = False  # True if player 1 finished setting role
     map_id: int = 0
@@ -128,7 +128,7 @@ class Server:
                 room.player_role_ids[i] actually represents the events for the role
                 In shooter-shooter or chopper-chopper game, since player_role_ids is [0, 0] or [1, 1]
                 room.player_role_ids[i] can't be directly used as the index for string_lists[]
-                1 - room.player_role_ids[i] makes it right as the index for string_lists[]
+                (1 - room.player_role_ids[i]) makes it right as the index for string_lists[]
                 """
                 # if len(string_lists[room.player_role_ids[i]]) > 0:
                 #     # 1-1 = 0, 1-0 = 1
@@ -193,7 +193,8 @@ class Server:
             elif int(r[1][0]) in [*self.game_dict]:  # r1:string = "room_id, role_id"
                 writer.write("okAB".encode())
                 chosen_room_id = int(r[1][0])
-                role_id = int(r[1][2])
+                chosen_role_id = int(r[1][2])  # r1:string = "room_id, role_id"
+                # role_id = int(r[1][2])
                 r = await self.check_read(player_name, reader, writer)  # r/w cycle
                 if not r[0]:
                     return not CONNECTED, chosen_room_id
@@ -208,7 +209,7 @@ class Server:
                 self.game_dict[chosen_room_id].player_names.append(player_name)  # player1
                 self.game_dict[chosen_room_id].player_readers.append(reader)  # player1
                 self.game_dict[chosen_room_id].player_writers.append(writer)  # player1
-                self.game_dict[chosen_room_id].player_role_ids[1] = role_id  # player1
+                self.game_dict[chosen_room_id].player_role_ids[1] = chosen_role_id  # player1
                 chosen_room = self.game_dict[chosen_room_id]
                 while not chosen_room.game_set0:  # meaning player0 has not finished setting game yet
                     # clock.tick(FPS)
@@ -384,6 +385,7 @@ class Server:
     async def re_select(self, room: RoomState):
         room.winner = "nobody"
         room.game_set0 = False
+        room.player_joined = False
         start = pygame.time.get_ticks()
         clock = pygame.time.Clock()
         while not room.check_ready():
@@ -393,6 +395,14 @@ class Server:
                 # print(FPS_T - tick)
                 await asyncio.sleep((FPS_T - tick) / 1000)
             start = pygame.time.get_ticks()
+
+            r = await self.check_read(room.player_names[0], room.player_readers[0], room.player_readers[1])
+            if not r[0]:
+                room.running = False
+                return
+            else:
+                if r[1]
+
             r = await self.check_read_room(room)
             if not r[0]:
                 room.running = False

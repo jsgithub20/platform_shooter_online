@@ -301,7 +301,7 @@ class Menu:
         # [(player0_name, game_ready, room_id),]
         self.chosen_room = item_index[0]
 
-    def cb_join_menu_openned(self, from_menu, to_menu):
+    def cb_join_game_menu_openned(self, from_menu, to_menu):
         self.player_id = 1
         self.conn_join()
 
@@ -360,6 +360,9 @@ class Menu:
 
         self.play()
 
+    def cb_pass(self, from_menu, to_menu):
+        pass
+
     def check_end(self, events):
         for event in events:
             if event.type == pygame.QUIT or \
@@ -396,11 +399,38 @@ class Menu:
             self.end()
         self.t_loop.create_task(self.connection.client_game())
         self.winner = ""
+        self.reselect_flag = True
         if self.player_id == 1:
-            return
+            self.join_game_menu.set_onbeforeopen(self.cb_pass)
+            self.selector_game.hide()
+            self.b_refresh.hide()
+            self.main_menu._current = self.join_game_menu
+            self.main_menu.enable()
+            img_idx = 0
+            while not self.reselect_done_flag:
+                self.clock.tick(FPS)
+
+                events = pygame.event.get()
+                self.check_end(events)
+
+                self.main_menu.update(events)
+                # self.join_game_menu.update(events)
+
+                if self.main_menu.is_enabled():
+                    self.screen.blit(background_image, (0, 0))
+                    if self.main_menu.is_enabled():
+                        self.main_menu.draw(self.screen)
+                else:
+                    break
+
+                # img_idx = self.role_img_animation(img_idx)
+                img_idx = self.role_img_animation(self.img_join_menu, img_idx)
+
+                pygame.display.flip()
+
+            self.reselect_done_flag = False
 
         elif self.player_id == 0:
-            self.reselect_flag = True
             self.main_menu._current = self.sub_menu_selection0
             self.main_menu.enable()
 
@@ -598,6 +628,9 @@ class Menu:
         all_sound.set_sound(pygame_menu.sound.SOUND_TYPE_OPEN_MENU, 'resources/sound/Amazon.ogg', volume=0.5)
         # all_sound.play_open_menu()
         # engine.play_click_mouse()
+        btn_img_lft = pygame_menu.BaseImage("resources/gui/left.png")
+        btn_img_rgt = pygame_menu.BaseImage("resources/gui/right.png")
+        btn_img_ok = pygame_menu.BaseImage("resources/gui/Button_18_small.png")
 
         # -------------------------------------------------------------------------
         # Create menus: Main menu
@@ -644,7 +677,7 @@ class Menu:
         sub_menu_selection0_theme.widget_padding = 5
 
         self.main_menu = pygame_menu.Menu(
-            "Platform Game", 1024, 768,
+            "Platform Game", WINDOW_SIZE[0], WINDOW_SIZE[1],
             center_content=False,
             onclose=pygame_menu.events.EXIT,  # User press ESC button
             theme=no_title_theme,
@@ -668,14 +701,14 @@ class Menu:
         )
 
         self.join_game_menu = pygame_menu.Menu(
-            'Choosing Games', WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.8,
+            'Choosing Games', WINDOW_SIZE[0], WINDOW_SIZE[1],
             center_content=False,
             # onclose=pygame_menu.events.EXIT,  # User press ESC button
             theme=no_title_theme_join_game,
             position=[40, 20],
         )
 
-        self.join_game_menu.set_onbeforeopen(self.cb_join_menu_openned)
+        self.join_game_menu.set_onbeforeopen(self.cb_join_game_menu_openned)
 
         self.check_join_menu = pygame_menu.Menu(
             'Game Room Selection', WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.8,
@@ -723,7 +756,7 @@ class Menu:
         wait_lbl.translate(100, 300)
 
         # main_menu
-        lbl0 = self.main_menu.add.label("Long long ago.... blah blah blah, choose your role")
+        lbl0 = self.main_menu.add.label("Long long ago.... blah blah blah, click the button to play")
         lbl0.set_float(True, False, True)
         lbl0.translate(100, 15)
 
@@ -735,7 +768,6 @@ class Menu:
         self.img_idle_girl.set_float(True, False, True)
         self.img_idle_girl.translate(500, 100)
 
-        btn_img_ok = pygame_menu.BaseImage("resources/gui/Button_18_small.png")
 
         ok_btn = self.main_menu.add.button(" ", self.connection_menu, background_color=btn_img_ok)
         ok_btn.resize(100, 100)
@@ -790,20 +822,20 @@ class Menu:
 
         self.join_game_menu.add.vertical_margin(30)
 
-        refresh_frame = self.join_game_menu.add.frame_h(400, 50, align=ALIGN_LEFT)
+        # refresh_frame = self.join_game_menu.add.frame_h(400, 50, align=ALIGN_LEFT)
 
-        b_refresh = self.join_game_menu.add.button("refresh",
-                                                   self.cb_refresh,
-                                                   underline=True,
-                                                   cursor=CURSOR_HAND)
+        # b_refresh = self.join_game_menu.add.button("refresh",
+        #                                            self.cb_refresh,
+        #                                            underline=True,
+        #                                            cursor=CURSOR_HAND)
+        #
+        # # b_refresh.add_self_to_kwargs()
+        #
+        # refresh_frame.pack(self.join_game_menu.add.label("Please"))
+        # refresh_frame.pack(b_refresh)
+        # refresh_frame.pack(self.join_game_menu.add.label(" the game list!"))
 
-        # b_refresh.add_self_to_kwargs()
-
-        refresh_frame.pack(self.join_game_menu.add.label("Please"))
-        refresh_frame.pack(b_refresh)
-        refresh_frame.pack(self.join_game_menu.add.label(" the game list!"))
-
-        self.join_game_menu.add.vertical_margin(15)
+        # self.join_game_menu.add.vertical_margin(15)
 
         self.selector_game = self.join_game_menu.add.dropselect(
             title='Choose a game to join:',
@@ -814,15 +846,69 @@ class Menu:
             selection_box_height=10
         )
 
-        self.join_game_menu.add.vertical_margin(15)
+        self.selector_game.set_float(True, False, True)
+        self.selector_game.translate(150, 10)
 
-        self.join_game_menu.add.button("Join", self.check_join_menu, cursor=CURSOR_HAND)
         self.join_game_menu.add.vertical_margin(15)
+        self.b_refresh = self.join_game_menu.add.button("refresh", self.cb_refresh, cursor=CURSOR_HAND,
+                                                   background_color=LIGHT_GREEN)
+        self.b_refresh.set_float(True, False, True)
+        self.b_refresh.translate(50, 80)
+
+        # self.join_game_menu.add.vertical_margin(15)
         #
         # self.join_game_menu.add.button("Back", pygame_menu.events.BACK)
         # self.join_game_menu.add.vertical_margin(15)
 
-        self.join_game_menu.add.button("Quit", pygame_menu.events.EXIT)
+        b_quit = self.join_game_menu.add.button("Quit", pygame_menu.events.EXIT,
+                                                background_color=LIGHT_GREEN)
+        b_quit.set_float(True, False, True)
+        b_quit.translate(300, 80)
+
+        # title text can't be empty, otherwise resize doesn't work!
+        sub1_btn_lft = self.join_game_menu.add.button(" ", self.cb_role_sel_lft, background_color=btn_img_lft)
+        sub1_btn_lft.resize(100, 100)
+        sub1_btn_lft.set_float(True, False, True)
+        sub1_btn_lft.translate(150, 200)
+
+        sub1_btn_rgt = self.join_game_menu.add.button(" ", self.cb_role_sel_rgt, background_color=btn_img_rgt)
+        sub1_btn_rgt.resize(100, 100)
+        sub1_btn_rgt.set_float(True, False, True)
+        sub1_btn_rgt.translate(750, 200)
+
+        for j in range(len(role_def.girl_txt)):
+            lbl = self.join_game_menu.add.label(role_def.girl_txt[j][5],
+                                                    "",
+                                                    font_size=role_def.girl_txt[j][0],
+                                                    font_color=role_def.girl_txt[j][1])
+            lbl.set_float(True, False, True)
+            lbl.translate(role_def.girl_txt[j][2], role_def.girl_txt[j][3])
+            lbl.hide()
+            self.girl_desc_lbl_lst.append(lbl)
+
+        for j in range(len(role_def.boy_txt)):
+            lbl = self.join_game_menu.add.label(role_def.boy_txt[j][5],
+                                                    "",
+                                                    font_size=role_def.boy_txt[j][0],
+                                                    font_color=role_def.boy_txt[j][1])
+            lbl.set_float(True, False, True)
+            lbl.translate(role_def.boy_txt[j][2], role_def.boy_txt[j][3])
+            # lbl.hide()
+            self.boy_desc_lbl_lst.append(lbl)
+
+        self.img_join_menu = self.join_game_menu.add.surface(self.current_img_lst[0])
+        self.img_join_menu.set_float(True, False, True)
+        self.img_join_menu.translate(350, 100)
+
+        self.b_join = self.join_game_menu.add.button("Join", self.check_join_menu, cursor=CURSOR_HAND,
+                                                     background_color=LIGHT_GREEN)
+        self.b_join.set_float(True, False, True)
+        self.b_join.translate(890, 570)
+
+        # ok_btn_sel = self.join_game_menu.add.button(" ", self.sub_menu_player0_wait, background_color=btn_img_ok)
+        # ok_btn_sel.resize(100, 100)
+        # ok_btn_sel.set_float(True, False, True)
+        # ok_btn_sel.translate(890, 570)
 
         # join_game_menu end
         # check_join_menu start
@@ -882,15 +968,11 @@ class Menu:
         selector_map.set_float(True, False, True)
         selector_map.translate(650, 100)
 
-        btn_img_lft = pygame_menu.BaseImage("resources/gui/left.png")
-
         # title text can't be empty, otherwise resize doesn't work!
         sub1_btn_lft = self.sub_menu_selection0.add.button(" ", self.cb_role_sel_lft, background_color=btn_img_lft)
         sub1_btn_lft.resize(100, 100)
         sub1_btn_lft.set_float(True, False, True)
         sub1_btn_lft.translate(150, 200)
-
-        btn_img_rgt = pygame_menu.BaseImage("resources/gui/right.png")
 
         sub1_btn_rgt = self.sub_menu_selection0.add.button(" ", self.cb_role_sel_rgt, background_color=btn_img_rgt)
         sub1_btn_rgt.resize(100, 100)
@@ -931,6 +1013,7 @@ class Menu:
         img_idx0 = 0
         img_idx1 = 0
         img_idx2 = 0
+        img_idx3 = 0
         # current_img_idx = 0
         # -------------------------------------------------------------------------
         # Main loop
@@ -954,6 +1037,7 @@ class Menu:
             img_idx0 = self.idle_img_animation(self.img_idle_boy, 0, img_idx0)
             img_idx1 = self.idle_img_animation(self.img_idle_girl, 1, img_idx1)
             img_idx2 = self.role_img_animation(self.img_selection0, img_idx2)
+            img_idx3 = self.role_img_animation(self.img_join_menu, img_idx3)
             # if self.main_menu.get_current() == self.sub_menu_selection0:
             #     self.splat_font.render_to(self.screen, (100, 100), "render to menu screen")
 

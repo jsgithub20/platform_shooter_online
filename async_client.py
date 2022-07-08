@@ -118,6 +118,7 @@ class Network:
 
     async def send_room_choice(self, room, role_id):  # room = [player0_name, game_ready, room_id]
         self.writer.write(f"{room[2]},{role_id}AB".encode())
+        # print(f"{room[2]},{role_id}AB")
         r = await self.check_read()
         if not r[0]:  # return connected, string
             print("Connection issue to server during send_room_choice")
