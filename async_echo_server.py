@@ -2,18 +2,23 @@ import asyncio
 
 
 async def handle_echo(reader, writer):
-    data = await reader.readuntil(separator=b"||")
-    # message = data.decode()
-    # addr = writer.get_extra_info('peername')
-    #
-    # print(f"Received {message!r} from {addr!r}")
-    #
-    # print(f"Send: {message!r}")
-    writer.write(data)
-    await writer.drain()
-
-    print("Close the connection")
-    writer.close()
+    running = True
+    data = ""
+    while running:
+        try:
+            data = await reader.readuntil(separator=b"||")
+            # message = data.decode()
+            # addr = writer.get_extra_info('peername')
+            #
+            # print(f"Received {message!r} from {addr!r}")
+            #
+            # print(f"Send: {message!r}")
+            writer.write(data)
+            await writer.drain()
+        except (ConnectionError, asyncio.IncompleteReadError):
+            writer.close()
+            running = False
+            print("connection lost")
 
 
 async def main():

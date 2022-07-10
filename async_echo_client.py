@@ -44,25 +44,35 @@ send = [*asdict(send_o).values()]
 
 send1 = json.dumps(send)
 send2 = send1.encode()
-print(len(send2))
+# print(len(send2))
 send3 = compress(send2) + b"||"
-print(len(send3))
+# print(len(send3))
 
 
 async def tcp_echo_client(message):
     reader, writer = await asyncio.open_connection(
         '127.0.0.1', 8888)
+    running = True
+    while running:
+        txt = input("Enter your msg to send: ")
+        if txt == "quit":
+            print("bye")
+            writer.close()
+            break
+        writer.write(f"{txt}+‘||’".encode())
+        recv = await reader.readuntil(separator=b"||")
+        print(recv.decode())
 
-    print(f'Send: {message!r}')
-    writer.write(message)
-
-    data = await reader.readuntil(separator=b"||")
-    data1 = decompress(data[:-1])
-    data2 = data1.decode()
-    recv = json.loads(data2)
-    print(f'Received: {recv!r}')
-
-    print('Close the connection')
-    writer.close()
+    # print(f'Send: {message!r}')
+    # writer.write(message)
+    #
+    # data = await reader.readuntil(separator=b"||")
+    # data1 = decompress(data[:-1])
+    # data2 = data1.decode()
+    # recv = json.loads(data2)
+    # print(f'Received: {recv!r}')
+    #
+    # print('Close the connection')
+    # writer.close()
 
 asyncio.run(tcp_echo_client(send3))

@@ -400,10 +400,10 @@ class GameSS:  # shooter vs shooter
 
         # Create the self.player
         self.player_shooter0 = Player()
-        self.player_shooter0.hit_limit = SHOOTER_SCORE_HIT
+        self.player_shooter0.hit_limit = SS_SHOOTER_SCORE_HIT
 
         self.player_shooter1 = Player()
-        self.player_shooter1.hit_limit = SHOOTER_SCORE_HIT
+        self.player_shooter1.hit_limit = SS_SHOOTER_SCORE_HIT
 
         self.role_lst = [self.player_shooter0, self.player_shooter1]
 
@@ -561,7 +561,7 @@ class GameSS:  # shooter vs shooter
         elif self.player_shooter1.reload_timer == 0 and self.r_sign_flg1:
             self.r_sign_flg1 = 0
 
-        if self.player_shooter1 in self.active_sprite_grp:
+        if self.player_shooter0 in self.active_sprite_grp:
             bullet_hit_shooter0 = pg.sprite.spritecollideany(self.player_shooter0, self.bullet_sprite_grp1)
             if bullet_hit_shooter0:
                 bullet_hit_shooter0.live_flag = 0
@@ -738,10 +738,10 @@ class GameCC:  # chopper vs chopper
 
         # Create the self.player
         self.player_chopper0 = sprite_player_correction.Player()
-        self.player_chopper0.hit_limit = CHOPPER_SCORE_HIT
+        self.player_chopper0.hit_limit = CC_CHOPPER_SCORE_HIT
 
         self.player_chopper1 = sprite_player_correction.Player()
-        self.player_chopper1.hit_limit = CHOPPER_SCORE_HIT
+        self.player_chopper1.hit_limit = CC_CHOPPER_SCORE_HIT
         
         self.role_lst = [self.player_chopper0, self.player_chopper1]
 

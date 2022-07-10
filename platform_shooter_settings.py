@@ -7,6 +7,8 @@ config.read("server_config.ini")
 TIMEOUT = config["DEFAULT"].getint("TIMEOUT")
 CHOPPER_SCORE_HIT = config["DEFAULT"].getint("CHOPPER_SCORE_HIT")
 SHOOTER_SCORE_HIT = config["DEFAULT"].getint("SHOOTER_SCORE_HIT")
+CC_CHOPPER_SCORE_HIT = config["DEFAULT"].getint("CC_CHOPPER_SCORE_HIT")
+SS_SHOOTER_SCORE_HIT = config["DEFAULT"].getint("SS_SHOOTER_SCORE_HIT")
 CHOPPER_CD = config["DEFAULT"].getint("CHOPPER_CD")  # ms
 RELOAD = config["DEFAULT"].getint("SHOOTER_RELOAD")
 

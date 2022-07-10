@@ -39,7 +39,7 @@ attack_R1 = [pg.image.load("resources/shooter/changed/Throw__000.png"), pg.image
             pg.image.load("resources/shooter/changed/Throw__006.png"), pg.image.load("resources/shooter/changed/Throw__007.png"),
             pg.image.load("resources/shooter/changed/Throw__008.png"), pg.image.load("resources/shooter/changed/Throw__009.png")]
 
-attack_L1 = [pg.transform.flip(sprite, True, False) for sprite in attack_R]
+attack_L1 = [pg.transform.flip(sprite, True, False) for sprite in attack_R1]
 
 img_dict = {"run_R": run_R, "run_L": run_L, "attack_R": attack_R, "attack_L": attack_L}
 img_dict1 = {"run_R": run_R1, "run_L": run_L1, "attack_R": attack_R1, "attack_L": attack_L1}

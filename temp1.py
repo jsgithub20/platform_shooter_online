@@ -90,7 +90,7 @@ import configparser
 #
 # print(c)
 
-import game_class_s as gcs
+# import game_class_s as gcs
 
 # class TClass1:
 #     def __init__(self):
@@ -110,7 +110,11 @@ import game_class_s as gcs
 # print(b)
 # b.age = 10
 
-a = ("(c1,c2)", "aa")
-b = f"{a}1"
-c = (a, b)
-print(c[0][0])
+# a = ("(c1,c2)", "aa")
+# b = f"{a}1"
+# c = (a, b)
+# print(c[0][0])
+
+string = "12,3"
+print(list(string.split(",")))
+# print(string)

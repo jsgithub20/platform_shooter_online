@@ -317,13 +317,13 @@ class GameSS:
         if self.player_id == 0:
             self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="left")
             self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name, alignment="right")
-            self.my_health_bar = HealthBar(10, 750, SHOOTER_SCORE_HIT)
-            self.your_health_bar = HealthBar(820, 750, SHOOTER_SCORE_HIT)
+            self.my_health_bar = HealthBar(10, 750, SS_SHOOTER_SCORE_HIT)
+            self.your_health_bar = HealthBar(820, 750, SS_SHOOTER_SCORE_HIT)
         elif self.player_id == 1:
             self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="right")
             self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name, alignment="left")
-            self.your_health_bar = HealthBar(10, 750, SHOOTER_SCORE_HIT)
-            self.my_health_bar = HealthBar(810, 750, SHOOTER_SCORE_HIT)
+            self.your_health_bar = HealthBar(10, 750, SS_SHOOTER_SCORE_HIT)
+            self.my_health_bar = HealthBar(810, 750, SS_SHOOTER_SCORE_HIT)
 
         self.restart()
 
@@ -526,14 +526,14 @@ class GameCC:
             self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="left")
             self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name,
                                           alignment="right")
-            self.my_health_bar = HealthBar(10, 750, CHOPPER_SCORE_HIT)
-            self.your_health_bar = HealthBar(820, 750, CHOPPER_SCORE_HIT)
+            self.my_health_bar = HealthBar(10, 750, CC_CHOPPER_SCORE_HIT)
+            self.your_health_bar = HealthBar(820, 750, CC_CHOPPER_SCORE_HIT)
         elif self.player_id == 1:
             self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="right")
             self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name,
                                           alignment="left")
-            self.your_health_bar = HealthBar(10, 750, CHOPPER_SCORE_HIT)
-            self.my_health_bar = HealthBar(810, 750, CHOPPER_SCORE_HIT)
+            self.your_health_bar = HealthBar(10, 750, CC_CHOPPER_SCORE_HIT)
+            self.my_health_bar = HealthBar(810, 750, CC_CHOPPER_SCORE_HIT)
 
         self.restart()
 

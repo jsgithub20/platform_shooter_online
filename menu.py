@@ -205,6 +205,10 @@ class Menu:
 
         self.lbl_lst = [self.boy_desc_lbl_lst, self.girl_desc_lbl_lst]
 
+        self.msg_lbl = None
+        self.check_join_back_btn = None
+        self.check_join_ok_btn = None
+
     def cb_conn_conn(self, server_ip, server_port, player_name, **kwargs):
         if not self.connected_flag:
             self.connected_flag = True
@@ -328,21 +332,28 @@ class Menu:
         self.match_id = item_tuple[1]
 
     def cb_check_join_menu_openned(self, from_menu, to_menu):
-        self.t_loop.create_task(self.connection.send_room_choice(self.chosen_room, self.current_role_id))
-        try:
-            msg = self.connection.chosen_room_ok.get(timeout=TIMEOUT)
-            if msg == "ok":
-                self.msg_lbl.set_title("Game room choice accepted, press ok to proceed")
-                self.check_join_back_btn.hide()
-                self.check_join_ok_btn.show()
-            else:
-                self.msg_lbl.set_title("Game room choice is not accepted, please choose again")
-                self.check_join_back_btn.show()
-                self.check_join_ok_btn.hide()
-        except queue.Empty:
-            # TODO: code to acknowledge the player and ask for input
-            print("Connection issue")
-            self.end()
+        if not self.reselect_flag:
+            self.t_loop.create_task(self.connection.send_room_choice(self.chosen_room, self.current_role_id))
+            try:
+                msg = self.connection.chosen_room_ok.get(timeout=TIMEOUT)
+                if msg == "ok":
+                    self.msg_lbl.set_title("Game room choice accepted, press ok to proceed")
+                    self.check_join_back_btn.hide()
+                    self.check_join_ok_btn.show()
+                else:
+                    self.msg_lbl.set_title("Game room choice is not accepted, please choose again")
+                    self.check_join_back_btn.show()
+                    self.check_join_ok_btn.hide()
+            except queue.Empty:
+                # TODO: code to acknowledge the player and ask for input
+                print("Connection issue")
+                self.end()
+        else:
+            self.connection.game_setting = [1, self.current_role_id, 0, 0]
+            self.reselect_done_flag = True
+            self.msg_lbl.set_title("Good choice, press ok to proceed")
+            self.check_join_back_btn.hide()
+            self.check_join_ok_btn.show()
 
     def cb_player0_wait_menu_opened(self, from_menu, to_menu):
         self.player_id = 0
@@ -350,7 +361,7 @@ class Menu:
         # self.t_loop.create_task(self.connection.client_game())
         if not self.reselect_flag:  # if reselect, self.play() is already running
             self.play()
-            self.reselect_flag = True
+            # self.reselect_flag = True
         else:
             self.reselect_done_flag = True
 
@@ -397,6 +408,11 @@ class Menu:
     def reselect(self):
         if not game_class_c.running:
             self.end()
+        """
+        different from the flows for player1 in the first run cycle, 
+        self.t_loop.create_task(self.connection.client_game()) must be run for player1 at beginning of 
+        def reselect(self) so that the while loop in the reselect() method on server won't be blocked
+        """
         self.t_loop.create_task(self.connection.client_game())
         self.winner = ""
         self.reselect_flag = True
@@ -428,9 +444,8 @@ class Menu:
 
                 pygame.display.flip()
 
-            self.reselect_done_flag = False
-
         elif self.player_id == 0:
+
             self.main_menu._current = self.sub_menu_selection0
             self.main_menu.enable()
 
@@ -456,7 +471,7 @@ class Menu:
 
                 pygame.display.flip()
 
-            self.reselect_done_flag = False
+        self.reselect_done_flag = False
 
     def role_img_animation(self, img, img_idx):
         if img_idx + 1 == len(self.current_img_lst) * 3:
@@ -517,7 +532,7 @@ class Menu:
         game_type = game_class_c.game_type_lst[role_ids[0] + role_ids[1]]
 
         g = game_type(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT,
-                              self.map_id, self.match_id, self.player_id, self.role_id, self.my_name, self.your_name)
+                      self.map_id, self.match_id, self.player_id, self.role_id, self.my_name, self.your_name)
 
         g.your_name = self.connection.server_msg[1]
         # g.map_id = self.connection.server_msg[2]
@@ -792,7 +807,7 @@ class Menu:
 
         player_name = self.connection_menu.add.text_input(
             'Your name: ',
-            default="Amy",
+            default="Dad",
             onreturn=None,
             textinput_id='new_game'
         )
