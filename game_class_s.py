@@ -285,36 +285,36 @@ class GameSC:  # shooter vs chopper
 
     def gs_conversion(self):
         game_state = []
-        game_state.append(self.player_shooter.img_dict_key)
-        game_state.append(self.player_shooter.image_idx)
-        game_state.append((self.player_shooter.rect.x, self.player_shooter.rect.y))
-        game_state.append(self.player_chopper.img_dict_key)
-        game_state.append(self.player_chopper.image_idx)
-        game_state.append((self.player_chopper.rect.x, self.player_chopper.rect.y))
-        game_state.append((self.bullets_l[0].rect.x, self.bullets_l[0].rect.y))
-        game_state.append((self.bullets_l[1].rect.x, self.bullets_l[1].rect.y))
-        game_state.append((self.bullets_l[2].rect.x, self.bullets_l[2].rect.y))
-        game_state.append((self.bullets_l[3].rect.x, self.bullets_l[3].rect.y))
-        game_state.append((self.bullets_l[4].rect.x, self.bullets_l[4].rect.y))
-        game_state.append((self.bullets_r[0].rect.x, self.bullets_r[0].rect.y))
-        game_state.append((self.bullets_r[1].rect.x, self.bullets_r[1].rect.y))
-        game_state.append((self.bullets_r[2].rect.x, self.bullets_r[2].rect.y))
-        game_state.append((self.bullets_r[3].rect.x, self.bullets_r[3].rect.y))
-        game_state.append((self.bullets_r[4].rect.x, self.bullets_r[4].rect.y))
+        game_state.append(self.player_shooter.img_dict_key)  # 0
+        game_state.append(self.player_shooter.image_idx)  # 1
+        game_state.append((self.player_shooter.rect.x, self.player_shooter.rect.y))  # 2
+        game_state.append(self.player_chopper.img_dict_key)  # 3
+        game_state.append(self.player_chopper.image_idx)  # 4
+        game_state.append((self.player_chopper.rect.x, self.player_chopper.rect.y))  # 5
+        game_state.append((self.bullets_l[0].rect.x, self.bullets_l[0].rect.y))  # 6
+        game_state.append((self.bullets_l[1].rect.x, self.bullets_l[1].rect.y))  # 7
+        game_state.append((self.bullets_l[2].rect.x, self.bullets_l[2].rect.y))  # 8
+        game_state.append((self.bullets_l[3].rect.x, self.bullets_l[3].rect.y))  # 9
+        game_state.append((self.bullets_l[4].rect.x, self.bullets_l[4].rect.y))  # 10
+        game_state.append((self.bullets_r[0].rect.x, self.bullets_r[0].rect.y))  # 11
+        game_state.append((self.bullets_r[1].rect.x, self.bullets_r[1].rect.y))  # 12
+        game_state.append((self.bullets_r[2].rect.x, self.bullets_r[2].rect.y))  # 13
+        game_state.append((self.bullets_r[3].rect.x, self.bullets_r[3].rect.y))  # 14
+        game_state.append((self.bullets_r[4].rect.x, self.bullets_r[4].rect.y))  # 15
         if self.current_level_no == 0:
-            game_state.append(DEAD_CRATER_POS)
+            game_state.append(DEAD_CRATER_POS)  # 16
         else:
             game_state.append((self.level02.moving_block.rect.x, self.level02.moving_block.rect.y))
-        game_state.append(self.r_sign_flg)
-        game_state.append(self.map_id)
-        game_state.append(self.match_id)
-        game_state.append(self.current_level_no)
-        game_state.append(self.match_score["round"])
-        game_state.append(self.match_score["shooter"])
-        game_state.append(self.match_score["chopper"])
-        game_state.append(self.winner)
-        game_state.append(self.player_shooter.hit_count)
-        game_state.append(self.player_chopper.hit_count)
+        game_state.append(self.r_sign_flg)  # 17
+        game_state.append(self.map_id)  # 18
+        game_state.append(self.match_id)  # 19
+        game_state.append(self.current_level_no)  # 20
+        game_state.append(self.match_score["round"])  # 21
+        game_state.append(self.match_score["shooter"])  # 22
+        game_state.append(self.match_score["chopper"])  # 23
+        game_state.append(self.winner)  # 24
+        game_state.append(self.player_shooter.hit_count)  # 25
+        game_state.append(self.player_chopper.hit_count)  # 26
 
         return game_state
 
@@ -570,7 +570,7 @@ class GameSS:  # shooter vs shooter
 
                 if self.player_shooter0.hit_count == self.player_shooter0.hit_limit:
                     # self.active_sprite_grp.remove(self.player_shooter1)
-                    self.match_score["shooter0"] += 1
+                    self.match_score["shooter1"] += 1
                     # self.player_shooter1.hit_count = 0
                     self.winner, self.playing = self.check_winner()
                     if self.winner == "nobody":

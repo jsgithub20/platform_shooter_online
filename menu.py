@@ -17,6 +17,7 @@ import pygame_menu
 import asyncio
 import async_client
 import pygame.freetype as ft
+import csv
 import role_def
 import game_class_c
 from platform_shooter_settings import *
@@ -174,6 +175,13 @@ class Menu:
         self.level_id = 0
         self.role_id = 0
         self.player_id = 0
+        self.credits = self.read_csv("resources/credits.csv")
+        self.credits_speed = 0.1
+        self.credits_x = 0
+        self.credits_y00 = 370
+        self.credits_y0 = self.credits_y00
+        self.credits_pitch = 50
+        self.credits_cnt = len(self.credits)
         self.gs_lst = []  # Game state received as a list
         self.splat_font = ft.Font("resources/fonts/earwig factory rg.ttf", 60)
         self.counting_font = ft.Font("resources/OvOV20.ttf", 60)
@@ -185,16 +193,21 @@ class Menu:
         self.game_over_screen_flag = True
 
         girl_idle = []
+        girl_idle_50per = []
 
         for j in range(9):
             girl_idle.append(pygame.image.load(f"resources/gui/girl/Idle__00{j}.png"))
+            girl_idle_50per.append(pygame.image.load(f"resources/gui/girl/50 percent/Idle__00{j}.png"))
 
         boy_idle = []
+        boy_idle_50per = []
 
         for j in range(9):
             boy_idle.append(pygame.image.load(f"resources/gui/boy/Idle__00{j}.png"))
+            boy_idle_50per.append(pygame.image.load(f"resources/gui/boy/50 percent/Idle__00{j}.png"))
 
         self.img_lst = [boy_idle, girl_idle]
+        self.img_lst_50per = [boy_idle_50per, girl_idle_50per]
 
         self.current_role_id = 0
         self.previous_role_id = 1
@@ -208,6 +221,21 @@ class Menu:
         self.msg_lbl = None
         self.check_join_back_btn = None
         self.check_join_ok_btn = None
+
+    def read_csv(self, file_name, dict=0):
+        result = None
+        if dict == 0:
+            with open(file_name, newline='') as csvfile:
+                reader = csv.reader(csvfile)
+                result = []
+                for item in reader:
+                    result.append(item[0])
+        elif dict == 1:
+            with open(file_name, newline='') as csvfile:
+                reader = csv.DictReader(csvfile)
+                for item in reader:
+                    print(item)
+        return result
 
     def cb_conn_conn(self, server_ip, server_port, player_name, **kwargs):
         if not self.connected_flag:
@@ -374,6 +402,21 @@ class Menu:
     def cb_pass(self, from_menu, to_menu):
         pass
 
+    def cb_animate_credits(self, widget: 'pygame_menu.widgets.Widget', menu: 'pygame_menu.Menu'):
+        # pos = widget.get_position()
+        # new_y = pos[1] - 16
+        # widget.translate(0, new_y)
+        # print(widget.get_position())
+        id_str = widget.get_id()
+        pos_y = widget.get_position()[1]
+        if id_str == str(self.credits_cnt + 2 - 1):  # index of the last element is len()-1
+            if pos_y < -10:
+                self.credits_y0 = self.credits_y00
+        else:
+            # self.credits_y0 += self.credits_speed
+            self.credits_y0 -= self.credits_speed
+        widget.translate(self.credits_x, self.credits_y0 + int(id_str) * self.credits_pitch)
+
     def check_end(self, events):
         for event in events:
             if event.type == pygame.QUIT or \
@@ -488,6 +531,15 @@ class Menu:
         else:
             img_idx += 1
         img.set_surface(self.img_lst[boy_girl][img_idx // 3])
+        return img_idx
+
+    def idle_img_animation_50per(self, img, boy_girl, img_idx):
+        # boy = 0, girl = 1
+        if img_idx + 1 == len(self.img_lst_50per[boy_girl]) * 3:
+            img_idx = 0
+        else:
+            img_idx += 1
+        img.set_surface(self.img_lst_50per[boy_girl][img_idx // 3])
         return img_idx
 
     def game_over_screen(self):
@@ -773,16 +825,46 @@ class Menu:
         # main_menu
         lbl0 = self.main_menu.add.label("Long long ago.... blah blah blah, click the button to play")
         lbl0.set_float(True, False, True)
-        lbl0.translate(100, 15)
+        lbl0.translate(100, 10)
 
-        self.img_idle_boy = self.main_menu.add.surface(self.img_lst[0][0])
+        credit_frame = self.main_menu.add.frame_h(800, 800)
+        credit_frame.set_float(True, False, True)
+        credit_frame.translate(250, 150)
+        credit_frame.set_background_color((0, 0, 0, 0))
+        credit_frame.make_scrollarea(600, 370, (0, 0, 0, 0), (0, 0, 0, 0), None, True, (0, 0, 0, 0),
+                                     1, POSITION_WEST, (0, 0, 0, 0), (0, 0, 0, 0), 0, 2, POSITION_WEST)
+
+        self.img_idle_boy = self.main_menu.add.surface(self.img_lst_50per[0][0])
         self.img_idle_boy.set_float(True, False, True)
-        self.img_idle_boy.translate(100, 100)
+        self.img_idle_boy.translate(65, 100)
 
-        self.img_idle_girl = self.main_menu.add.surface(self.img_lst[1][0])
+        self.img_idle_girl = self.main_menu.add.surface(self.img_lst_50per[1][0])
         self.img_idle_girl.set_float(True, False, True)
-        self.img_idle_girl.translate(500, 100)
+        self.img_idle_girl.translate(50, 350)
 
+        self.credits_title = self.main_menu.add.label("CREDITS", label_id="0")
+        credit_frame.pack(self.credits_title)
+        # self.credits_title.set_frame(credit_frame)
+        self.credits_title.set_float(True, False, True)
+        # self.credits_title.translate(0, 300)
+        self.credits_title.translate(self.credits_x, self.credits_y0)
+        self.credits_title.add_draw_callback(self.cb_animate_credits)
+        # self.credits_title.set_frame(credit_frame)
+
+        self.credits_blank = self.main_menu.add.label("", label_id="1")
+        credit_frame.pack(self.credits_blank)
+        self.credits_blank.set_float(True, False, True)
+        self.credits_blank.translate(self.credits_x, self.credits_y0 + self.credits_pitch)
+        self.credits_blank.add_draw_callback(self.cb_animate_credits)
+        # self.credits_blank.set_frame(credit_frame)
+        #
+        for i in range(len(self.credits)):
+            lbl = self.main_menu.add.label(f"{self.credits[i]}", f"{i + 2}")
+            credit_frame.pack(lbl)
+            lbl.set_float(True, False, True)
+            lbl.translate(self.credits_x, self.credits_y0 + i + 2)
+            lbl.add_draw_callback(self.cb_animate_credits)
+            # lbl.set_frame(credit_frame)
 
         ok_btn = self.main_menu.add.button(" ", self.connection_menu, background_color=btn_img_ok)
         ok_btn.resize(100, 100)
@@ -809,7 +891,8 @@ class Menu:
             'Your name: ',
             default="Dad",
             onreturn=None,
-            textinput_id='new_game'
+            textinput_id='new_game',
+            maxchar=49
         )
 
         b_connect = self.connection_menu.add.button("Connection status: <click to connect>",
@@ -1049,8 +1132,8 @@ class Menu:
             else:
                 break
 
-            img_idx0 = self.idle_img_animation(self.img_idle_boy, 0, img_idx0)
-            img_idx1 = self.idle_img_animation(self.img_idle_girl, 1, img_idx1)
+            img_idx0 = self.idle_img_animation_50per(self.img_idle_boy, 0, img_idx0)
+            img_idx1 = self.idle_img_animation_50per(self.img_idle_girl, 1, img_idx1)
             img_idx2 = self.role_img_animation(self.img_selection0, img_idx2)
             img_idx3 = self.role_img_animation(self.img_join_menu, img_idx3)
             # if self.main_menu.get_current() == self.sub_menu_selection0:

@@ -1,120 +1,190 @@
-import zlib
-from zlib import compress, decompress
-from dataclasses import dataclass, asdict, field
-import json
-import pickle
-import configparser
+"""
+pygame-menu
+https://github.com/ppizarror/pygame-menu
 
-# DEAD_BULLET_POS = (-99, -99)
-#
-# @dataclass
-# class GameState:
-#     shooter_img_dict_key: str = "run_R"  # 0
-#     shooter_img_idx: int = 0  # 1
-#     shooter_pos: tuple = (0, 0)  # 2
-#     chopper_img_dict_key: str = "run_R"  # 3
-#     chopper_img_idx: int = 0  # 4
-#     chopper_pos: tuple = (0, 0)  # 5
-#     bullet_l0_pos: tuple = DEAD_BULLET_POS  # bullet_l[0] 6
-#     bullet_l1_pos: tuple = DEAD_BULLET_POS  # bullet_l[1] 7
-#     bullet_l2_pos: tuple = DEAD_BULLET_POS  # bullet_l[2] 8
-#     bullet_l3_pos: tuple = DEAD_BULLET_POS  # bullet_l[3] 9
-#     bullet_l4_pos: tuple = DEAD_BULLET_POS  # bullet_l[4] 10
-#     bullet_r0_pos: tuple = DEAD_BULLET_POS  # bullet_r[0] 11
-#     bullet_r1_pos: tuple = DEAD_BULLET_POS  # bullet_r[1] 12
-#     bullet_r2_pos: tuple = DEAD_BULLET_POS  # bullet_r[2] 13
-#     bullet_r3_pos: tuple = DEAD_BULLET_POS  # bullet_r[3] 14
-#     bullet_r4_pos: tuple = DEAD_BULLET_POS  # bullet_r[4] 15
-#     moving_block_pos: tuple = DEAD_BULLET_POS  # 16
-#     r_sign_flg: int = 0  # 17
-#     # r_sign_pos: tuple = DEAD_R_POS  # 17
-#     map_id: int = 0  # 18
-#     match_id: int = 0  # 19
-#     level_id: int = 0  # 20
-#     round: int = 0  # 21
-#     shooter_score: int = 0  # 22
-#     chopper_score: int = 0  # 23
-#     winner: str = "nobody"  # 24
-#     shooter_hit: int = 0  # 25
-#     chopper_hit: int = 0  # 26
-#
-#
-# send_o = GameState()
-# send = [*asdict(send_o).values()]
-#
-# send1 = json.dumps(send)
-# send2 = send1.encode()
-# send3 = compress(send2)
-# print(len(send2))
-# print(len(send3))
-# try:
-#     print(decompress(send2))
-# except zlib.error:
-#     print(send2.decode())
+EXAMPLE - DYNAMIC WIDGET UPDATE
+Dynamically updates the widgets based on user events.
+"""
 
-#
-#
-# send1 = json.dumps(send).encode()
-# print(f"original {len(send1)}")
-# print(send)
-# send_c = compress(send1)
-#
-# send_c_p = pickle.dumps(send_c)
-#
-# print(len(send_c_p))
-#
-# recv_c = pickle.loads(send_c_p)
-#
-# recv_1 = decompress(recv_c)
-#
-# recv = json.loads(recv_1)
-#
-# print(recv)
+__all__ = ['main']
+
+import pygame
+import pygame_menu
+from pygame_menu.examples import create_example_window
+
+import math
+from typing import Dict, Any
 
 
-# config = configparser.ConfigParser()
-# config.read("server_config.ini")
-#
-# TIMEOUT = config["Game Setting"].getint("TIMEOUT")
-# CHOPPER_CD = config["DEFAULT"].getint("CHOPPER_CD")
-# print(TIMEOUT, CHOPPER_CD)
+class App(object):
+    """
+    The following object creates the whole app.
+    """
+    image_widget: 'pygame_menu.widgets.Image'
+    item_description_widget: 'pygame_menu.widgets.Label'
+    menu: 'pygame_menu.Menu'
+    modes: Dict[int, Dict[str, Any]]
+    quit_button: 'pygame_menu.widgets.Button'
+    quit_button_fake: 'pygame_menu.widgets.Button'
+    selector_widget: 'pygame_menu.widgets.Selector'
+    surface: 'pygame.Surface'
 
-# @dataclass
-# class RoomState:
-#     l: list[int, int] = field(default_factory=list)
-#
-#
-# a = "01234"
-# b = list(a)
-# c = b[1:-1]
-#
-# print(c)
+    def __init__(self) -> None:
+        self.surface = create_example_window('Example - Dynamic Widget Update',
+                                             (640, 480), flags=pygame.NOFRAME)
 
-# import game_class_s as gcs
+        # Load image
+        default_image = pygame_menu.BaseImage(
+            image_path=pygame_menu.baseimage.IMAGE_EXAMPLE_PYGAME_MENU
+        ).scale(0.2, 0.2)
 
-# class TClass1:
-#     def __init__(self):
-#         print("TClass1")
-#
-#
-# class TClass2:
-#     def __init__(self, name):
-#         print("TClass2")
-#         self.name = name
-#
-#
-# cls_lst = [TClass1, TClass2]
-#
-# # a = cls_lst[0]()
-# b = cls_lst[1]("name")
-# print(b)
-# b.age = 10
+        # Set theme
+        theme = pygame_menu.themes.THEME_DEFAULT.copy()
+        theme.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_UNDERLINE_TITLE
+        theme.title_close_button_cursor = pygame_menu.locals.CURSOR_HAND
+        theme.title_font_color = (35, 35, 35)
 
-# a = ("(c1,c2)", "aa")
-# b = f"{a}1"
-# c = (a, b)
-# print(c[0][0])
+        # This dict stores the values of the widgets to be changed dynamically
+        self.modes = {
+            1: {
+                'image': default_image.copy(),
+                'label': {
+                    'color': theme.widget_font_color,
+                    'size': theme.widget_font_size,
+                    'text': 'The first one is very epic'
+                }
+            },
+            2: {
+                'image': default_image.copy().to_bw(),
+                'label': {
+                    'color': (0, 0, 0),
+                    'size': 20,
+                    'text': 'This other one is also epic, but fancy'
+                }
+            },
+            3: {
+                'image': default_image.copy().flip(False, True).pick_channels('r'),
+                'label': {
+                    'color': (255, 0, 0),
+                    'size': 45,
+                    'text': 'YOU D I E D'
+                }
+            }
+        }
 
-string = "12,3"
-print(list(string.split(",")))
-# print(string)
+        # Create menus
+        self.menu = pygame_menu.Menu(
+            height=480,
+            onclose=pygame_menu.events.CLOSE,
+            theme=theme,
+            title='Everything is dynamic now',
+            width=640
+        )
+
+        self.selector_widget = self.menu.add.selector(
+            title='Pick one option: ',
+            items=[('The first', 1),
+                   ('The second', 2),
+                   ('The final mode', 3)],
+            onchange=self._on_selector_change
+        )
+
+        self.image_widget = self.menu.add.image(
+            image_path=self.modes[1]['image'],
+            padding=(25, 0, 0, 0)  # top, right, bottom, left
+        )
+
+        self.item_description_widget = self.menu.add.label(title='')
+
+        self.quit_button = self.menu.add.button('Quit', pygame_menu.events.EXIT)
+
+        self.quit_button_fake = self.menu.add.button('You cannot quit', self.fake_quit,
+                                                     font_color=(255, 255, 255))
+        self.quit_button_fake.add_draw_callback(self.animate_quit_button)
+
+        # Update the widgets based on selected value from selector get_value
+        # returns selected item tuple and index, so [0][1] means the second object
+        # from ('The first', 1) tuple
+        self._update_from_selection(int(self.selector_widget.get_value()[0][1]))
+
+    def animate_quit_button(
+            self,
+            widget: 'pygame_menu.widgets.Widget',
+            menu: 'pygame_menu.Menu'
+    ) -> None:
+        """
+        Animate widgets if the last option is selected.
+
+        :param widget: Widget to be updated
+        :param menu: Menu
+        """
+        if self.current == 3:
+            t = widget.get_counter_attribute('t', menu.get_clock().get_time() * 0.0075, math.pi)
+            widget.set_padding(10 * (1 + math.sin(t)))  # Oscillating padding
+            widget.set_background_color((int(125 * (1 + math.sin(t))), 0, 0), None)
+            c = int(127 * (1 + math.cos(t)))
+            widget.update_font({'color': (c, c, c)})  # Widget font now is in grayscale
+            # widget.translate(10 * math.cos(t), 10 * math.sin(t))
+            widget.rotate(5 * t)
+
+    @staticmethod
+    def fake_quit() -> None:
+        """
+        Function executed by fake quit button.
+        """
+        print('I said that you cannot quit')
+
+    def _update_from_selection(self, index: int) -> None:
+        """
+        Change widgets depending on index.
+
+        :param index: Index
+        """
+        self.current = index
+        self.image_widget.set_image(self.modes[index]['image'])
+        self.item_description_widget.set_title(self.modes[index]['label']['text'])
+        self.item_description_widget.update_font(
+            {'color': self.modes[index]['label']['color'],
+             'size': self.modes[index]['label']['size']}
+        )
+        # Swap buttons using hide/show
+        if index == 3:
+            self.quit_button.hide()
+            self.quit_button_fake.show()
+        else:
+            self.quit_button.show()
+            self.quit_button_fake.hide()
+
+    def _on_selector_change(self, selected: Any, value: int) -> None:
+        """
+        Function executed if selector changes.
+
+        :param selected: Selector data containing text and index
+        :param value: Value from the selected option
+        """
+        print('Selected data:', selected)
+        self._update_from_selection(value)
+
+    def mainloop(self, test: bool) -> None:
+        """
+        App mainloop.
+
+        :param test: Test status
+        """
+        self.menu.mainloop(self.surface, disable_loop=test)
+
+
+def main(test: bool = False) -> 'App':
+    """
+    Main function.
+
+    :param test: Indicate function is being tested
+    :return: App object
+    """
+    app = App()
+    app.mainloop(test)
+    return app
+
+
+if __name__ == '__main__':
+    main()

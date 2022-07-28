@@ -91,13 +91,21 @@ class GameSC:
         if self.player_id == 0:
             self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="left")
             self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name, alignment="right")
-            self.my_health_bar = HealthBar(10, 750, SHOOTER_SCORE_HIT)
-            self.your_health_bar = HealthBar(820, 750, CHOPPER_SCORE_HIT)
+            if self.role_id == 0:
+                self.my_health_bar = HealthBar(10, 750, SHOOTER_SCORE_HIT)
+                self.your_health_bar = HealthBar(820, 750, CHOPPER_SCORE_HIT)
+            else:
+                self.my_health_bar = HealthBar(10, 750, CHOPPER_SCORE_HIT)
+                self.your_health_bar = HealthBar(820, 750, SHOOTER_SCORE_HIT)
         elif self.player_id == 1:
-            self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="right")
-            self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name, alignment="left")
-            self.your_health_bar = HealthBar(10, 750, SHOOTER_SCORE_HIT)
-            self.my_health_bar = HealthBar(810, 750, CHOPPER_SCORE_HIT)
+            self.my_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "my_name", self.my_name, alignment="left")
+            self.your_name_txt = DrawText(self.screen, 30, WHITE, 25, 720, "your_name", self.your_name, alignment="right")
+            if self.role_id == 0:
+                self.my_health_bar = HealthBar(10, 750, SHOOTER_SCORE_HIT)
+                self.your_health_bar = HealthBar(820, 750, CHOPPER_SCORE_HIT)
+            else:
+                self.my_health_bar = HealthBar(10, 750, CHOPPER_SCORE_HIT)
+                self.your_health_bar = HealthBar(820, 750, SHOOTER_SCORE_HIT)
 
         self.restart()
 
@@ -135,42 +143,43 @@ class GameSC:
         # Game Loop - events
         for i in range(len(self.events_lst)):
             self.events_lst[i] = "0"
-        for event in pg.event.get():
-            # check for closing window
-            if event.type == pg.QUIT:
-                self.events_lst[0] = QUIT
-                self.playing = False
-                global running
-                running = False
-
-            if event.type == pg.KEYDOWN:
-                if event.key == pg.K_ESCAPE:
+        if not self.round_count_down_flag:
+            for event in pg.event.get():
+                # check for closing window
+                if event.type == pg.QUIT:
                     self.events_lst[0] = QUIT
                     self.playing = False
-                    # global running
+                    global running
                     running = False
-                # player_shooter controls
-                if event.key == pg.K_LEFT:
-                    self.events_lst[1] = "1"
-                if event.key == pg.K_RIGHT:
-                    self.events_lst[2] = "1"
-                if event.key == pg.K_UP:
-                    self.events_lst[3] = "1"
-                if event.key == pg.K_SPACE:
-                    if self.role_lst[self.role_id] == "chopper":
-                        if (pg.time.get_ticks() - self.timer) > CHOPPER_CD:
-                            self.events_lst[4] = "1"
-                            self.timer = pg.time.get_ticks()
-                    else:
-                        self.events_lst[4] = "1"
-                        self.snd_yeet.play()
 
-            if event.type == pg.KEYUP:
-                # player_shooter controls
-                if event.key == pg.K_LEFT:
-                    self.events_lst[5] = "1"
-                if event.key == pg.K_RIGHT:
-                    self.events_lst[6] = "1"
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_ESCAPE:
+                        self.events_lst[0] = QUIT
+                        self.playing = False
+                        # global running
+                        running = False
+                    # player_shooter controls
+                    if event.key == pg.K_LEFT:
+                        self.events_lst[1] = "1"
+                    if event.key == pg.K_RIGHT:
+                        self.events_lst[2] = "1"
+                    if event.key == pg.K_UP:
+                        self.events_lst[3] = "1"
+                    if event.key == pg.K_SPACE:
+                        if self.role_lst[self.role_id] == "chopper":
+                            if (pg.time.get_ticks() - self.timer) > CHOPPER_CD:
+                                self.events_lst[4] = "1"
+                                self.timer = pg.time.get_ticks()
+                        else:
+                            self.events_lst[4] = "1"
+                            self.snd_yeet.play()
+
+                if event.type == pg.KEYUP:
+                    # player_shooter controls
+                    if event.key == pg.K_LEFT:
+                        self.events_lst[5] = "1"
+                    if event.key == pg.K_RIGHT:
+                        self.events_lst[6] = "1"
 
         if self.round_count_down_flag and self.counting >= 0:
             self.events_lst[0] = HOLD
@@ -211,11 +220,19 @@ class GameSC:
         self.match_type_txt.text = f"{gs_lst[22]} - {MATCH_TYPE_LST[int(gs_lst[19])]} - {gs_lst[23]}"
         self.fps_txt.text = str(int(self.clock.get_fps()))
         if self.player_id == 0:
-            self.my_health_bar.hit = gs_lst[25]
-            self.your_health_bar.hit = gs_lst[26]
+            if self.role_id == 0:
+                self.my_health_bar.hit = gs_lst[25]
+                self.your_health_bar.hit = gs_lst[26]
+            else:
+                self.my_health_bar.hit = gs_lst[26]
+                self.your_health_bar.hit = gs_lst[25]
         elif self.player_id == 1:
-            self.my_health_bar.hit = gs_lst[26]
-            self.your_health_bar.hit = gs_lst[25]
+            if self.role_id == 0:
+                self.my_health_bar.hit = gs_lst[25]
+                self.your_health_bar.hit = gs_lst[26]
+            else:
+                self.my_health_bar.hit = gs_lst[26]
+                self.your_health_bar.hit = gs_lst[25]
         self.upd_text_sprite_grp.update()
 
     def draw(self):
@@ -367,37 +384,38 @@ class GameSS:
         # Game Loop - events
         for i in range(len(self.events_lst)):
             self.events_lst[i] = "0"
-        for event in pg.event.get():
-            # check for closing window
-            if event.type == pg.QUIT:
-                self.events_lst[0] = QUIT
-                self.playing = False
-                global running
-                running = False
-
-            if event.type == pg.KEYDOWN:
-                if event.key == pg.K_ESCAPE:
+        if not self.round_count_down_flag:
+            for event in pg.event.get():
+                # check for closing window
+                if event.type == pg.QUIT:
                     self.events_lst[0] = QUIT
                     self.playing = False
-                    # global running
+                    global running
                     running = False
-                # player_shooter controls
-                if event.key == pg.K_LEFT:
-                    self.events_lst[1] = "1"
-                if event.key == pg.K_RIGHT:
-                    self.events_lst[2] = "1"
-                if event.key == pg.K_UP:
-                    self.events_lst[3] = "1"
-                if event.key == pg.K_SPACE:
-                    self.events_lst[4] = "1"
-                    self.snd_yeet.play()
 
-            if event.type == pg.KEYUP:
-                # player_shooter controls
-                if event.key == pg.K_LEFT:
-                    self.events_lst[5] = "1"
-                if event.key == pg.K_RIGHT:
-                    self.events_lst[6] = "1"
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_ESCAPE:
+                        self.events_lst[0] = QUIT
+                        self.playing = False
+                        # global running
+                        running = False
+                    # player_shooter controls
+                    if event.key == pg.K_LEFT:
+                        self.events_lst[1] = "1"
+                    if event.key == pg.K_RIGHT:
+                        self.events_lst[2] = "1"
+                    if event.key == pg.K_UP:
+                        self.events_lst[3] = "1"
+                    if event.key == pg.K_SPACE:
+                        self.events_lst[4] = "1"
+                        self.snd_yeet.play()
+
+                if event.type == pg.KEYUP:
+                    # player_shooter controls
+                    if event.key == pg.K_LEFT:
+                        self.events_lst[5] = "1"
+                    if event.key == pg.K_RIGHT:
+                        self.events_lst[6] = "1"
 
         if self.round_count_down_flag and self.counting >= 0:
             self.events_lst[0] = HOLD
@@ -575,36 +593,37 @@ class GameCC:
         # Game Loop - events
         for i in range(len(self.events_lst)):
             self.events_lst[i] = "0"
-        for event in pg.event.get():
-            # check for closing window
-            if event.type == pg.QUIT:
-                self.events_lst[0] = QUIT
-                self.playing = False
-                global running
-                running = False
-
-            if event.type == pg.KEYDOWN:
-                if event.key == pg.K_ESCAPE:
+        if not self.round_count_down_flag:
+            for event in pg.event.get():
+                # check for closing window
+                if event.type == pg.QUIT:
                     self.events_lst[0] = QUIT
                     self.playing = False
-                    # global running
+                    global running
                     running = False
-                if event.key == pg.K_LEFT:
-                    self.events_lst[1] = "1"
-                if event.key == pg.K_RIGHT:
-                    self.events_lst[2] = "1"
-                if event.key == pg.K_UP:
-                    self.events_lst[3] = "1"
-                if event.key == pg.K_SPACE:
-                    if (pg.time.get_ticks() - self.timer) > CHOPPER_CD:
-                        self.events_lst[4] = "1"
-                        self.timer = pg.time.get_ticks()
 
-            if event.type == pg.KEYUP:
-                if event.key == pg.K_LEFT:
-                    self.events_lst[5] = "1"
-                if event.key == pg.K_RIGHT:
-                    self.events_lst[6] = "1"
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_ESCAPE:
+                        self.events_lst[0] = QUIT
+                        self.playing = False
+                        # global running
+                        running = False
+                    if event.key == pg.K_LEFT:
+                        self.events_lst[1] = "1"
+                    if event.key == pg.K_RIGHT:
+                        self.events_lst[2] = "1"
+                    if event.key == pg.K_UP:
+                        self.events_lst[3] = "1"
+                    if event.key == pg.K_SPACE:
+                        if (pg.time.get_ticks() - self.timer) > CHOPPER_CD:
+                            self.events_lst[4] = "1"
+                            self.timer = pg.time.get_ticks()
+
+                if event.type == pg.KEYUP:
+                    if event.key == pg.K_LEFT:
+                        self.events_lst[5] = "1"
+                    if event.key == pg.K_RIGHT:
+                        self.events_lst[6] = "1"
 
         if self.round_count_down_flag and self.counting >= 0:
             self.events_lst[0] = HOLD
