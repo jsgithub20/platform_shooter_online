@@ -25,7 +25,7 @@ current_img_sel = 0
 current_img_lst = img_lst[current_img_sel]
 
 no_title_theme_join_game = pygame_menu.themes.THEME_ORANGE.copy()
-no_title_theme_join_game.background_color = (0, 0, 0, 0)
+no_title_theme_join_game.background_color = (0, 0, 0, 100)
 # no_title_theme_join_game.title = False
 no_title_theme_join_game.title_close_button = False
 no_title_theme_join_game.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_NONE
@@ -115,14 +115,14 @@ menu = pygame_menu.Menu(
     position=[40, 20])
 
 sub_menu = pygame_menu.Menu(
-    'Choosing Games', 1024 * 0.8, 768 * 0.88,
+    'Sub_menu', 1024 * 0.8, 768 * 0.88,
     center_content=False,
     onclose=pygame_menu.events.EXIT,  # User press ESC button
     theme=sub_menu_theme,
     position=[40, 20])
 
 sub_menu1 = pygame_menu.Menu(
-    'Choosing Games', 1024, 768,
+    'Choosing Role', 1024, 768,
     center_content=False,
     onclose=pygame_menu.events.EXIT,  # User press ESC button
     theme=sub_menu1_theme,
@@ -192,6 +192,10 @@ txt = menu.add.text_input("Text Input: ", default="test", onreturn=None)
 btn1 = menu.add.button("Get text", cb_get_text, txt.get_value())
 
 menu.add.button("selection", sub_menu1)
+back_btn = sub_menu1.add.button("back", pygame_menu.events.BACK)
+back_btn.set_float(True, False, True)
+back_btn.translate(50, 350)
+
 
 lbl_match_type = sub_menu1.add.label("Match Types")
 lbl_match_type.set_float(True, False, True)

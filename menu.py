@@ -542,6 +542,20 @@ class Menu:
         img.set_surface(self.img_lst_50per[boy_girl][img_idx // 3])
         return img_idx
 
+
+    def conn_issue_screen(self):
+        while self.game_over_screen_flag:
+            self.clock.tick(FPS)
+            events = pygame.event.get()
+            # self.check_end(events)
+            for event in events:
+                if event.type == pygame.KEYDOWN:
+                    self.end()
+
+            self.counting_font.render_to(self.screen, (110, 350), f"Connection issue", bgcolor=LIGHT_GREEN)
+            self.counting_font.render_to(self.screen, (120, 400), f"Press any key to quit", bgcolor=LIGHT_GREEN)
+            pygame.display.flip()
+
     def game_over_screen(self):
         if not game_class_c.running:
             self.end()
@@ -605,7 +619,8 @@ class Menu:
                 self.gs_lst = self.connection.game_state.get(timeout=TIMEOUT)
                 # self.gs_lst = self.connection.game_state.get()
             except queue.Empty:
-                # TODO: code to acknowledge the player and ask for input
+                # self.connection.game_ready = False
+                # self.conn_issue_screen()
                 print("Connection issue")
                 self.end()
 
@@ -743,6 +758,8 @@ class Menu:
         sub_menu_selection0_theme.widget_alignment = pygame_menu.locals.ALIGN_LEFT
         sub_menu_selection0_theme.widget_padding = 5
 
+        self.button_effect0 = pygame_menu.widgets.HighlightSelection()
+
         self.main_menu = pygame_menu.Menu(
             "Platform Game", WINDOW_SIZE[0], WINDOW_SIZE[1],
             center_content=False,
@@ -867,6 +884,7 @@ class Menu:
             # lbl.set_frame(credit_frame)
 
         ok_btn = self.main_menu.add.button(" ", self.connection_menu, background_color=btn_img_ok)
+        ok_btn.set_selection_effect()
         ok_btn.resize(100, 100)
         ok_btn.set_float(True, False, True)
         ok_btn.translate(890, 570)

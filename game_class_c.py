@@ -48,8 +48,12 @@ class GameSC:
 
         self.current_level = None
 
+        self.reloading = False
+
         self.snd_yeet = pg.mixer.Sound("resources/sound/yeet.ogg")
         self.snd_yeet.set_volume(0.2)
+
+        self.snd_no_bullet = pg.mixer.Sound("resources/sound/mixkit-single-classic-click-1116.ogg")
 
         # self.running = True
 
@@ -76,8 +80,16 @@ class GameSC:
             # bullet.level = self.current_level
             self.bullets_r.append(bullet)
 
-        # the "R" sign on the shooter's head to indicate it's the reloading time, so it can't shoot
-        self.r_sign = DrawText(self.screen, 30, RED, 0, 0, "r_sign", "R", 0, 10)
+        # the "R" sign or reloading indicator on the shooter's head to indicate it's the reloading time, so it can't shoot
+        # self.r_sign = DrawText(self.screen, 30, RED, 0, 0, "r_sign", "R", 0, 10)
+        self.r_signs = []
+        for i in range(8):
+            self.r_signs.append(ImgFrame(f"resources/shooter/r_sign{i}.png", DEAD_R_POS[0], DEAD_R_POS[1], 2))
+
+        # self.r_signs = [ImgFrame("resources/shooter/r_sign0.png", DEAD_R_POS[0], DEAD_R_POS[1], 2),
+        #                 ImgFrame("resources/shooter/r_sign1.png", DEAD_R_POS[0], DEAD_R_POS[1], 2),
+        #                 ImgFrame("resources/shooter/r_sign2.png", DEAD_R_POS[0], DEAD_R_POS[1], 2),
+        #                 ImgFrame("resources/shooter/r_sign3.png", DEAD_R_POS[0], DEAD_R_POS[1], 2)]
 
         self.fps_txt = DrawText(self.screen, 20, LIGHT_GREEN, 5, 5, "fps_txt", "0")
 
@@ -134,7 +146,7 @@ class GameSC:
 
         self.player_chopper.level = self.current_level
 
-        self.active_sprite_grp.add(self.player_shooter, self.player_chopper, self.r_sign)
+        self.active_sprite_grp.add(self.player_shooter, self.player_chopper, *self.r_signs)
         self.upd_text_sprite_grp.add(self.fps_txt, self.match_type_txt, self.my_health_bar, self.your_health_bar)  # only text sprites that need to be updated
         self.idle_text_sprite_grp.add(self.my_name_txt, self.your_name_txt, self.level_txt)
         self.bullet_sprite_grp.add(*self.bullets_r, *self.bullets_l)
@@ -170,9 +182,11 @@ class GameSC:
                             if (pg.time.get_ticks() - self.timer) > CHOPPER_CD:
                                 self.events_lst[4] = "1"
                                 self.timer = pg.time.get_ticks()
-                        else:
+                        elif not self.reloading:
                             self.events_lst[4] = "1"
                             self.snd_yeet.play()
+                        else:
+                            self.snd_no_bullet.play()
 
                 if event.type == pg.KEYUP:
                     # player_shooter controls
@@ -195,13 +209,13 @@ class GameSC:
 
     def update_game_state(self, gs_lst):
         self.clock.tick()
-        if gs_lst[21] > self.round:
-            self.round = gs_lst[21]
+        if gs_lst[23] > self.round:
+            self.round = gs_lst[23]
             self.round_count_down_flag = True
             self.counting = 3
             self.timer = pg.time.get_ticks()
-        if gs_lst[24] != "nobody":
-            self.winner = gs_lst[24]
+        if gs_lst[26] != "nobody":
+            self.winner = gs_lst[26]
             self.playing = False
         self.player_shooter.update_img(gs_lst[0], gs_lst[1])
         self.player_shooter.rect.x, self.player_shooter.rect.y = gs_lst[2]
@@ -209,30 +223,45 @@ class GameSC:
         self.player_chopper.rect.x, self.player_chopper.rect.y = gs_lst[5]
         for i in range(TTL_BULLETS):
             self.bullets_l[i].rect.x, self.bullets_l[i].rect.y = gs_lst[i+6]
-            self.bullets_r[i].rect.x, self.bullets_r[i].rect.y = gs_lst[i+11]
+            self.bullets_r[i].rect.x, self.bullets_r[i].rect.y = gs_lst[i+12]
         if self.current_level_no == 1:
             self.current_level.moving_block.rect.x, self.current_level.moving_block.rect.y = gs_lst[16]
-        if gs_lst[17]:  # r_sign_flg = 1
-            self.r_sign.rect.midbottom = self.player_shooter.rect.midtop
-        else:  # r_sign_flg = 0
-            self.r_sign.rect.midbottom = (-99, -99)
+        if gs_lst[19]:  # r_sign_cnt != 0
+            self.reloading = True
+            self.r_signs[gs_lst[19] - 1].rect.midbottom = self.player_shooter.rect.midtop
+            i = gs_lst[19] - 2
+            if i >= 0:
+                self.r_signs[i].rect.midbottom = DEAD_R_POS
+        else:  # r_sign_cnt = 0
+            # self.r_sign.rect.midbottom = (-99, -99)
+            self.reloading = False
+            for i in range(8):
+                self.r_signs[i].rect.midbottom = DEAD_R_POS
 
-        self.match_type_txt.text = f"{gs_lst[22]} - {MATCH_TYPE_LST[int(gs_lst[19])]} - {gs_lst[23]}"
+        # self.match_type_txt.text = f"{gs_lst[22]} - {MATCH_TYPE_LST[int(gs_lst[19])]} - {gs_lst[23]}"
         self.fps_txt.text = str(int(self.clock.get_fps()))
-        if self.player_id == 0:
-            if self.role_id == 0:
-                self.my_health_bar.hit = gs_lst[25]
-                self.your_health_bar.hit = gs_lst[26]
-            else:
-                self.my_health_bar.hit = gs_lst[26]
-                self.your_health_bar.hit = gs_lst[25]
-        elif self.player_id == 1:
-            if self.role_id == 0:
-                self.my_health_bar.hit = gs_lst[25]
-                self.your_health_bar.hit = gs_lst[26]
-            else:
-                self.my_health_bar.hit = gs_lst[26]
-                self.your_health_bar.hit = gs_lst[25]
+        if self.role_id == 0:
+            self.match_type_txt.text = f"{gs_lst[24]} - {MATCH_TYPE_LST[int(gs_lst[21])]} - {gs_lst[25]}"
+            self.my_health_bar.hit = gs_lst[27]
+            self.your_health_bar.hit = gs_lst[28]
+        else:
+            self.match_type_txt.text = f"{gs_lst[25]} - {MATCH_TYPE_LST[int(gs_lst[21])]} - {gs_lst[24]}"
+            self.my_health_bar.hit = gs_lst[28]
+            self.your_health_bar.hit = gs_lst[27]
+        # if self.player_id == 0:
+        #     if self.role_id == 0:
+        #         self.my_health_bar.hit = gs_lst[25]
+        #         self.your_health_bar.hit = gs_lst[26]
+        #     else:
+        #         self.my_health_bar.hit = gs_lst[26]
+        #         self.your_health_bar.hit = gs_lst[25]
+        # elif self.player_id == 1:
+        #     if self.role_id == 0:
+        #         self.my_health_bar.hit = gs_lst[25]
+        #         self.your_health_bar.hit = gs_lst[26]
+        #     else:
+        #         self.my_health_bar.hit = gs_lst[26]
+        #         self.your_health_bar.hit = gs_lst[25]
         self.upd_text_sprite_grp.update()
 
     def draw(self):
@@ -260,6 +289,7 @@ class GameSS:
         self.win_h = win_h
         self.splat_font = ft.Font("resources/fonts/earwig factory rg.ttf", 60)
         self.counting_font = ft.Font("resources/OvOV20.ttf", 60)
+
         self.counting = 3
 
         self.map_id = map_id
@@ -284,8 +314,13 @@ class GameSS:
 
         self.current_level = None
 
+        self.reloading0 = False
+        self.reloading1 = False
+
         self.snd_yeet = pg.mixer.Sound("resources/sound/yeet.ogg")
         self.snd_yeet.set_volume(0.2)
+
+        self.snd_no_bullet = pg.mixer.Sound("resources/sound/mixkit-single-classic-click-1116.ogg")
 
         # self.running = True
 
@@ -319,8 +354,15 @@ class GameSS:
             self.bullets_r1.append(bullet1)
 
         # the "R" sign on the shooter's head to indicate it's the reloading time, so it can't shoot
-        self.r_sign0 = DrawText(self.screen, 30, RED, 0, 0, "r_sign0", "R", 0, 10)
-        self.r_sign1 = DrawText(self.screen, 30, RED, 0, 0, "r_sign", "R", 0, 10)
+        # self.r_sign0 = DrawText(self.screen, 30, RED, 0, 0, "r_sign0", "R", 0, 10)
+        # self.r_sign1 = DrawText(self.screen, 30, RED, 0, 0, "r_sign", "R", 0, 10)
+        self.r_signs0 = []
+        for i in range(8):
+            self.r_signs0.append(ImgFrame(f"resources/shooter/r_sign{i}.png", DEAD_R_POS[0], DEAD_R_POS[1], 2))
+
+        self.r_signs1 = []
+        for i in range(8):
+            self.r_signs1.append(ImgFrame(f"resources/shooter/r_sign{i}.png", DEAD_R_POS[0], DEAD_R_POS[1], 2))
 
         self.fps_txt = DrawText(self.screen, 20, LIGHT_GREEN, 5, 5, "fps_txt", "0")
 
@@ -374,7 +416,7 @@ class GameSS:
 
         self.player_shooter1.level = self.current_level
 
-        self.active_sprite_grp.add(self.player_shooter0, self.player_shooter1, self.r_sign0, self.r_sign1)
+        self.active_sprite_grp.add(self.player_shooter0, self.player_shooter1, *self.r_signs0, *self.r_signs1)
         self.upd_text_sprite_grp.add(self.fps_txt, self.match_type_txt, self.my_health_bar, self.your_health_bar)  # only text sprites that need to be updated
         self.idle_text_sprite_grp.add(self.my_name_txt, self.your_name_txt, self.level_txt)
         self.bullet_sprite_grp0.add(*self.bullets_r0, *self.bullets_l0)
@@ -392,6 +434,7 @@ class GameSS:
                     self.playing = False
                     global running
                     running = False
+                    return
 
                 if event.type == pg.KEYDOWN:
                     if event.key == pg.K_ESCAPE:
@@ -399,6 +442,7 @@ class GameSS:
                         self.playing = False
                         # global running
                         running = False
+                        return
                     # player_shooter controls
                     if event.key == pg.K_LEFT:
                         self.events_lst[1] = "1"
@@ -407,8 +451,14 @@ class GameSS:
                     if event.key == pg.K_UP:
                         self.events_lst[3] = "1"
                     if event.key == pg.K_SPACE:
-                        self.events_lst[4] = "1"
-                        self.snd_yeet.play()
+                        if self.player_id == 0 and not self.reloading0:
+                            self.events_lst[4] = "1"
+                            self.snd_yeet.play()
+                        elif self.player_id == 1 and not self.reloading1:
+                            self.events_lst[4] = "1"
+                            self.snd_yeet.play()
+                        else:
+                            self.snd_no_bullet.play()
 
                 if event.type == pg.KEYUP:
                     # player_shooter controls
@@ -431,13 +481,13 @@ class GameSS:
 
     def update_game_state(self, gs_lst):
         self.clock.tick()
-        if gs_lst[32] > self.round:
-            self.round = gs_lst[32]
+        if gs_lst[36] > self.round:
+            self.round = gs_lst[36]
             self.round_count_down_flag = True
             self.counting = 3
             self.timer = pg.time.get_ticks()
-        if gs_lst[35] != "nobody":
-            self.winner = gs_lst[35]
+        if gs_lst[39] != "nobody":
+            self.winner = gs_lst[39]
             self.playing = False
         self.player_shooter0.update_img(gs_lst[0], gs_lst[1])
         self.player_shooter0.rect.x, self.player_shooter0.rect.y = gs_lst[2]
@@ -445,28 +495,53 @@ class GameSS:
         self.player_shooter1.rect.x, self.player_shooter1.rect.y = gs_lst[5]
         for i in range(TTL_BULLETS):
             self.bullets_l0[i].rect.x, self.bullets_l0[i].rect.y = gs_lst[i+6]
-            self.bullets_r0[i].rect.x, self.bullets_r0[i].rect.y = gs_lst[i+11]
-            self.bullets_l1[i].rect.x, self.bullets_l1[i].rect.y = gs_lst[i+16]
-            self.bullets_r1[i].rect.x, self.bullets_r1[i].rect.y = gs_lst[i+21]
+            self.bullets_r0[i].rect.x, self.bullets_r0[i].rect.y = gs_lst[i+12]
+            self.bullets_l1[i].rect.x, self.bullets_l1[i].rect.y = gs_lst[i+18]
+            self.bullets_r1[i].rect.x, self.bullets_r1[i].rect.y = gs_lst[i+24]
         if self.current_level_no == 1:
-            self.current_level.moving_block.rect.x, self.current_level.moving_block.rect.y = gs_lst[26]
-        if gs_lst[27]:  # r_sign_flg = 1
-            self.r_sign0.rect.midbottom = self.player_shooter0.rect.midtop
-        else:  # r_sign_flg = 0
-            self.r_sign0.rect.midbottom = (-99, -99)
-        if gs_lst[28]:  # r_sign_flg = 1
-            self.r_sign1.rect.midbottom = self.player_shooter1.rect.midtop
-        else:  # r_sign_flg = 0
-            self.r_sign1.rect.midbottom = (-99, -99)
+            self.current_level.moving_block.rect.x, self.current_level.moving_block.rect.y = gs_lst[30]
 
-        self.match_type_txt.text = f"{gs_lst[33]} - {MATCH_TYPE_LST[int(gs_lst[30])]} - {gs_lst[34]}"
+        if gs_lst[31]:  # r_sign_cnt0 != 0
+            self.reloading0 = True
+            self.r_signs0[gs_lst[31] - 1].rect.midbottom = self.player_shooter0.rect.midtop
+            i = gs_lst[31] - 2
+            if i >= 0:
+                self.r_signs0[i].rect.midbottom = DEAD_R_POS
+        else:  # r_sign_cnt = 0
+            # self.r_sign.rect.midbottom = (-99, -99)
+            self.reloading0 = False
+            for i in range(8):
+                self.r_signs0[i].rect.midbottom = DEAD_R_POS
+
+        if gs_lst[32]:  # r_sign_cnt1 != 0
+            self.reloading1 = True
+            self.r_signs1[gs_lst[32] - 1].rect.midbottom = self.player_shooter1.rect.midtop
+            i = gs_lst[32] - 2
+            if i >= 0:
+                self.r_signs1[i].rect.midbottom = DEAD_R_POS
+        else:  # r_sign_cnt = 0
+            # self.r_sign.rect.midbottom = (-99, -99)
+            self.reloading1 = False
+            for i in range(8):
+                self.r_signs1[i].rect.midbottom = DEAD_R_POS
+
+        # if gs_lst[27]:  # r_sign_flg = 1
+        #     self.r_sign0.rect.midbottom = self.player_shooter0.rect.midtop
+        # else:  # r_sign_flg = 0
+        #     self.r_sign0.rect.midbottom = (-99, -99)
+        # if gs_lst[28]:  # r_sign_flg = 1
+        #     self.r_sign1.rect.midbottom = self.player_shooter1.rect.midtop
+        # else:  # r_sign_flg = 0
+        #     self.r_sign1.rect.midbottom = (-99, -99)
+
+        self.match_type_txt.text = f"{gs_lst[37]} - {MATCH_TYPE_LST[int(gs_lst[34])]} - {gs_lst[38]}"
         self.fps_txt.text = str(int(self.clock.get_fps()))
         if self.player_id == 0:
-            self.my_health_bar.hit = gs_lst[36]
-            self.your_health_bar.hit = gs_lst[37]
+            self.my_health_bar.hit = gs_lst[40]
+            self.your_health_bar.hit = gs_lst[41]
         elif self.player_id == 1:
-            self.my_health_bar.hit = gs_lst[37]
-            self.your_health_bar.hit = gs_lst[36]
+            self.my_health_bar.hit = gs_lst[41]
+            self.your_health_bar.hit = gs_lst[40]
         self.upd_text_sprite_grp.update()
 
     def draw(self):

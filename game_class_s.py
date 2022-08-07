@@ -10,7 +10,6 @@ import sprite_player_correction
 from role_def import *
 
 
-
 class GameSC:  # shooter vs chopper
     def __init__(self, screen, win_w, win_h, map_id, level_id, match_id):
         pg.init()
@@ -56,7 +55,7 @@ class GameSC:  # shooter vs chopper
 
         # the "R" sign on the shooter's head to indicate it's the reloading time, so it can't shoot
         # self.r_sign = DrawText(self.screen, 10, RED, 0, 0, "r_sign", "R", 0, 10)
-        self.r_sign_flg = 0
+        self.r_sign_cnt = 0
         self.snd_yeet = False
 
         self.running = True
@@ -120,7 +119,7 @@ class GameSC:  # shooter vs chopper
             self.bullets_r[i].rect.x, self.bullets_r[i].rect.y = DEAD_BULLET_POS
             self.bullets_r[i].level = self.current_level
 
-        self.r_sign_flg = 0
+        self.r_sign_cnt = 0
 
         self.active_sprite_grp.add(self.player_shooter, self.player_chopper)
         self.bullet_sprite_grp.add(*self.bullets_r, *self.bullets_l)
@@ -207,10 +206,7 @@ class GameSC:  # shooter vs chopper
         self.active_sprite_grp.update()
         self.bullet_sprite_grp.update()
 
-        if self.player_shooter.reload_timer > 0 and not self.r_sign_flg:
-            self.r_sign_flg = 1
-        elif self.player_shooter.reload_timer == 0 and self.r_sign_flg:
-            self.r_sign_flg = 0
+        self.r_sign_cnt = self.player_shooter.r_sign_cnt
 
         if self.player_chopper in self.active_sprite_grp:
             bullet_hit_chopper = pg.sprite.spritecollideany(self.player_chopper, self.bullet_sprite_grp)
@@ -296,25 +292,28 @@ class GameSC:  # shooter vs chopper
         game_state.append((self.bullets_l[2].rect.x, self.bullets_l[2].rect.y))  # 8
         game_state.append((self.bullets_l[3].rect.x, self.bullets_l[3].rect.y))  # 9
         game_state.append((self.bullets_l[4].rect.x, self.bullets_l[4].rect.y))  # 10
-        game_state.append((self.bullets_r[0].rect.x, self.bullets_r[0].rect.y))  # 11
-        game_state.append((self.bullets_r[1].rect.x, self.bullets_r[1].rect.y))  # 12
-        game_state.append((self.bullets_r[2].rect.x, self.bullets_r[2].rect.y))  # 13
-        game_state.append((self.bullets_r[3].rect.x, self.bullets_r[3].rect.y))  # 14
-        game_state.append((self.bullets_r[4].rect.x, self.bullets_r[4].rect.y))  # 15
+        game_state.append((self.bullets_l[5].rect.x, self.bullets_l[5].rect.y))  # 11
+
+        game_state.append((self.bullets_r[0].rect.x, self.bullets_r[0].rect.y))  # 12
+        game_state.append((self.bullets_r[1].rect.x, self.bullets_r[1].rect.y))  # 13
+        game_state.append((self.bullets_r[2].rect.x, self.bullets_r[2].rect.y))  # 14
+        game_state.append((self.bullets_r[3].rect.x, self.bullets_r[3].rect.y))  # 15
+        game_state.append((self.bullets_r[4].rect.x, self.bullets_r[4].rect.y))  # 16
+        game_state.append((self.bullets_r[5].rect.x, self.bullets_r[5].rect.y))  # 17
         if self.current_level_no == 0:
-            game_state.append(DEAD_CRATER_POS)  # 16
+            game_state.append(DEAD_CRATER_POS)  # 18
         else:
             game_state.append((self.level02.moving_block.rect.x, self.level02.moving_block.rect.y))
-        game_state.append(self.r_sign_flg)  # 17
-        game_state.append(self.map_id)  # 18
-        game_state.append(self.match_id)  # 19
-        game_state.append(self.current_level_no)  # 20
-        game_state.append(self.match_score["round"])  # 21
-        game_state.append(self.match_score["shooter"])  # 22
-        game_state.append(self.match_score["chopper"])  # 23
-        game_state.append(self.winner)  # 24
-        game_state.append(self.player_shooter.hit_count)  # 25
-        game_state.append(self.player_chopper.hit_count)  # 26
+        game_state.append(self.r_sign_cnt)  # 19
+        game_state.append(self.map_id)  # 20
+        game_state.append(self.match_id)  # 21
+        game_state.append(self.current_level_no)  # 22
+        game_state.append(self.match_score["round"])  # 23
+        game_state.append(self.match_score["shooter"])  # 24
+        game_state.append(self.match_score["chopper"])  # 25
+        game_state.append(self.winner)  # 26
+        game_state.append(self.player_shooter.hit_count)  # 27
+        game_state.append(self.player_chopper.hit_count)  # 28
 
         return game_state
 
@@ -371,8 +370,8 @@ class GameSS:  # shooter vs shooter
 
         # the "R" sign on the shooter's head to indicate it's the reloading time, so it can't shoot
         # self.r_sign = DrawText(self.screen, 10, RED, 0, 0, "r_sign", "R", 0, 10)
-        self.r_sign_flg0 = 0
-        self.r_sign_flg1 = 0
+        self.r_sign_cnt0 = 0
+        self.r_sign_cnt1 = 0
         self.snd_yeet = False
 
         self.running = True
@@ -444,8 +443,8 @@ class GameSS:  # shooter vs shooter
             self.bullets_r1[i].rect.x, self.bullets_r1[i].rect.y = DEAD_BULLET_POS
             self.bullets_r1[i].level = self.current_level
 
-        self.r_sign_flg0 = 0
-        self.r_sign_flg1 = 0
+        self.r_sign_cnt0 = 0
+        self.r_sign_cnt1 = 0
 
         self.active_sprite_grp.add(self.player_shooter0, self.player_shooter1)
         self.bullet_sprite_grp0.add(*self.bullets_r0, *self.bullets_l0)
@@ -551,20 +550,14 @@ class GameSS:  # shooter vs shooter
         self.bullet_sprite_grp0.update()
         self.bullet_sprite_grp1.update()
 
-        if self.player_shooter0.reload_timer > 0 and not self.r_sign_flg0:
-            self.r_sign_flg0 = 1
-        elif self.player_shooter0.reload_timer == 0 and self.r_sign_flg0:
-            self.r_sign_flg0 = 0
-
-        if self.player_shooter1.reload_timer > 0 and not self.r_sign_flg1:
-            self.r_sign_flg1 = 1
-        elif self.player_shooter1.reload_timer == 0 and self.r_sign_flg1:
-            self.r_sign_flg1 = 0
+        self.r_sign_cnt0 = self.player_shooter0.r_sign_cnt
+        self.r_sign_cnt1 = self.player_shooter1.r_sign_cnt
 
         if self.player_shooter0 in self.active_sprite_grp:
             bullet_hit_shooter0 = pg.sprite.spritecollideany(self.player_shooter0, self.bullet_sprite_grp1)
             if bullet_hit_shooter0:
                 bullet_hit_shooter0.live_flag = 0
+                bullet_hit_shooter0.loop_count = 0
                 self.player_shooter0.hit_flag = 1
                 self.player_shooter0.hit_count += 1
 
@@ -580,6 +573,7 @@ class GameSS:  # shooter vs shooter
             bullet_hit_shooter1 = pg.sprite.spritecollideany(self.player_shooter1, self.bullet_sprite_grp0)
             if bullet_hit_shooter1:
                 bullet_hit_shooter1.live_flag = 0
+                bullet_hit_shooter1.loop_count = 0
                 self.player_shooter1.hit_flag = 1
                 self.player_shooter1.hit_count += 1
 
@@ -648,36 +642,44 @@ class GameSS:  # shooter vs shooter
         game_state.append((self.bullets_l0[2].rect.x, self.bullets_l0[2].rect.y))  # 8
         game_state.append((self.bullets_l0[3].rect.x, self.bullets_l0[3].rect.y))  # 9
         game_state.append((self.bullets_l0[4].rect.x, self.bullets_l0[4].rect.y))  # 10
-        game_state.append((self.bullets_r0[0].rect.x, self.bullets_r0[0].rect.y))  # 11
-        game_state.append((self.bullets_r0[1].rect.x, self.bullets_r0[1].rect.y))  # 12
-        game_state.append((self.bullets_r0[2].rect.x, self.bullets_r0[2].rect.y))  # 13
-        game_state.append((self.bullets_r0[3].rect.x, self.bullets_r0[3].rect.y))  # 14
-        game_state.append((self.bullets_r0[4].rect.x, self.bullets_r0[4].rect.y))  # 15
-        game_state.append((self.bullets_l1[0].rect.x, self.bullets_l1[0].rect.y))  # 16
-        game_state.append((self.bullets_l1[1].rect.x, self.bullets_l1[1].rect.y))  # 17
-        game_state.append((self.bullets_l1[2].rect.x, self.bullets_l1[2].rect.y))  # 18
-        game_state.append((self.bullets_l1[3].rect.x, self.bullets_l1[3].rect.y))  # 19
-        game_state.append((self.bullets_l1[4].rect.x, self.bullets_l1[4].rect.y))  # 20
-        game_state.append((self.bullets_r1[0].rect.x, self.bullets_r1[0].rect.y))  # 21
-        game_state.append((self.bullets_r1[1].rect.x, self.bullets_r1[1].rect.y))  # 22
-        game_state.append((self.bullets_r1[2].rect.x, self.bullets_r1[2].rect.y))  # 23
-        game_state.append((self.bullets_r1[3].rect.x, self.bullets_r1[3].rect.y))  # 24
-        game_state.append((self.bullets_r1[4].rect.x, self.bullets_r1[4].rect.y))  # 25
+        game_state.append((self.bullets_l0[5].rect.x, self.bullets_l0[5].rect.y))  # 11
+
+        game_state.append((self.bullets_r0[0].rect.x, self.bullets_r0[0].rect.y))  # 12
+        game_state.append((self.bullets_r0[1].rect.x, self.bullets_r0[1].rect.y))  # 13
+        game_state.append((self.bullets_r0[2].rect.x, self.bullets_r0[2].rect.y))  # 14
+        game_state.append((self.bullets_r0[3].rect.x, self.bullets_r0[3].rect.y))  # 15
+        game_state.append((self.bullets_r0[4].rect.x, self.bullets_r0[4].rect.y))  # 16
+        game_state.append((self.bullets_r0[5].rect.x, self.bullets_r0[5].rect.y))  # 17
+
+        game_state.append((self.bullets_l1[0].rect.x, self.bullets_l1[0].rect.y))  # 18
+        game_state.append((self.bullets_l1[1].rect.x, self.bullets_l1[1].rect.y))  # 19
+        game_state.append((self.bullets_l1[2].rect.x, self.bullets_l1[2].rect.y))  # 20
+        game_state.append((self.bullets_l1[3].rect.x, self.bullets_l1[3].rect.y))  # 21
+        game_state.append((self.bullets_l1[4].rect.x, self.bullets_l1[4].rect.y))  # 22
+        game_state.append((self.bullets_l1[5].rect.x, self.bullets_l1[5].rect.y))  # 23
+
+        game_state.append((self.bullets_r1[0].rect.x, self.bullets_r1[0].rect.y))  # 24
+        game_state.append((self.bullets_r1[1].rect.x, self.bullets_r1[1].rect.y))  # 25
+        game_state.append((self.bullets_r1[2].rect.x, self.bullets_r1[2].rect.y))  # 26
+        game_state.append((self.bullets_r1[3].rect.x, self.bullets_r1[3].rect.y))  # 27
+        game_state.append((self.bullets_r1[4].rect.x, self.bullets_r1[4].rect.y))  # 28
+        game_state.append((self.bullets_r1[5].rect.x, self.bullets_r1[5].rect.y))  # 29
+
         if self.current_level_no == 0:
-            game_state.append(DEAD_CRATER_POS)  # 26
+            game_state.append(DEAD_CRATER_POS)  # 30
         else:
-            game_state.append((self.level02.moving_block.rect.x, self.level02.moving_block.rect.y))  # 26
-        game_state.append(self.r_sign_flg0)  # 27
-        game_state.append(self.r_sign_flg1)  # 28
-        game_state.append(self.map_id)  # 29
-        game_state.append(self.match_id)  # 30
-        game_state.append(self.current_level_no)  # 31
-        game_state.append(self.match_score["round"])  # 32
-        game_state.append(self.match_score["shooter0"])  # 33
-        game_state.append(self.match_score["shooter1"])  # 34
-        game_state.append(self.winner)  # 35
-        game_state.append(self.player_shooter0.hit_count)  # 36
-        game_state.append(self.player_shooter1.hit_count)  # 37
+            game_state.append((self.level02.moving_block.rect.x, self.level02.moving_block.rect.y))  # 30
+        game_state.append(self.r_sign_cnt0)  # 31
+        game_state.append(self.r_sign_cnt1)  # 32
+        game_state.append(self.map_id)  # 33
+        game_state.append(self.match_id)  # 34
+        game_state.append(self.current_level_no)  # 35
+        game_state.append(self.match_score["round"])  # 36
+        game_state.append(self.match_score["shooter0"])  # 37
+        game_state.append(self.match_score["shooter1"])  # 38
+        game_state.append(self.winner)  # 39
+        game_state.append(self.player_shooter0.hit_count)  # 40
+        game_state.append(self.player_shooter1.hit_count)  # 41
 
         return game_state
 

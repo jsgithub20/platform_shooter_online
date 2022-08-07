@@ -10,7 +10,7 @@ SHOOTER_SCORE_HIT = config["DEFAULT"].getint("SHOOTER_SCORE_HIT")
 CC_CHOPPER_SCORE_HIT = config["DEFAULT"].getint("CC_CHOPPER_SCORE_HIT")
 SS_SHOOTER_SCORE_HIT = config["DEFAULT"].getint("SS_SHOOTER_SCORE_HIT")
 CHOPPER_CD = config["DEFAULT"].getint("CHOPPER_CD")  # ms
-RELOAD = config["DEFAULT"].getint("SHOOTER_RELOAD")
+RELOAD = config["DEFAULT"].getint("SHOOTER_RELOAD")  # number of bullets before reload
 
 # Colors
 BLACK = (0, 0, 0)
@@ -35,11 +35,12 @@ MAP_LST = ["map0", "map1"]
 TITLE = "Platform Shooter"
 FPS = 60
 FPS_T = 16.67
-TTL_BULLETS = 5
+TTL_BULLETS = 6
 DEAD_BULLET_POS = (-99, -99)
 DEAD_R_POS = (-99, -200)
 DEAD_CRATER_POS = (-99, -300)
 DEAD_BLOCK_POS = (-99, -400)
+RELOAD_TIME = 4000  # shooter reload time
 
 CONNECTED = True
 

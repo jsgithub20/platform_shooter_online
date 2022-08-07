@@ -69,14 +69,15 @@ idle_boy = [pg.image.load("resources/gui/boy/Idle__000.png"), pg.image.load("res
              pg.image.load("resources/gui/boy/Idle__008.png"), pg.image.load("resources/gui/boy/Idle__009.png")]
 
 
-class Buttons(pg.sprite.Sprite):
-    def __init__(self, file, pos_x, pos_y, name):
+class ImgFrame(pg.sprite.Sprite):
+    def __init__(self, file, pos_x, pos_y, scale=1, name=None):
         pg.sprite.Sprite.__init__(self)
         self.image = pg.image.load(file).convert_alpha()
         self.rect = self.image.get_rect()
+        self.image = pg.transform.scale(self.image, (self.rect.w * scale, self.rect.h * scale))
+        self.rect = self.image.get_rect()
         self.rect.x = pos_x
         self.rect.y = pos_y
-        self.btn_clicked = 0
         self.name = name
 
 
@@ -264,7 +265,7 @@ class Bullet(pg.sprite.Sprite):
         if -50 < self.rect.x < 0:  # to avoid counting the bullets at (-99, -99)
             self.rect.x = self.screen_width
             self.loop_count += 1
-        if self.rect.x > self.screen_width:
+        elif self.rect.x > self.screen_width:
             self.rect.x = 0
             self.loop_count += 1
         if self.loop_count == 2:
@@ -352,6 +353,7 @@ class Player(pg.sprite.Sprite):
 
         # number of seconds before the player can shoot more bullets
         self.reload_timer = 0
+        self.r_sign_cnt = 0
 
         # set to 1 if the player is attacking, so the image set is changed to attacking sets
         self.attack_flg = 0
@@ -409,15 +411,33 @@ class Player(pg.sprite.Sprite):
         if self.rect.right < 0:
             self.rect.left = SCREEN_WIDTH
 
-        self.reloading()
+        self.r_sign_cnt = self.reloading()
 
     def reloading(self):
         if self.loaded <= 0:
             if self.reload_timer == 0:
                 self.reload_timer = pg.time.get_ticks()
-            elif pg.time.get_ticks() - self.reload_timer >= 4000:
-                self.loaded = 5
+            elif 0 <= (pg.time.get_ticks() - self.reload_timer) < 500:
+                return 1
+            elif 500 <= (pg.time.get_ticks() - self.reload_timer) < 1000:
+                return 2
+            elif 1000 <= (pg.time.get_ticks() - self.reload_timer) < 1500:
+                return 3
+            elif 1500 <= (pg.time.get_ticks() - self.reload_timer) < 2000:
+                return 4
+            elif 2000 <= (pg.time.get_ticks() - self.reload_timer) < 2500:
+                return 5
+            elif 2500 <= (pg.time.get_ticks() - self.reload_timer) < 3000:
+                return 6
+            elif 3000 <= (pg.time.get_ticks() - self.reload_timer) < 3500:
+                return 7
+            elif 3500 <= (pg.time.get_ticks() - self.reload_timer) < 4000:
+                return 8
+            else:
+                # elif pg.time.get_ticks() - self.reload_timer >= RELOAD_TIME:
+                self.loaded = 6
                 self.reload_timer = 0
+                return 0
 
     def calc_grav(self):
         """ Calculate effect of gravity. """

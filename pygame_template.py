@@ -24,9 +24,13 @@ class DrawText(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = 100
         self.rect.y = 100
+        self.speed = 3
 
     def update(self) -> None:
         self.image = self.font.render(self.text, True, (255, 255, 255))
+        self.rect.x += self.speed
+        if self.rect.x > WINDOW_SIZE[0]:
+            self.rect.x = 0
 
     def chg_font(self, font_name):
         self.font_name = font_name
@@ -51,7 +55,6 @@ class Game:
         self.text = DrawText("Example Text!")
         self.txt_grp = pg.sprite.Group()
         self.txt_grp.add(self.text)
-        self.run()
 
     def run(self):
         while self.playing:
@@ -59,8 +62,6 @@ class Game:
             self.events()
             self.update()
             self.draw()
-
-        self.end_screen()
 
     def events(self):
         events = pg.event.get()
