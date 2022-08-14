@@ -178,10 +178,14 @@ class Menu:
         self.credits = self.read_csv("resources/credits.csv")
         self.credits_speed = 0.1
         self.credits_x = 0
-        self.credits_y00 = 370
+        self.credits_y00 = 80
         self.credits_y0 = self.credits_y00
-        self.credits_pitch = 50
+        self.credits_pitch = 35
         self.credits_cnt = len(self.credits)
+        self.credits_timer = 0
+        self.credits_on_flg = False
+        self.credits_timer_up = 2000
+        self.credits_timing_flg = False
         self.gs_lst = []  # Game state received as a list
         self.splat_font = ft.Font("resources/fonts/earwig factory rg.ttf", 60)
         self.counting_font = ft.Font("resources/OvOV20.ttf", 60)
@@ -199,6 +203,11 @@ class Menu:
             girl_idle.append(pygame.image.load(f"resources/gui/girl/Idle__00{j}.png"))
             girl_idle_50per.append(pygame.image.load(f"resources/gui/girl/50 percent/Idle__00{j}.png"))
 
+        girl_idle = []  # test Amy's art
+        for j in range(4):
+            img = pygame.image.load(f"resources/gui/girl/aIdle__00{j}.png")
+            girl_idle.append(pygame.transform.scale2x(img))
+
         boy_idle = []
         boy_idle_50per = []
 
@@ -209,7 +218,7 @@ class Menu:
         self.img_lst = [boy_idle, girl_idle]
         self.img_lst_50per = [boy_idle_50per, girl_idle_50per]
 
-        self.current_role_id = 0
+        self.current_role_id = 1
         self.previous_role_id = 1
         self.current_img_lst = self.img_lst[self.current_role_id]
 
@@ -221,6 +230,9 @@ class Menu:
         self.msg_lbl = None
         self.check_join_back_btn = None
         self.check_join_ok_btn = None
+
+        self.btn_img_rgt_prsd = pygame_menu.BaseImage("resources/gui/right_pressed.png")
+        self.btn_img_rgt_prsd.scale4x()
 
     def read_csv(self, file_name, dict=0):
         result = None
@@ -407,15 +419,28 @@ class Menu:
         # new_y = pos[1] - 16
         # widget.translate(0, new_y)
         # print(widget.get_position())
-        id_str = widget.get_id()
-        pos_y = widget.get_position()[1]
-        if id_str == str(self.credits_cnt + 2 - 1):  # index of the last element is len()-1
-            if pos_y < -10:
-                self.credits_y0 = self.credits_y00
-        else:
-            # self.credits_y0 += self.credits_speed
-            self.credits_y0 -= self.credits_speed
-        widget.translate(self.credits_x, self.credits_y0 + int(id_str) * self.credits_pitch)
+        if not self.credits_timing_flg:
+            self.credits_timer = pygame.time.get_ticks()
+            self.credits_timing_flg = True
+        elif pygame.time.get_ticks() - self.credits_timer >= self.credits_timer_up:
+            self.credits_on_flg = True
+
+        if self.credits_on_flg:
+            id_str = widget.get_id()
+            pos_y = widget.get_position()[1]
+            if id_str == str(self.credits_cnt + 6 - 1):  # index of the last element is len()-1
+                if pos_y < -10:
+                    self.credits_y0 = self.credits_y00
+            else:
+                # self.credits_y0 += self.credits_speed
+                self.credits_y0 -= self.credits_speed
+            widget.translate(self.credits_x, self.credits_y0 + int(id_str) * self.credits_pitch)
+
+    def cb_selection0_img_anim(self, widget:pygame_menu.widgets.widget.image, menu):
+        pass
+
+    def cb_rgt_btn_pressed(self, selected, widget:pygame_menu.widgets.Button, ref_menu):
+        widget.set_background_color(self.btn_img_rgt_prsd)
 
     def check_end(self, events):
         for event in events:
@@ -431,6 +456,7 @@ class Menu:
     def end(self):
         self.t_loop.stop_tasks()
         self.t_loop.stop()
+        # self.conn_issue_screen()
         pygame.quit()
         exit()
 
@@ -544,13 +570,13 @@ class Menu:
 
 
     def conn_issue_screen(self):
-        while self.game_over_screen_flag:
+        while True:
             self.clock.tick(FPS)
             events = pygame.event.get()
             # self.check_end(events)
             for event in events:
                 if event.type == pygame.KEYDOWN:
-                    self.end()
+                    break
 
             self.counting_font.render_to(self.screen, (110, 350), f"Connection issue", bgcolor=LIGHT_GREEN)
             self.counting_font.render_to(self.screen, (120, 400), f"Press any key to quit", bgcolor=LIGHT_GREEN)
@@ -710,8 +736,22 @@ class Menu:
         all_sound.set_sound(pygame_menu.sound.SOUND_TYPE_OPEN_MENU, 'resources/sound/Amazon.ogg', volume=0.5)
         # all_sound.play_open_menu()
         # engine.play_click_mouse()
+
+
+        engine = pygame_menu.sound.Sound()
+        # engine.set_sound(pygame_menu.sound.SOUND_TYPE_CLICK_MOUSE, 'resources/sound/click.ogg')
+        engine.set_sound(pygame_menu.sound.SOUND_TYPE_WIDGET_SELECTION, 'resources/sound/click.ogg')
+        # engine.set_sound(pygame_menu.sound.SOUND_TYPE_OPEN_MENU, 'resources/sound/click.ogg')
+        # engine.set_sound(pygame_menu.sound.SOUND_TYPE_OPEN_MENU, '/home/me/open.ogg')
+
+        # self.sub_menu_selection0.set_sound(engine, recursive=True)  # Apply on menu and all sub-menus
+
         btn_img_lft = pygame_menu.BaseImage("resources/gui/left.png")
+        btn_img_lft.scale4x()
         btn_img_rgt = pygame_menu.BaseImage("resources/gui/right.png")
+        btn_img_rgt.scale4x()
+        btn_img_rgt_prsd = pygame_menu.BaseImage("resources/gui/right_pressed.png")
+        btn_img_rgt_prsd.scale4x()
         btn_img_ok = pygame_menu.BaseImage("resources/gui/Button_18_small.png")
 
         # -------------------------------------------------------------------------
@@ -768,13 +808,13 @@ class Menu:
             position=[40, 20],
         )
 
-        engine = pygame_menu.sound.Sound()
-        # engine.set_sound(pygame_menu.sound.SOUND_TYPE_CLICK_MOUSE, 'resources/sound/click.ogg')
-        engine.set_sound(pygame_menu.sound.SOUND_TYPE_WIDGET_SELECTION, 'resources/sound/click.ogg')
-        # engine.set_sound(pygame_menu.sound.SOUND_TYPE_OPEN_MENU, 'resources/sound/click.ogg')
-        # engine.set_sound(pygame_menu.sound.SOUND_TYPE_OPEN_MENU, '/home/me/open.ogg')
-
-        # self.sub_menu_selection0.set_sound(engine, recursive=True)  # Apply on menu and all sub-menus
+        self.credits_menu = pygame_menu.Menu(
+            "CREDITS", WINDOW_SIZE[0], WINDOW_SIZE[1],
+            center_content=False,
+            onclose=pygame_menu.events.EXIT,  # User press ESC button
+            theme=no_title_theme,
+            position=[40, 20],
+        )
 
         self.connection_menu = pygame_menu.Menu(
             "Platform Game", WINDOW_SIZE[0] * 0.8, WINDOW_SIZE[1] * 0.8,
@@ -844,11 +884,11 @@ class Menu:
         lbl0.set_float(True, False, True)
         lbl0.translate(100, 10)
 
-        credit_frame = self.main_menu.add.frame_h(800, 800)
+        credit_frame = self.credits_menu.add.frame_h(800, 800)
         credit_frame.set_float(True, False, True)
         credit_frame.translate(250, 150)
         credit_frame.set_background_color((0, 0, 0, 0))
-        credit_frame.make_scrollarea(600, 370, (0, 0, 0, 0), (0, 0, 0, 0), None, True, (0, 0, 0, 0),
+        credit_frame.make_scrollarea(600, 200, (0, 0, 0, 0), (0, 0, 0, 0), None, True, (0, 0, 0, 0),
                                      1, POSITION_WEST, (0, 0, 0, 0), (0, 0, 0, 0), 0, 2, POSITION_WEST)
 
         self.img_idle_boy = self.main_menu.add.surface(self.img_lst_50per[0][0])
@@ -859,29 +899,57 @@ class Menu:
         self.img_idle_girl.set_float(True, False, True)
         self.img_idle_girl.translate(50, 350)
 
-        self.credits_title = self.main_menu.add.label("CREDITS", label_id="0")
+        self.main_menu.add.button("Credits", self.credits_menu)
+
+        self.long_long = self.credits_menu.add.label("Long long ago.... blah blah blah,", label_id="0")
+        credit_frame.pack(self.long_long)
+        self.long_long.set_float(True, False, True)
+        self.long_long.translate(self.credits_x, self.credits_y0)
+        self.long_long.add_draw_callback(self.cb_animate_credits)
+
+        self.click_to_play = self.credits_menu.add.label("click the button to play", label_id="1")
+        credit_frame.pack(self.click_to_play)
+        self.click_to_play.set_float(True, False, True)
+        self.click_to_play.translate(self.credits_x, self.credits_y0 + self.credits_pitch)
+        self.click_to_play.add_draw_callback(self.cb_animate_credits)
+
+        self.credits_blank0 = self.credits_menu.add.label("", label_id="2")
+        credit_frame.pack(self.credits_blank0)
+        self.credits_blank0.set_float(True, False, True)
+        self.credits_blank0.translate(self.credits_x, self.credits_y0 + self.credits_pitch * 2)
+        self.credits_blank0.add_draw_callback(self.cb_animate_credits)
+
+        self.credits_blank1 = self.credits_menu.add.label("", label_id="3")
+        credit_frame.pack(self.credits_blank1)
+        self.credits_blank1.set_float(True, False, True)
+        self.credits_blank1.translate(self.credits_x, self.credits_y0 + self.credits_pitch * 3)
+        self.credits_blank1.add_draw_callback(self.cb_animate_credits)
+
+        self.credits_title = self.credits_menu.add.label("CREDITS", label_id="4", font_size=20)
         credit_frame.pack(self.credits_title)
         # self.credits_title.set_frame(credit_frame)
         self.credits_title.set_float(True, False, True)
         # self.credits_title.translate(0, 300)
-        self.credits_title.translate(self.credits_x, self.credits_y0)
+        self.credits_title.translate(self.credits_x, self.credits_y0 + self.credits_pitch * 4)
         self.credits_title.add_draw_callback(self.cb_animate_credits)
         # self.credits_title.set_frame(credit_frame)
 
-        self.credits_blank = self.main_menu.add.label("", label_id="1")
+        self.credits_blank = self.credits_menu.add.label("", label_id="5", font_size=20)
         credit_frame.pack(self.credits_blank)
         self.credits_blank.set_float(True, False, True)
-        self.credits_blank.translate(self.credits_x, self.credits_y0 + self.credits_pitch)
+        self.credits_blank.translate(self.credits_x, self.credits_y0 + self.credits_pitch * 5)
         self.credits_blank.add_draw_callback(self.cb_animate_credits)
         # self.credits_blank.set_frame(credit_frame)
         #
         for i in range(len(self.credits)):
-            lbl = self.main_menu.add.label(f"{self.credits[i]}", f"{i + 2}")
+            lbl = self.credits_menu.add.label(f"{self.credits[i]}", f"{i + 6}", font_size=20)
             credit_frame.pack(lbl)
             lbl.set_float(True, False, True)
-            lbl.translate(self.credits_x, self.credits_y0 + i + 2)
+            lbl.translate(self.credits_x, self.credits_y0 + (i + 6) * self.credits_pitch)
             lbl.add_draw_callback(self.cb_animate_credits)
             # lbl.set_frame(credit_frame)
+
+        self.credits_menu.add.button("Back", pygame_menu.events.BACK)
 
         ok_btn = self.main_menu.add.button(" ", self.connection_menu, background_color=btn_img_ok)
         ok_btn.set_selection_effect()
@@ -1091,9 +1159,10 @@ class Menu:
         sub1_btn_lft.translate(150, 200)
 
         sub1_btn_rgt = self.sub_menu_selection0.add.button(" ", self.cb_role_sel_rgt, background_color=btn_img_rgt)
-        sub1_btn_rgt.resize(100, 100)
+        sub1_btn_rgt.resize(126, 126)
         sub1_btn_rgt.set_float(True, False, True)
         sub1_btn_rgt.translate(750, 200)
+        sub1_btn_rgt.set_onselect(self.cb_rgt_btn_pressed)
 
         for j in range(len(role_def.girl_txt)):
             lbl = self.sub_menu_selection0.add.label(role_def.girl_txt[j][5],
@@ -1118,6 +1187,7 @@ class Menu:
         self.img_selection0 = self.sub_menu_selection0.add.surface(self.current_img_lst[0])
         self.img_selection0.set_float(True, False, True)
         self.img_selection0.translate(350, 100)
+        self.img_selection0.add_draw_callback(self.cb_selection0_img_anim)
 
         ok_btn_sel = self.sub_menu_selection0.add.button(" ", self.sub_menu_player0_wait, background_color=btn_img_ok)
         ok_btn_sel.resize(100, 100)

@@ -73,7 +73,7 @@ class Server:
         # self.my_logger.addHandler(fh)
         self.timer = 0
 
-    async def check_read(self, player_name, reader, writer):
+    async def check_read(self, player_name, reader, writer, in_room_flg):
         # used for read() before the connected player is in a game room
         string = None
         connected = CONNECTED
@@ -82,13 +82,15 @@ class Server:
             received = await reader.readuntil(separator=b"AB")
             string = received.decode()[:-2]
         except (ConnectionError, asyncio.IncompleteReadError):
-            self.cnt -= 1
+            if not in_room_flg:
+                self.cnt -= 1
             self.my_logger.warning(
                 f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
             connected = not CONNECTED
         else:  # if the connection is properly connected, there will be no ConnectionError exception raised
             if not received:
-                self.cnt -= 1
+                if not in_room_flg:
+                    self.cnt -= 1
                 self.my_logger.warning(
                     f"Connection to player {player_name} is lost [{getframeinfo(currentframe()).lineno}]")
                 if not writer.is_closing():
@@ -485,7 +487,9 @@ class Server:
             g.events_lst1 = r[1][1]
 
             if g.events_lst0[0] != HOLD and g.events_lst1[0] != HOLD:
-                g.events()
+                if not g.events():
+                    room.running = False
+                    return
                 g.update()
 
             byte = (json.dumps(g.gs_conversion()).encode())

@@ -59,9 +59,9 @@ async def tcp_echo_client(message):
             print("bye")
             writer.close()
             break
-        writer.write(f"{txt}+‘||’".encode())
+        writer.write(f"{txt}||".encode())
         recv = await reader.readuntil(separator=b"||")
-        print(recv.decode())
+        print(f"received from server: {recv.decode()[:-2]}")
 
     # print(f'Send: {message!r}')
     # writer.write(message)

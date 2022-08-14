@@ -7,7 +7,7 @@ from sys import exit
 from platform_shooter_settings import *
 from platform_shooter_sprites import *
 import sprite_player_correction
-from role_def import *
+# from role_def import *
 
 
 class GameSC:  # shooter vs chopper
@@ -136,12 +136,21 @@ class GameSC:  # shooter vs chopper
     #         self.update()
 
     def events(self):
+        events_ok_flg = True
         # Game Loop - events
         # lst_s = list(self.events_str_shooter)
         # lst_c = list(self.events_str_chopper)
-
-        events_lst_shooter = [int(item) for item in self.events_lst0]
-        events_lst_chopper = [int(item) for item in self.events_lst1]
+        """
+        in some cases, a quiting player is not caught in check_read_room() 
+        the following try/except code avoids the exception stops the task code without 
+        being handled by the mainloop
+        """
+        try:
+            events_lst_shooter = [int(item) for item in self.events_lst0]
+            events_lst_chopper = [int(item) for item in self.events_lst1]
+        except ValueError:
+            events_ok_flg = False
+            return events_ok_flg
 
         if events_lst_shooter[0] or events_lst_chopper[0]:
             if self.playing:
@@ -199,6 +208,8 @@ class GameSC:  # shooter vs chopper
             self.player_chopper.stop()
         if events_lst_chopper[6] and self.player_chopper.change_x > 0:
             self.player_chopper.stop()
+
+        return events_ok_flg
 
     def update(self):
         # Game Loop - Update
@@ -462,12 +473,21 @@ class GameSS:  # shooter vs shooter
     #         self.update()
 
     def events(self):
+        events_ok_flg = True
         # Game Loop - events
         # lst_s = list(self.events_str_shooter0)
         # lst_c = list(self.events_str_shooter1)
-
-        events_lst_shooter0 = [int(item) for item in self.events_lst0]
-        events_lst_shooter1 = [int(item) for item in self.events_lst1]
+        """
+        in some cases, a quiting player is not caught in check_read_room() 
+        the following try/except code avoids the exception stops the task code without 
+        being handled by the mainloop
+        """
+        try:
+            events_lst_shooter0 = [int(item) for item in self.events_lst0]
+            events_lst_shooter1 = [int(item) for item in self.events_lst1]
+        except ValueError:
+            events_ok_flg = False
+            return events_ok_flg
 
         if events_lst_shooter0[0] or events_lst_shooter1[0]:
             if self.playing:
@@ -542,6 +562,8 @@ class GameSS:  # shooter vs shooter
             self.player_shooter1.stop()
         if events_lst_shooter1[6] and self.player_shooter1.change_x > 0:
             self.player_shooter1.stop()
+
+        return events_ok_flg
 
     def update(self):
         # Game Loop - Update
@@ -770,12 +792,22 @@ class GameCC:  # chopper vs chopper
         self.active_sprite_grp.add(self.player_chopper0, self.player_chopper1)
 
     def events(self):
+        events_ok_flg = True
+
         # Game Loop - events
         # lst_s = list(self.events_str_shooter)
         # lst_c = list(self.events_str_chopper)
-
-        events_lst_chopper0 = [int(item) for item in self.events_lst0]
-        events_lst_chopper1 = [int(item) for item in self.events_lst1]
+        """
+        in some cases, a quiting player is not caught in check_read_room() 
+        the following try/except code avoids the exception stops the task code without 
+        being handled by the mainloop
+        """
+        try:
+            events_lst_chopper0 = [int(item) for item in self.events_lst0]
+            events_lst_chopper1 = [int(item) for item in self.events_lst1]
+        except ValueError:
+            events_ok_flg = False
+            return events_ok_flg
 
         if events_lst_chopper0[0] or events_lst_chopper1[0]:
             if self.playing:
@@ -813,6 +845,8 @@ class GameCC:  # chopper vs chopper
             self.player_chopper1.stop()
         if events_lst_chopper1[6] and self.player_chopper1.change_x > 0:
             self.player_chopper1.stop()
+
+        return events_ok_flg
 
     def update(self):
         # Game Loop - Update

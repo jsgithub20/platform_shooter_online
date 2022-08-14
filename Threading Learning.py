@@ -20,28 +20,29 @@ from threading import Thread
 # no Threading example ends
 
 # Threading example starts
-def task(id):
+def task(id, s):
     print(f'Starting the task {id}...')
-    sleep(1)
+    sleep(s)
     print(f'The task {id} completed')
 
 
 start_time = perf_counter()
-
-# create multiple new threads
+#
+# # create multiple new threads
 threads = []
-for i in range(10):
-    t = Thread(target=task, args=(i, ))
+for i in range(4):
+    t = Thread(target=task, args=(i, i/2))
+    # t = Thread(target=task, args=(i, i/2), daemon=True)
     # t = Thread(target=task, args=(i, ), daemon=True)
     threads.append(t)
 
 # start the threads
-for i in range(10):
+for i in range(4):
     threads[i].start()
 
 # wait for the threads to complete
-for i in range(10):
-    threads[i].join()
+# for i in range(4):
+#     threads[i].join()
 
 end_time = perf_counter()
 

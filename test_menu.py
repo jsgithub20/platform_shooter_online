@@ -107,6 +107,29 @@ async def add_item(widget_drop_select: pygame_menu.widgets.widget.dropselect):
 def cb_get_text(txt):
     print(txt)
 
+
+def cb_btn_update_callback(click_img, **kwargs):
+    kwargs["widget"].set_background_color(click_img)
+
+
+def cb_btn_pressed_img(selected, widget:pygame_menu.widgets.Button, ref_menu):
+    widget.set_background_color(btn_img_lft)
+
+
+def cb_btn_unpressed_img(widget:pygame_menu.widgets.Button, event_passed):
+    widget.set_background_color(btn_img_rgt)
+
+
+def cb_submenu1_opened(from_menu, to_menu):
+    to_menu.select_widget(None)
+    # print(to_menu.get_selected_widget().get_index())
+    # print(to_menu._index)
+    # sub1_btn_rgt.set_background_color(btn_img_rgt)
+    # print(to_menu.get_title())
+    # current_menu = to_menu.get_current()
+    # current_menu.select_widget(None)
+
+
 menu = pygame_menu.Menu(
     'Choosing Games', 1024 * 0.8, 768 * 0.8,
     center_content=False,
@@ -192,6 +215,11 @@ txt = menu.add.text_input("Text Input: ", default="test", onreturn=None)
 btn1 = menu.add.button("Get text", cb_get_text, txt.get_value())
 
 menu.add.button("selection", sub_menu1)
+
+back_btn1 = sub_menu1.add.button("back1", pygame_menu.events.BACK)
+back_btn1.set_float(True, False, True)
+back_btn1.translate(50, 400)
+
 back_btn = sub_menu1.add.button("back", pygame_menu.events.BACK)
 back_btn.set_float(True, False, True)
 back_btn.translate(50, 350)
@@ -243,10 +271,14 @@ sub1_btn_lft.translate(150, 200)
 
 btn_img_rgt = pygame_menu.BaseImage("resources/gui/right.png")
 
-sub1_btn_rgt = sub_menu1.add.button(" ", None, background_color=btn_img_rgt)
+sub1_btn_rgt = sub_menu1.add.button(" ", pygame_menu.events.BACK, background_color=btn_img_rgt)
 sub1_btn_rgt.resize(100, 100)
 sub1_btn_rgt.set_float(True, False, True)
 sub1_btn_rgt.translate(750, 200)
+sub1_btn_rgt.set_onselect(cb_btn_pressed_img)
+# sub1_btn_rgt.set_onmouseleave(cb_btn_unpressed_img)
+# sub1_btn_rgt.add_self_to_kwargs()
+# sub1_btn_rgt.update_callback(cb_btn_update_callback, btn_img_lft)
 
 img = sub_menu1.add.surface(current_img_lst[0])
 img.set_float(True, False, True)
@@ -269,6 +301,8 @@ for i in range(len(role_def.boy_txt)):
     lbl.translate(role_def.boy_txt[i][2], role_def.boy_txt[i][3])
     lbl.hide()
     boy_desc_lbl_lst.append(lbl)
+
+sub_menu1.set_onbeforeopen(cb_submenu1_opened)
 
 img_idx = 0
 current_img_idx = 0
