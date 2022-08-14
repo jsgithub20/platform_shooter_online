@@ -192,7 +192,7 @@ class Server:
                 rooms_lst = [["no game", False, 0]]
             rooms_lst_enc = (json.dumps(rooms_lst) + "AB").encode()
             writer.write(rooms_lst_enc)
-            r = await self.check_read(player_name, reader, writer)  # return connected, string
+            r = await self.check_read(player_name, reader, writer, False)  # return connected, string
             if not r[0]:
                 return not CONNECTED, chosen_room_id
             else:
@@ -202,7 +202,7 @@ class Server:
                     chosen_room_id = int(info[0])
                     chosen_role_id = int(info[1])
                     # role_id = int(r[1][2])
-                    r = await self.check_read(player_name, reader, writer)  # r/w cycle
+                    r = await self.check_read(player_name, reader, writer, False)  # r/w cycle
                     if not r[0]:
                         return not CONNECTED, chosen_room_id
                     """
