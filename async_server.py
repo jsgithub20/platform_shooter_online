@@ -111,6 +111,7 @@ class Server:
                                f"{room.player_names}, game room is being closed!")
 
     def remove_player1(self, room):
+        self.cnt -= 1
         room.player_names.pop()  # player1
         room.player_readers.pop()  # player1
         room.player_writers.pop()  # player1
@@ -222,13 +223,13 @@ class Server:
                         # clock.tick(FPS)
                         writer.write(
                             f"{self.game_dict[chosen_room_id].player_names[0]} is not ready yet, please wait...AB".encode())
-                        r = await self.check_read(player_name, reader, writer)  # return connected, string
+                        r = await self.check_read(player_name, reader, writer, True)  # return connected, string
                         if not r[0]:
                             if chosen_room_id in self.game_dict:
                                 self.remove_player1(self.game_dict[chosen_room_id])
                             return not CONNECTED, chosen_room_id
                     writer.write("Game is ready to playAB".encode())
-                    r = await self.check_read(player_name, reader, writer)  # (mark 1) return connected, string
+                    r = await self.check_read(player_name, reader, writer, True)  # (mark 1) return connected, string
                     if not r[0]:
                         if chosen_room_id in self.game_dict:
                             self.remove_player1(self.game_dict[chosen_room_id])
@@ -294,7 +295,7 @@ class Server:
             client_task.set_name(client_name)
             writer.write((str(self.client_id) + "AB").encode())
 
-            r = await self.check_read(player_name, reader, writer)  # waiting for "create" or "join"
+            r = await self.check_read(player_name, reader, writer, False)  # waiting for "create" or "join"
             if not r[0]:  # return connected, string
                 return
             else:
@@ -355,9 +356,10 @@ class Server:
                 room.player_writers[0].write(data)
                 r = await self.check_read(
                     room.player_names[0], room.player_readers[0],
-                    room.player_writers[0])  # r/w cycle and check the connection
+                    room.player_writers[0], True)  # r/w cycle and check the connection
                 if not r[0]:  # return connected, string
                     if room.room_id in self.game_dict and player_id == 0:
+                        self.cnt -= 1
                         self.room_cnt -= 1
                         self.game_dict.pop(room.room_id)
                     else:
@@ -410,7 +412,7 @@ class Server:
                 await asyncio.sleep((FPS_T - tick) / 1000)
             start = pygame.time.get_ticks()
 
-            r = await self.check_read(room.player_names[0], room.player_readers[0], room.player_writers[0])
+            r = await self.check_read(room.player_names[0], room.player_readers[0], room.player_writers[0], True)
             if not r[0]:
                 room.running = False
                 return
@@ -422,7 +424,7 @@ class Server:
                     # room.player_role_ids[1] = 1 - room.player_role_ids[0]  # 1-1 = 0, 1-0 = 1
                     room.game_set0 = True
 
-            r = await self.check_read(room.player_names[1], room.player_readers[1], room.player_writers[1])
+            r = await self.check_read(room.player_names[1], room.player_readers[1], room.player_writers[1], True)
             if not r[0]:
                 room.running = False
                 return

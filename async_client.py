@@ -93,8 +93,6 @@ class Network:
         conn_type = "handshake"
         self.player_name = player_name
         self.reader, self.writer = await asyncio.open_connection(self.server_ip, self.server_port)
-        # id_data = await self.reader.read(100)
-        # self.client_id = id_data.decode()
         self.writer.write(f"{conn_type},{self.player_name}AB".encode())
         r = await self.check_read()
         if r[0]:  # return connected, string
@@ -205,6 +203,8 @@ class Network:
         # start_p = perf_counter()
         while self.game_ready:  # this is the routine game tick
             self.clock.tick(FPS)
+            # print(f"async_client = {pygame.time.get_ticks()}")
+
             # print((perf_counter() - start_p)*1000)
             # start_p = perf_counter()
             try:

@@ -175,17 +175,18 @@ class Menu:
         self.level_id = 0
         self.role_id = 0
         self.player_id = 0
-        self.credits = self.read_csv("resources/credits.csv")
+        # self.credits = self.read_csv("resources/credits.csv")
+        self.credits = role_def.game_credits
         self.credits_speed = 0.1
         self.credits_x = 0
-        self.credits_y00 = 80
+        self.credits_y00 = 500
         self.credits_y0 = self.credits_y00
         self.credits_pitch = 35
         self.credits_cnt = len(self.credits)
         self.credits_timer = 0
-        self.credits_on_flg = False
-        self.credits_timer_up = 2000
-        self.credits_timing_flg = False
+        # self.credits_on_flg = False
+        # self.credits_timer_up = 2000
+        # self.credits_timing_flg = False
         self.gs_lst = []  # Game state received as a list
         self.splat_font = ft.Font("resources/fonts/earwig factory rg.ttf", 60)
         self.counting_font = ft.Font("resources/OvOV20.ttf", 60)
@@ -415,26 +416,15 @@ class Menu:
         pass
 
     def cb_animate_credits(self, widget: 'pygame_menu.widgets.Widget', menu: 'pygame_menu.Menu'):
-        # pos = widget.get_position()
-        # new_y = pos[1] - 16
-        # widget.translate(0, new_y)
-        # print(widget.get_position())
-        if not self.credits_timing_flg:
-            self.credits_timer = pygame.time.get_ticks()
-            self.credits_timing_flg = True
-        elif pygame.time.get_ticks() - self.credits_timer >= self.credits_timer_up:
-            self.credits_on_flg = True
-
-        if self.credits_on_flg:
-            id_str = widget.get_id()
-            pos_y = widget.get_position()[1]
-            if id_str == str(self.credits_cnt + 6 - 1):  # index of the last element is len()-1
-                if pos_y < -10:
-                    self.credits_y0 = self.credits_y00
-            else:
-                # self.credits_y0 += self.credits_speed
-                self.credits_y0 -= self.credits_speed
-            widget.translate(self.credits_x, self.credits_y0 + int(id_str) * self.credits_pitch)
+        id_str = widget.get_id()
+        pos_y = widget.get_position()[1]
+        if id_str == str(self.credits_cnt - 1):  # index of the last element is len()-1
+            if pos_y < -10:
+                self.credits_y0 = self.credits_y00
+        else:
+            # self.credits_y0 += self.credits_speed
+            self.credits_y0 -= self.credits_speed
+        widget.translate(self.credits_x, self.credits_y0 + int(id_str) * self.credits_pitch)
 
     def cb_selection0_img_anim(self, widget:pygame_menu.widgets.widget.image, menu):
         pass
@@ -637,10 +627,6 @@ class Menu:
         while g.playing:  # routine game tick
             g.events()
             self.connection.events_str.put(g.events_str)
-            # self.connection.events_str = g.events_str
-            # if not g.playing:
-            #     print(f"g.events_str {g.events_str}")
-            #     return
             try:
                 self.gs_lst = self.connection.game_state.get(timeout=TIMEOUT)
                 # self.gs_lst = self.connection.game_state.get()
@@ -882,14 +868,12 @@ class Menu:
         # main_menu
         lbl0 = self.main_menu.add.label("Long long ago.... blah blah blah, click the button to play")
         lbl0.set_float(True, False, True)
-        lbl0.translate(100, 10)
+        lbl0.translate(200, 200)
 
-        credit_frame = self.credits_menu.add.frame_h(800, 800)
-        credit_frame.set_float(True, False, True)
-        credit_frame.translate(250, 150)
-        credit_frame.set_background_color((0, 0, 0, 0))
-        credit_frame.make_scrollarea(600, 200, (0, 0, 0, 0), (0, 0, 0, 0), None, True, (0, 0, 0, 0),
-                                     1, POSITION_WEST, (0, 0, 0, 0), (0, 0, 0, 0), 0, 2, POSITION_WEST)
+        lbl1 = self.main_menu.add.label("You choose to use this program on your own risk, the author "
+                                        "doesn't bear any liabilities due to the use of this program", font_size=20)
+        lbl1.set_float(True, False, True)
+        lbl1.translate(20, 650)
 
         self.img_idle_boy = self.main_menu.add.surface(self.img_lst_50per[0][0])
         self.img_idle_boy.set_float(True, False, True)
@@ -899,53 +883,22 @@ class Menu:
         self.img_idle_girl.set_float(True, False, True)
         self.img_idle_girl.translate(50, 350)
 
-        self.main_menu.add.button("Credits", self.credits_menu)
+        credits_btn = self.main_menu.add.button("Credits", self.credits_menu)
+        credits_btn.set_float(True, False, True)
+        credits_btn.translate(250, 600)
 
-        self.long_long = self.credits_menu.add.label("Long long ago.... blah blah blah,", label_id="0")
-        credit_frame.pack(self.long_long)
-        self.long_long.set_float(True, False, True)
-        self.long_long.translate(self.credits_x, self.credits_y0)
-        self.long_long.add_draw_callback(self.cb_animate_credits)
+        credit_frame = self.credits_menu.add.frame_h(800, 800)
+        credit_frame.set_float(True, False, True)
+        credit_frame.translate(250, 100)
+        credit_frame.set_background_color((0, 0, 0, 100))
+        credit_frame.make_scrollarea(600, 500, (0, 0, 0, 0), (0, 0, 0, 0), None, True, (0, 0, 0, 0),
+                                     1, POSITION_WEST, (0, 0, 0, 0), (0, 0, 0, 0), 0, 2, POSITION_WEST)
 
-        self.click_to_play = self.credits_menu.add.label("click the button to play", label_id="1")
-        credit_frame.pack(self.click_to_play)
-        self.click_to_play.set_float(True, False, True)
-        self.click_to_play.translate(self.credits_x, self.credits_y0 + self.credits_pitch)
-        self.click_to_play.add_draw_callback(self.cb_animate_credits)
-
-        self.credits_blank0 = self.credits_menu.add.label("", label_id="2")
-        credit_frame.pack(self.credits_blank0)
-        self.credits_blank0.set_float(True, False, True)
-        self.credits_blank0.translate(self.credits_x, self.credits_y0 + self.credits_pitch * 2)
-        self.credits_blank0.add_draw_callback(self.cb_animate_credits)
-
-        self.credits_blank1 = self.credits_menu.add.label("", label_id="3")
-        credit_frame.pack(self.credits_blank1)
-        self.credits_blank1.set_float(True, False, True)
-        self.credits_blank1.translate(self.credits_x, self.credits_y0 + self.credits_pitch * 3)
-        self.credits_blank1.add_draw_callback(self.cb_animate_credits)
-
-        self.credits_title = self.credits_menu.add.label("CREDITS", label_id="4", font_size=20)
-        credit_frame.pack(self.credits_title)
-        # self.credits_title.set_frame(credit_frame)
-        self.credits_title.set_float(True, False, True)
-        # self.credits_title.translate(0, 300)
-        self.credits_title.translate(self.credits_x, self.credits_y0 + self.credits_pitch * 4)
-        self.credits_title.add_draw_callback(self.cb_animate_credits)
-        # self.credits_title.set_frame(credit_frame)
-
-        self.credits_blank = self.credits_menu.add.label("", label_id="5", font_size=20)
-        credit_frame.pack(self.credits_blank)
-        self.credits_blank.set_float(True, False, True)
-        self.credits_blank.translate(self.credits_x, self.credits_y0 + self.credits_pitch * 5)
-        self.credits_blank.add_draw_callback(self.cb_animate_credits)
-        # self.credits_blank.set_frame(credit_frame)
-        #
         for i in range(len(self.credits)):
-            lbl = self.credits_menu.add.label(f"{self.credits[i]}", f"{i + 6}", font_size=20)
+            lbl = self.credits_menu.add.label(f"{self.credits[i]}", f"{i}")
             credit_frame.pack(lbl)
             lbl.set_float(True, False, True)
-            lbl.translate(self.credits_x, self.credits_y0 + (i + 6) * self.credits_pitch)
+            lbl.translate(self.credits_x, self.credits_y0 + (i) * self.credits_pitch)
             lbl.add_draw_callback(self.cb_animate_credits)
             # lbl.set_frame(credit_frame)
 
@@ -1206,6 +1159,7 @@ class Menu:
         # -------------------------------------------------------------------------
         while self.playing:
             self.clock.tick(FPS)
+            # print(f"menu = {pygame.time.get_ticks()}")
 
             events = pygame.event.get()
             self.check_end(events)

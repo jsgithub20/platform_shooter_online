@@ -24,3 +24,18 @@ txt_r3 = [20, RED, 670, 550, "weakness3", "3 chops", 0, 10]
 txt_b = [30, GREEN, 430, 620, "name", "Shooter", 0, 10]
 
 boy_txt = [txt_l1, txt_l2, txt_l3, txt_r1, txt_r2, txt_r3, txt_b]
+
+game_credits = ["CREDITS",
+                "",
+                "Art: Yijia (Amy) Yao",
+                "Game design: Yijia (Amy) Yao",
+                "Programming: Yijia (Amy) Yao and Her Dad",
+                'Debugger: John1',
+                'Debugger: John2',
+                'Debugger: John3',
+                'Debugger: John4',
+                'Debugger: John5',
+                'Debugger: John6',
+                'Debugger: John7',
+                'Debugger: John8',
+                'Debugger: John9']
