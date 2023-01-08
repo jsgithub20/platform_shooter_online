@@ -20,6 +20,7 @@ RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 LIGHT_BLUE = (68, 105, 252)
 LIGHT_GREEN = (100, 250, 122)
+CREDITS_COLOR = (199, 192, 147)
 
 # Screen dimensions
 WINDOW_SIZE = (1024, 768)

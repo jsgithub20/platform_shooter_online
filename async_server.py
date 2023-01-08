@@ -20,6 +20,7 @@ from inspect import currentframe, getframeinfo
 import game_class_s
 import game_state
 from platform_shooter_settings import *
+# import platform_shooter_settings
 
 FRAME_INFO = getframeinfo(currentframe())
 
@@ -134,8 +135,9 @@ class Server:
                 room.player_role_ids[i] actually represents the events for the role
                 In shooter-shooter or chopper-chopper game, since player_role_ids is [0, 0] or [1, 1]
                 room.player_role_ids[i] can't be directly used as the index for string_lists[]
-                (1 - room.player_role_ids[i]) makes it right as the index for string_lists[]
+                use i directly to assign the received info to string_lists[]
                 """
+                # (1 - room.player_role_ids[i]) makes it right as the index for string_lists[]
                 # if len(string_lists[room.player_role_ids[i]]) > 0:
                 #     # 1-1 = 0, 1-0 = 1
                 #     index = 1 - room.player_role_ids[i]
@@ -253,7 +255,7 @@ class Server:
 
         try:  # initial read() needs different handling than self.check_read
             received = await reader.readuntil(separator=b"AB")
-            temp = received.decode()[:-2]
+            temp = received.decode()[:-2] # "handshake,Amy" = ["handshake", "Amy"]
             player_info = temp.split(",")  # "{conn_type},{self.player_name}"
         except (ConnectionError, asyncio.IncompleteReadError):
             self.my_logger.warning(

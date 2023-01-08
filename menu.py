@@ -41,7 +41,11 @@ from platform_shooter_settings import *
 # -----------------------------------------------------------------------------
 # Load image & set game text
 # -----------------------------------------------------------------------------
-background_image = pygame.image.load("resources\gui\Window_19_1024-768.png")
+# background_image = pygame.image.load("resources\gui\Window_19_1024-768.png")
+background_image = pygame.image.load("resources/gui/ui.png")
+
+COVER_PAGE_BGIMG = pygame_menu.BaseImage("resources/gui/ui.png")
+CREDITS_BGIMG = pygame_menu.BaseImage("resources/gui/credits_screen.png")
 
 GIRL_idle_img = []
 for i in range(9):
@@ -179,7 +183,7 @@ class Menu:
         self.credits = role_def.game_credits
         self.credits_speed = 0.1
         self.credits_x = 0
-        self.credits_y00 = 500
+        self.credits_y00 = 380
         self.credits_y0 = self.credits_y00
         self.credits_pitch = 35
         self.credits_cnt = len(self.credits)
@@ -194,8 +198,11 @@ class Menu:
         self.b_connect: [pygame_menu.widgets.widget.button] = None
         self.selector_game: [pygame_menu.widgets.widget.dropselect] = None
         self.surface: [pygame.Surface] = pygame.image.load("resources/gui/Window_06.png")
+        # self.surface: [pygame.Surface] = pygame.image.load("resources/gui/ui.png")
         self.sound: [pygame_menu.sound.Sound] = None
         self.game_over_screen_flag = True
+
+        self.idle_img_frame_rate = 4  # 1/4 of FPS
 
         girl_idle = []
         girl_idle_50per = []
@@ -205,9 +212,10 @@ class Menu:
             girl_idle_50per.append(pygame.image.load(f"resources/gui/girl/50 percent/Idle__00{j}.png"))
 
         girl_idle = []  # test Amy's art
-        for j in range(4):
+        for j in range(5):
             img = pygame.image.load(f"resources/gui/girl/aIdle__00{j}.png")
-            girl_idle.append(pygame.transform.scale2x(img))
+            # girl_idle.append(pygame.transform.scale2x(img))
+            girl_idle.append(img)
 
         boy_idle = []
         boy_idle_50per = []
@@ -215,6 +223,12 @@ class Menu:
         for j in range(9):
             boy_idle.append(pygame.image.load(f"resources/gui/boy/Idle__00{j}.png"))
             boy_idle_50per.append(pygame.image.load(f"resources/gui/boy/50 percent/Idle__00{j}.png"))
+
+        boy_idle = []  # test Amy's art
+        for j in range(4):
+            img = pygame.image.load(f"resources/gui/boy/aIdle__00{j}.png")
+            # girl_idle.append(pygame.transform.scale2x(img))
+            boy_idle.append(img)
 
         self.img_lst = [boy_idle, girl_idle]
         self.img_lst_50per = [boy_idle_50per, girl_idle_50per]
@@ -234,6 +248,8 @@ class Menu:
 
         self.btn_img_rgt_prsd = pygame_menu.BaseImage("resources/gui/right_pressed.png")
         self.btn_img_rgt_prsd.scale4x()
+
+        self.lcls = locals()
 
     def read_csv(self, file_name, dict=0):
         result = None
@@ -340,7 +356,7 @@ class Menu:
     # def cb_join_game_btn(self):
     #     self.t_loop.create_task(self.connection.send_room_choice(self.chosen_room))
     #     self.t_loop.create_task(self.connection.client_game())
-        # self.demo_game()
+    # self.demo_game()
 
     def cb_dropselector_game_onchange(self, item_index: tuple, game_ready, room_id):
         # [(player0_name, game_ready, room_id),]
@@ -417,6 +433,7 @@ class Menu:
 
     def cb_animate_credits(self, widget: 'pygame_menu.widgets.Widget', menu: 'pygame_menu.Menu'):
         id_str = widget.get_id()
+        pos_x = widget.get_rect()[0]
         pos_y = widget.get_position()[1]
         if id_str == str(self.credits_cnt - 1):  # index of the last element is len()-1
             if pos_y < -10:
@@ -424,13 +441,23 @@ class Menu:
         else:
             # self.credits_y0 += self.credits_speed
             self.credits_y0 -= self.credits_speed
-        widget.translate(self.credits_x, self.credits_y0 + int(id_str) * self.credits_pitch)
+        # widget.translate(self.credits_x, self.credits_y0 + int(id_str) * self.credits_pitch)
+        widget.translate(pos_x, self.credits_y0 + int(id_str) * self.credits_pitch)
 
-    def cb_selection0_img_anim(self, widget:pygame_menu.widgets.widget.image, menu):
+    def cb_selection0_img_anim(self, widget: pygame_menu.widgets.widget.image, menu):
         pass
 
-    def cb_rgt_btn_pressed(self, selected, widget:pygame_menu.widgets.Button, ref_menu):
+    def cb_rgt_btn_pressed(self, selected, widget: pygame_menu.widgets.Button, ref_menu):
         widget.set_background_color(self.btn_img_rgt_prsd)
+
+    def cb_img_animate(self, widget: pygame_menu.widgets.SurfaceWidget, ref_menu: pygame_menu.Menu):
+        img_lst_name = widget.get_id()
+        img_lst = self.lcls[img_lst_name]
+        new_idx = widget.get_counter_attribute("idx", 1)
+        if new_idx >= (len(img_lst) - 1) * 4:
+            new_idx = 0
+            widget.set_attribute("idx", 0)
+        widget.set_surface(img_lst[new_idx // 4])
 
     def check_end(self, events):
         for event in events:
@@ -533,11 +560,11 @@ class Menu:
         self.reselect_done_flag = False
 
     def role_img_animation(self, img, img_idx):
-        if img_idx + 1 == len(self.current_img_lst) * 3:
+        if img_idx + 1 >= len(self.current_img_lst) * 15:
             img_idx = 0
         else:
             img_idx += 1
-        img.set_surface(self.current_img_lst[img_idx // 3])
+        img.set_surface(self.current_img_lst[img_idx // 15])
         return img_idx
 
     def idle_img_animation(self, img, boy_girl, img_idx):
@@ -557,7 +584,6 @@ class Menu:
             img_idx += 1
         img.set_surface(self.img_lst_50per[boy_girl][img_idx // 3])
         return img_idx
-
 
     def conn_issue_screen(self):
         while True:
@@ -592,7 +618,8 @@ class Menu:
                         return
 
             self.counting_font.render_to(self.screen, (300, 350), f"{self.winner} wins!", bgcolor=LIGHT_GREEN)
-            self.counting_font.render_to(self.screen, (20, 400), f"Press any key to continue in {counting} sec", bgcolor=LIGHT_GREEN)
+            self.counting_font.render_to(self.screen, (20, 400), f"Press any key to continue in {counting} sec",
+                                         bgcolor=LIGHT_GREEN)
             pygame.display.flip()
 
     def play(self):
@@ -723,7 +750,6 @@ class Menu:
         # all_sound.play_open_menu()
         # engine.play_click_mouse()
 
-
         engine = pygame_menu.sound.Sound()
         # engine.set_sound(pygame_menu.sound.SOUND_TYPE_CLICK_MOUSE, 'resources/sound/click.ogg')
         engine.set_sound(pygame_menu.sound.SOUND_TYPE_WIDGET_SELECTION, 'resources/sound/click.ogg')
@@ -739,12 +765,15 @@ class Menu:
         btn_img_rgt_prsd = pygame_menu.BaseImage("resources/gui/right_pressed.png")
         btn_img_rgt_prsd.scale4x()
         btn_img_ok = pygame_menu.BaseImage("resources/gui/Button_18_small.png")
+        btn_img_play = pygame_menu.BaseImage("resources/gui/play.png")
+        btn_img_credits = pygame_menu.BaseImage("resources/gui/credits.png")
 
         # -------------------------------------------------------------------------
         # Create menus: Main menu
         # -------------------------------------------------------------------------
         no_title_theme = pygame_menu.themes.THEME_ORANGE.copy()
         # no_title_theme.title_background_color = (0, 0, 0, 0)
+        no_title_theme.background_color = COVER_PAGE_BGIMG
         no_title_theme.title_font = pygame_menu.font.FONT_8BIT
 
         no_title_theme.title_font_shadow = True
@@ -752,12 +781,17 @@ class Menu:
         no_title_theme.title_close_button = False
         no_title_theme.title_offset = (120, 0)
 
-        no_title_theme.background_color = (0, 0, 0, 10)
-        # no_title_theme.title = False
+        # no_title_theme.background_color = (0, 0, 0, 10)
+        no_title_theme.title = False
         no_title_theme.widget_font = pygame_menu.font.FONT_MUNRO
         no_title_theme.widget_alignment = pygame_menu.locals.ALIGN_LEFT
         no_title_theme.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_NONE
         no_title_theme.widget_padding = 15
+
+        credits_theme = no_title_theme.copy()
+        credits_theme.background_color = CREDITS_BGIMG
+        credits_theme.widget_font_color = CREDITS_COLOR
+        credits_theme_font = pygame.font.Font(credits_theme.widget_font, credits_theme.widget_font_size)
 
         no_title_theme_join_game = pygame_menu.themes.THEME_ORANGE.copy()
         no_title_theme_join_game.background_color = (0, 0, 0, 10)
@@ -798,7 +832,7 @@ class Menu:
             "CREDITS", WINDOW_SIZE[0], WINDOW_SIZE[1],
             center_content=False,
             onclose=pygame_menu.events.EXIT,  # User press ESC button
-            theme=no_title_theme,
+            theme=credits_theme,
             position=[40, 20],
         )
 
@@ -866,49 +900,72 @@ class Menu:
         wait_lbl.translate(100, 300)
 
         # main_menu
-        lbl0 = self.main_menu.add.label("Long long ago.... blah blah blah, click the button to play")
-        lbl0.set_float(True, False, True)
-        lbl0.translate(200, 200)
+        # lbl0 = self.main_menu.add.label("Long long ago.... blah blah blah, click the button to play")
+        # lbl0.set_float(True, False, True)
+        # lbl0.translate(200, 200)
 
         lbl1 = self.main_menu.add.label("You choose to use this program on your own risk, the author "
                                         "doesn't bear any liabilities due to the use of this program", font_size=20)
         lbl1.set_float(True, False, True)
-        lbl1.translate(20, 650)
+        lbl1.translate(5, 730)
 
-        self.img_idle_boy = self.main_menu.add.surface(self.img_lst_50per[0][0])
-        self.img_idle_boy.set_float(True, False, True)
-        self.img_idle_boy.translate(65, 100)
+        # self.img_idle_boy = self.main_menu.add.surface(self.lcls["boy_idle_50per"][0], surface_id="boy_idle_50per")
+        # self.img_idle_boy.set_float(True, False, True)
+        # self.img_idle_boy.translate(65, 100)
+        # self.img_idle_boy.set_attribute("idx", 0)
+        # self.img_idle_boy.add_draw_callback(self.cb_img_animate)
+        #
+        # self.img_idle_girl = self.main_menu.add.surface(self.lcls["girl_idle_50per"][0], surface_id="girl_idle_50per")
+        # self.img_idle_girl.set_float(True, False, True)
+        # self.img_idle_girl.translate(50, 350)
+        # self.img_idle_girl.set_attribute("idx", 0)
+        # self.img_idle_girl.add_draw_callback(self.cb_img_animate)
 
-        self.img_idle_girl = self.main_menu.add.surface(self.img_lst_50per[1][0])
-        self.img_idle_girl.set_float(True, False, True)
-        self.img_idle_girl.translate(50, 350)
+        # self.img_idle_girl = self.main_menu.add.surface(self.img_lst_50per[1][0])
+        # self.img_idle_girl.set_float(True, False, True)
+        # self.img_idle_girl.translate(50, 350)
 
-        credits_btn = self.main_menu.add.button("Credits", self.credits_menu)
+        ok_btn = self.main_menu.add.button(" ", self.connection_menu, background_color=btn_img_play)
+        # ok_btn.set_selection_effect()
+        ok_btn.resize(120, 28)
+        ok_btn.set_float(True, False, True)
+        ok_btn.translate(450, 280)
+
+        credits_btn = self.main_menu.add.button(" ", self.credits_menu, background_color=btn_img_credits)
+        credits_btn.resize(168, 28)
         credits_btn.set_float(True, False, True)
-        credits_btn.translate(250, 600)
+        credits_btn.translate(430, 380)
 
         credit_frame = self.credits_menu.add.frame_h(800, 800)
         credit_frame.set_float(True, False, True)
-        credit_frame.translate(250, 100)
-        credit_frame.set_background_color((0, 0, 0, 100))
-        credit_frame.make_scrollarea(600, 500, (0, 0, 0, 0), (0, 0, 0, 0), None, True, (0, 0, 0, 0),
-                                     1, POSITION_WEST, (0, 0, 0, 0), (0, 0, 0, 0), 0, 2, POSITION_WEST)
+        credit_frame.translate(250, 200)
+        # credit_frame.set_background_color((0, 0, 0, 100))
+        credit_frame.make_scrollarea(510, 380,
+                                     scrollarea_color=None,
+                                     scrollbar_color=(235, 235, 235, 0),
+                                     scrollbar_cursor=None,
+                                     scrollbar_slider_color=(200, 200, 200, 0),
+                                     scrollbar_slider_hover_color=(180, 180, 180, 0),
+                                     scrollbar_slider_pad=0,
+                                     scrollbar_thick=20,
+                                     scrollbars=('position-south', 'position-east'),
+                                     scrollbar_shadow=False,
+                                     scrollbar_shadow_color=(0, 0, 0, 0),
+                                     scrollbar_shadow_offset=2,
+                                     scrollbar_shadow_position='position-southeast')
 
         for i in range(len(self.credits)):
             lbl = self.credits_menu.add.label(f"{self.credits[i]}", f"{i}")
+            lbl_width = credits_theme_font.size(self.credits[i])
             credit_frame.pack(lbl)
             lbl.set_float(True, False, True)
-            lbl.translate(self.credits_x, self.credits_y0 + (i) * self.credits_pitch)
+            # print((510-lbl_width[0])/2)
+            # lbl.translate(self.credits_x + (510-lbl_width[0]/2), self.credits_y0 + (i) * self.credits_pitch)
+            lbl.translate(self.credits_x + (510-(lbl_width[0]))/2, i * self.credits_pitch)
             lbl.add_draw_callback(self.cb_animate_credits)
             # lbl.set_frame(credit_frame)
 
         self.credits_menu.add.button("Back", pygame_menu.events.BACK)
-
-        ok_btn = self.main_menu.add.button(" ", self.connection_menu, background_color=btn_img_ok)
-        ok_btn.set_selection_effect()
-        ok_btn.resize(100, 100)
-        ok_btn.set_float(True, False, True)
-        ok_btn.translate(890, 570)
 
         # connection menu
 
@@ -916,7 +973,7 @@ class Menu:
 
         server_ip = self.connection_menu.add.text_input(
             'Server ip address: ',
-            default='192.168.3.170',  # '47.94.100.39'
+            default='127.0.0.1',  # '47.94.100.39'
             onreturn=None,
             textinput_id='server_ip')
 
@@ -935,10 +992,10 @@ class Menu:
         )
 
         b_connect = self.connection_menu.add.button("Connection status: <click to connect>",
-                                              self.cb_conn_conn,
-                                              server_ip,
-                                              server_port,
-                                              player_name)
+                                                    self.cb_conn_conn,
+                                                    server_ip,
+                                                    server_port,
+                                                    player_name)
         b_connect.add_self_to_kwargs()
 
         b_create = self.connection_menu.add.button("Create a new game", self.sub_menu_selection0)
@@ -949,9 +1006,9 @@ class Menu:
         self.connection_menu.add.button('Quit', pygame_menu.events.EXIT)
         self.connection_menu.add.vertical_margin(50)
         self.connection_menu.add.label("Disclaimer: you agree to use this program on your own risks.",
-                                 font_color="red",
-                                 font_size=20,
-                                 align=ALIGN_CENTER)
+                                       font_color="red",
+                                       font_size=20,
+                                       align=ALIGN_CENTER)
         self.connection_menu.set_sound(all_sound, recursive=True)  # Apply on menu and all sub-menus
 
         # main_menu end
@@ -988,7 +1045,7 @@ class Menu:
 
         self.join_game_menu.add.vertical_margin(15)
         self.b_refresh = self.join_game_menu.add.button("refresh", self.cb_refresh, cursor=CURSOR_HAND,
-                                                   background_color=LIGHT_GREEN)
+                                                        background_color=LIGHT_GREEN)
         self.b_refresh.set_float(True, False, True)
         self.b_refresh.translate(50, 80)
 
@@ -1015,9 +1072,9 @@ class Menu:
 
         for j in range(len(role_def.girl_txt)):
             lbl = self.join_game_menu.add.label(role_def.girl_txt[j][5],
-                                                    "",
-                                                    font_size=role_def.girl_txt[j][0],
-                                                    font_color=role_def.girl_txt[j][1])
+                                                "",
+                                                font_size=role_def.girl_txt[j][0],
+                                                font_color=role_def.girl_txt[j][1])
             lbl.set_float(True, False, True)
             lbl.translate(role_def.girl_txt[j][2], role_def.girl_txt[j][3])
             lbl.hide()
@@ -1025,9 +1082,9 @@ class Menu:
 
         for j in range(len(role_def.boy_txt)):
             lbl = self.join_game_menu.add.label(role_def.boy_txt[j][5],
-                                                    "",
-                                                    font_size=role_def.boy_txt[j][0],
-                                                    font_color=role_def.boy_txt[j][1])
+                                                "",
+                                                font_size=role_def.boy_txt[j][0],
+                                                font_color=role_def.boy_txt[j][1])
             lbl.set_float(True, False, True)
             lbl.translate(role_def.boy_txt[j][2], role_def.boy_txt[j][3])
             # lbl.hide()
@@ -1119,9 +1176,9 @@ class Menu:
 
         for j in range(len(role_def.girl_txt)):
             lbl = self.sub_menu_selection0.add.label(role_def.girl_txt[j][5],
-                                                    "",
-                                                    font_size=role_def.girl_txt[j][0],
-                                                    font_color=role_def.girl_txt[j][1])
+                                                     "",
+                                                     font_size=role_def.girl_txt[j][0],
+                                                     font_color=role_def.girl_txt[j][1])
             lbl.set_float(True, False, True)
             lbl.translate(role_def.girl_txt[j][2], role_def.girl_txt[j][3])
             lbl.hide()
@@ -1129,9 +1186,9 @@ class Menu:
 
         for j in range(len(role_def.boy_txt)):
             lbl = self.sub_menu_selection0.add.label(role_def.boy_txt[j][5],
-                                                    "",
-                                                    font_size=role_def.boy_txt[j][0],
-                                                    font_color=role_def.boy_txt[j][1])
+                                                     "",
+                                                     font_size=role_def.boy_txt[j][0],
+                                                     font_color=role_def.boy_txt[j][1])
             lbl.set_float(True, False, True)
             lbl.translate(role_def.boy_txt[j][2], role_def.boy_txt[j][3])
             # lbl.hide()
@@ -1151,8 +1208,6 @@ class Menu:
 
         img_idx0 = 0
         img_idx1 = 0
-        img_idx2 = 0
-        img_idx3 = 0
         # current_img_idx = 0
         # -------------------------------------------------------------------------
         # Main loop
@@ -1165,19 +1220,16 @@ class Menu:
             self.check_end(events)
 
             self.main_menu.update(events)
-            # self.join_game_menu.update(events)
 
             if self.main_menu.is_enabled():
-                self.screen.blit(background_image, (0, 0))
+                # self.screen.blit(background_image, (0, 0))
                 if self.main_menu.is_enabled():
                     self.main_menu.draw(self.screen)
             else:
                 break
 
-            img_idx0 = self.idle_img_animation_50per(self.img_idle_boy, 0, img_idx0)
-            img_idx1 = self.idle_img_animation_50per(self.img_idle_girl, 1, img_idx1)
-            img_idx2 = self.role_img_animation(self.img_selection0, img_idx2)
-            img_idx3 = self.role_img_animation(self.img_join_menu, img_idx3)
+            img_idx0 = self.role_img_animation(self.img_selection0, img_idx0)
+            img_idx1 = self.role_img_animation(self.img_join_menu, img_idx1)
             # if self.main_menu.get_current() == self.sub_menu_selection0:
             #     self.splat_font.render_to(self.screen, (100, 100), "render to menu screen")
 

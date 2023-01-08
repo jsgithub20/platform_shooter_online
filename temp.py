@@ -77,9 +77,39 @@ import asyncio
 # #
 # # print(len(data))
 #
-string = "Disconnected"
+# string = "Disconnected"
 # string_enc = string.encode()
 #
 # d_s = list(json.loads(string_enc.decode()))
 # print(d_s)
-print(string+";")
+# print(string+";")
+
+
+# class StrToVar:
+#     def __init__(self):
+#         lst = ["img1", "img2", "img3"]
+#         self.a = locals()
+#
+#     def print_var(self, var_name):
+#         a = self.a[var_name]
+#         print(a)
+#
+#
+# t = StrToVar()
+# t.print_var("lst")
+
+# class python:
+#     num = 100
+#     print('\nlocals() value inside class\n', locals())
+#
+# p = python()
+
+rooms_lst = [[self.game_dict[room_id].player_names[0], self.game_dict[room_id].check_ready(), room_id]
+             for room_id in [*self.game_dict] if self.game_dict[room_id].choosable]
+
+rooms_lst = []
+game_dict_keys = [*self.game_dict]
+
+for room_id in game_dict_keys:
+    if self.game_dict[room_id].choosable:
+        rooms_lst.append([self.game_dict[room_id].player_names[0], self.game_dict[room_id].check_ready(), room_id])
