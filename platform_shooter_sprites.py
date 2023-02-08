@@ -272,6 +272,7 @@ class Bullet(pg.sprite.Sprite):
             self.live_flag = 0
             self.loop_count = 0
         if pg.sprite.spritecollide(self, self.level.platform_list, False):
+            self.loop_count = 0
             self.live_flag = 0
 
 
